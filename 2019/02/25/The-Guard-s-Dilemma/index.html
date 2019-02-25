@@ -104,20 +104,25 @@
 
 
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Zhangtong&#39;s Notebook">
-<meta property="og:url" content="http://yoursite.com/index.html">
+  <meta name="description" content="IntroductionSGX isolates sensitive code and data from the OS, hypervisor, BIOS and other applications. Besides, SGX code and data is always encrypted as soon as it leaves the CPU. sensitive data, e.g.">
+<meta name="keywords" content="code-reuse attack,SGX">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The Guard&#39;s Dilemma">
+<meta property="og:url" content="http://yoursite.com/2019/02/25/The-Guard-s-Dilemma/index.html">
 <meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="IntroductionSGX isolates sensitive code and data from the OS, hypervisor, BIOS and other applications. Besides, SGX code and data is always encrypted as soon as it leaves the CPU. sensitive data, e.g.">
 <meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-02-25T09:34:33.389Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Zhangtong&#39;s Notebook">
+<meta name="twitter:title" content="The Guard&#39;s Dilemma">
+<meta name="twitter:description" content="IntroductionSGX isolates sensitive code and data from the OS, hypervisor, BIOS and other applications. Besides, SGX code and data is always encrypted as soon as it leaves the CPU. sensitive data, e.g.">
 
 
 
 
 
 
-  <link rel="canonical" href="http://yoursite.com/">
+  <link rel="canonical" href="http://yoursite.com/2019/02/25/The-Guard-s-Dilemma/">
 
 
 
@@ -127,7 +132,7 @@
   };
 </script>
 
-  <title>Zhangtong's Notebook</title>
+  <title>The Guard's Dilemma | Zhangtong's Notebook</title>
   
 
 
@@ -175,8 +180,7 @@
     
   
 
-  <div class="container sidebar-position-left 
-  page-home">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
@@ -214,7 +218,7 @@
         
         
           
-          <li class="menu-item menu-item-home menu-item-active">
+          <li class="menu-item menu-item-home">
 
     
     
@@ -293,9 +297,9 @@
           
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
 
@@ -327,10 +331,8 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/02/25/The-Guard-s-Dilemma/" class="post-title-link" itemprop="url">The Guard's Dilemma</a>
+          <h1 class="post-title" itemprop="name headline">The Guard's Dilemma
+
               
             
           </h1>
@@ -411,9 +413,7 @@
       
 
       
-        
-          
-            <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>SGX isolates sensitive code and data from the OS, hypervisor, BIOS and other applications. Besides, SGX code and data is always encrypted as soon as it leaves the CPU. sensitive data, e.g. cryptographic keys, of applications is protected by SGX containers called <em>enclaves</em>, which can be dynamiclly created while the applications, known as <em>hosts</em>, is running. enclaves provide predefined entry points to hosts performing sensitive computation.</p>
+        <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>SGX isolates sensitive code and data from the OS, hypervisor, BIOS and other applications. Besides, SGX code and data is always encrypted as soon as it leaves the CPU. sensitive data, e.g. cryptographic keys, of applications is protected by SGX containers called <em>enclaves</em>, which can be dynamiclly created while the applications, known as <em>hosts</em>, is running. enclaves provide predefined entry points to hosts performing sensitive computation.</p>
 <p>Ideally, the enclave code only includes minimal carefully-inspected code, which could be formally proven to be free of vulnerabilities. However, legacy applications can be adapted as well to run inside SGX enclaves with necessary modifications. Formally proving or manually inspecting legacy applications is not feasible, meaning that memory corruption vulnerabilities occurs in enclaves with high probability.</p>
 <p>Recently, Dark-ROP[1] was proposed to leverage memory-corruption against SGX. Dark-ROP is based on several oracles, which inform the attackers about the internal status of encalves, and return-oriented programming. However, Dark-ROP requires a non-randomized memory layout to locate secret code and data after crashing. Therefore, an implementation of SGX randomization called SGX-Shield[2] mitigates Dark-ROP attack.</p>
 <p>However, SGX-Shield does not randomize the part of SGX SDK that handles transitions between host code and enclave code, which contains a number of <em>gadgets</em> to mount a ROP attack. This paper demonstrates that the interface code is enough to mount powerful run-time attacks and bypass SGX-Shield without requiring kernel privileges.</p>
@@ -485,8 +485,6 @@
 </ol>
 <h3 id="Second-stage"><a href="#Second-stage" class="headerlink" title="Second stage"></a>Second stage</h3><p>The Shell code has full control over the enclave. In this case, attacker extract cryptographic keys used during remote attestation process through the shellcode. Therefore, she can sent these keys to remote server.</p>
 
-          
-        
       
     </div>
 
@@ -507,452 +505,38 @@
 
     <footer class="post-footer">
       
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/01/19/OpenVPN-Setup-Tutorial/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/01/19/OpenVPN-Setup-Tutorial/" class="post-title-link" itemprop="url">OpenVPN Setup Tutorial</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-01-19 16:08:34" itemprop="dateCreated datePublished" datetime="2019-01-19T16:08:34+08:00">2019-01-19</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">Edited on</span>
-                
-                <time title="Modified: 2019-02-25 17:40:42" itemprop="dateModified" datetime="2019-02-25T17:40:42+08:00">2019-02-25</time>
-              
-            
-          </span>
-
+        <div class="post-tags">
           
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/tutorial/" itemprop="url" rel="index"><span itemprop="name">tutorial</span></a></span>
-
-                
-                
-              
-            </span>
+            <a href="/tags/code-reuse-attack/" rel="tag"># code-reuse attack</a>
           
-
+            <a href="/tags/SGX/" rel="tag"># SGX</a>
           
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
         </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="Installation"><a href="#Installation" class="headerlink" title="Installation"></a>Installation</h2><h3 id="Via-source-code"><a href="#Via-source-code" class="headerlink" title="Via source code"></a>Via source code</h3><ol>
-<li><p>Download tar ball from <a href="https://openvpn.net/index.php/download/community-downloads.html" target="_blank" rel="noopener">release link</a></p>
-</li>
-<li><p>Dependencies</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">apt install libssl-dev liblzo2-dev libpam0g-dev</span><br><span class="line">apt install easy-rsa</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Build source code</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">tar xfz ./openvpn&lt;version&gt;.tar.gz</span><br><span class="line">cd openvpn&lt;version&gt;</span><br><span class="line">./configure</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-<h3 id="Via-official-apt-repositories"><a href="#Via-official-apt-repositories" class="headerlink" title="Via official apt repositories"></a>Via official apt repositories</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wget -O - https://swupdate.openvpn.net/repos/repo-public.gpg|apt-key add -</span><br><span class="line">echo "deb http://build.openvpn.net/debian/openvpn/stable xenial main" &gt; /etc/apt/sources.list.d/openvpn-aptrepo.list</span><br><span class="line">apt update &amp;&amp; apt install openvpn</span><br></pre></td></tr></table></figure>
-<h3 id="Via-script"><a href="#Via-script" class="headerlink" title="Via script"></a>Via script</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -O https://raw.githubusercontent.com/Angristan/openvpn-install/master/openvpn-install.sh</span><br><span class="line">chmod +x openvpn-install.sh</span><br><span class="line">./openvpn-install.sh</span><br></pre></td></tr></table></figure>
-<h2 id="Setup"><a href="#Setup" class="headerlink" title="Setup"></a>Setup</h2><h3 id="CA"><a href="#CA" class="headerlink" title="CA"></a>CA</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make-cadir CA &amp;&amp; cd CA</span><br></pre></td></tr></table></figure>
-<p>In <em>CA</em> directory, edit the <em>vars</em> file and set the KEY_COUNTRY, KEY_PROVINCE, KEY_CITY, KEY_ORG and KEY_EMAIL parameters.<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">source ./vars</span><br><span class="line">./clean-all</span><br><span class="line">./build-ca</span><br></pre></td></tr></table></figure></p>
-<h3 id="Key-generation"><a href="#Key-generation" class="headerlink" title="Key generation"></a>Key generation</h3><p>In <em>keys</em> directory, generate the private keys, certification and Diffie Hellman parameters.</p>
-<ol>
-<li><p>Server key generation</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./build-key-server server</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Client key generation</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">./build-key client1</span><br><span class="line">./build-key client2</span><br><span class="line">./build-key client3</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Diffie Hellman parameters generation</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./build-dh</span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-<p>Here is an explanation of the relevant files in <em>keys</em> subdir:</p>
-<table>
-<thead>
-<tr>
-<th>Filename</th>
-<th>Needed By</th>
-<th>Purpose</th>
-<th>Secret</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ca.crt</td>
-<td>server + all clients</td>
-<td>Root CA certificate</td>
-<td>NO</td>
-</tr>
-<tr>
-<td>ca.key</td>
-<td>key signing machine only</td>
-<td>Root CA key</td>
-<td>YES</td>
-</tr>
-<tr>
-<td>dh{n}.pem</td>
-<td>server only</td>
-<td>Diffie Hellman parameters</td>
-<td>NO</td>
-</tr>
-<tr>
-<td>server.crt</td>
-<td>server only</td>
-<td>Server Certificate</td>
-<td>NO</td>
-</tr>
-<tr>
-<td>server.key</td>
-<td>server only</td>
-<td>Server Key</td>
-<td>YES</td>
-</tr>
-<tr>
-<td>client1.crt</td>
-<td>client1 only</td>
-<td>Client1 Certificate</td>
-<td>NO</td>
-</tr>
-<tr>
-<td>client1.key</td>
-<td>client1 only</td>
-<td>Client1 Key</td>
-<td>YES</td>
-</tr>
-</tbody>
-</table>
-<h3 id="Configuration"><a href="#Configuration" class="headerlink" title="Configuration"></a>Configuration</h3><ul>
-<li>In VPNServer, put <em>server.conf</em>, <em>ca.crt</em>, <em>server.crt</em>, <em>server.key</em> and <em>dh{n}.pem</em> in the same directory(e.g. /etc/openvpn/).</li>
-<li>In Client, put <em>client.conf</em>, <em>client{n}.crt</em>, <em>client{n}.key</em> and <em>ca.crt</em> in the same directory.</li>
-<li>In <em>client.conf</em>, modify the <strong>remote</strong> value to VPNServer’s IPv4 address, modify <strong>cert</strong> and <strong>key</strong> to corresponding filename.</li>
-</ul>
-<h3 id="Running"><a href="#Running" class="headerlink" title="Running"></a>Running</h3><ol>
-<li><p>In VPNServer:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openvpn --config /etc/openvpn/server.conf --daemon</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>In Client:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openvpn --config /etc/openvpn/client&#123;n&#125;.conf --daemon</span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
       
 
       
       
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
       
 
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/01/03/Resolution-for-2019/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/01/03/Resolution-for-2019/" class="post-title-link" itemprop="url">Resolution for 2019</a>
-              
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
             
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
+              <a href="/2019/01/19/OpenVPN-Setup-Tutorial/" rel="next" title="OpenVPN Setup Tutorial">
+                <i class="fa fa-chevron-left"></i> OpenVPN Setup Tutorial
+              </a>
             
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
             
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-01-03 15:11:14" itemprop="dateCreated datePublished" datetime="2019-01-03T15:11:14+08:00">2019-01-03</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">Edited on</span>
-                
-                <time title="Modified: 2019-02-25 17:35:37" itemprop="dateModified" datetime="2019-02-25T17:35:37+08:00">2019-02-25</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
+          </div>
         </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
       
 
       
-        
-          
-            <h2 id="CTF"><a href="#CTF" class="headerlink" title="CTF"></a>CTF</h2><h3 id="Wargame"><a href="#Wargame" class="headerlink" title="Wargame"></a>Wargame</h3><p>Wargames are similar to CTF but always ongonging. Typically, they are always organized into levels.</p>
-<ol>
-<li><p><a href="https://microcorruption.com/" title="microcorruption" target="_blank" rel="noopener">Microcorruption</a></p>
-</li>
-<li><p><a href="http://smashthestack.org" title="smashthestack" target="_blank" rel="noopener">Smashthestack</a></p>
-</li>
-</ol>
-<h3 id="CTF-1"><a href="#CTF-1" class="headerlink" title="CTF"></a>CTF</h3><p>Following the steps in <a href="https://github.com/ctfs/resources" target="_blank" rel="noopener">Resources</a>.</p>
-<p>And reading the <a href="https://github.com/Naetw/CTF-pwn-tips" target="_blank" rel="noopener">Tips</a>.</p>
-<h2 id="LLVM"><a href="#LLVM" class="headerlink" title="LLVM"></a>LLVM</h2><h3 id="CPP"><a href="#CPP" class="headerlink" title="CPP"></a>CPP</h3><ol>
-<li><p>Finishing the tutorial in <a href="https://www.cplusplus.com/doc/tutorial/" target="_blank" rel="noopener">cplusplus.com</a>.</p>
-</li>
-<li><p>Practices in <a href="https://www.codewars.com/" target="_blank" rel="noopener">Codewars</a>.</p>
-</li>
-</ol>
-<h3 id="Compiler"><a href="#Compiler" class="headerlink" title="Compiler"></a>Compiler</h3><p>Compilers, Principles, Techniques and Tools.pdf</p>
-<h2 id="Paper-Notes"><a href="#Paper-Notes" class="headerlink" title="Paper Notes"></a>Paper Notes</h2><ol>
-<li>Code reuse attack</li>
-<li>side-channel related</li>
-</ol>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </div>
@@ -962,160 +546,15 @@
   </article>
 
 
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/24/hello-world/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2018/12/24/hello-world/" class="post-title-link" itemprop="url">Hello World</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2018-12-24 19:41:45" itemprop="dateCreated datePublished" datetime="2018-12-24T19:41:45+08:00">2018-12-24</time>
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
   </div>
-  
-  
-  
-  </article>
-
-
-    
-  </section>
-
-  
 
 
           </div>
           
+
+  
+
+
 
         </div>
         
@@ -1136,8 +575,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
 
-      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <div class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
             
@@ -1217,6 +665,22 @@
         </div>
       </div>
 
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#The-Guard’s-Dilemma"><span class="nav-number">2.</span> <span class="nav-text">The Guard’s Dilemma</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Overview-and-Attack-Workflow"><span class="nav-number">2.1.</span> <span class="nav-text">Overview and Attack Workflow</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Primitives"><span class="nav-number">2.1.1.</span> <span class="nav-text">Primitives</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Workflow"><span class="nav-number">2.1.2.</span> <span class="nav-text">Workflow</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Details"><span class="nav-number">2.2.</span> <span class="nav-text">Details</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ORET-Primitives"><span class="nav-number">2.2.1.</span> <span class="nav-text">ORET Primitives</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CONT-Primitive"><span class="nav-number">2.2.2.</span> <span class="nav-text">CONT Primitive</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Fake-stack"><span class="nav-number">2.2.3.</span> <span class="nav-text">Fake stack</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Fake-exception-information"><span class="nav-number">2.2.4.</span> <span class="nav-text">Fake exception information</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Attacking-SGX-Shield"><span class="nav-number">3.</span> <span class="nav-text">Attacking SGX-Shield</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Overview-on-SGX-Shield"><span class="nav-number">3.1.</span> <span class="nav-text">Overview on SGX-Shield</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Exploit"><span class="nav-number">3.2.</span> <span class="nav-text">Exploit</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#First-stage"><span class="nav-number">3.3.</span> <span class="nav-text">First stage</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Second-stage"><span class="nav-number">3.4.</span> <span class="nav-text">Second stage</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
       
 
       
@@ -1352,6 +816,10 @@
 
 
   
+  <script src="/js/src/scrollspy.js?v=6.6.0"></script>
+<script src="/js/src/post-details.js?v=6.6.0"></script>
+
+
 
   
 
