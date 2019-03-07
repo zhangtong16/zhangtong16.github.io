@@ -310,6 +310,174 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/07/Implementing-a-Language-one/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/03/07/Implementing-a-Language-one/" class="post-title-link" itemprop="url">Implementing a Language <one></one></a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-03-07 20:37:50 / Modified: 20:41:15" itemprop="dateCreated datePublished" datetime="2019-03-07T20:37:50+08:00">2019-03-07</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="The-Lexer"><a href="#The-Lexer" class="headerlink" title="The Lexer"></a>The Lexer</h2><p>The Lexer (aka scanner) breaks the source code into <em>tokens</em>, which includes a token code and potentially some metadata (e.g. the numeric value of a number).</p>
+<p>Each token returned by lexer will be either one of the Token enum values or it will be the ascii code value of an <em>unknown</em> character like +.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// The lexer returns tokens[0-255] if it is an unknown character, otherwise one of these for known things.</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">enum</span> Token &#123;</span><br><span class="line">  tok_eof = <span class="number">-1</span>,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// commands</span></span><br><span class="line">  tok_def = <span class="number">-2</span>, tok_extern = <span class="number">-3</span>,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// primary</span></span><br><span class="line">  tok_identifier = <span class="number">-1</span>, tok_number = <span class="number">-5</span>,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">string</span> IdentifierStr; <span class="comment">// Filled in if tok_identifier</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">double</span> NumVal;             <span class="comment">// Filled in if tok_number</span></span><br></pre></td></tr></table></figure>
+<p>The actual implementation of the lexer is a single function named <em>gettok</em>, which return the next token from standard input. Function gettok works by calling C getchar() to read characters one by one from standard input. It recognizes characters and store them into a variable <em>LastChar</em>. Additionally, the white space between tokens was ignored.</p>
+<p>The next thing gettok needs to do is recognize identifiers and specific words like <em>def</em>. We know the identifiers started with a alpha, followed by either number or alpha, ended with a space. Particularly, once the identifiers are the keywords (i.e., def or extern), we will return tok_def or tok_extern.</p>
+<p>For numeric values, we read it as characters from getchar, and store it as numric values into NumVal by C <em>strtod</em> function. Also, we must carefully handle the dot.</p>
+<p>For the comments, we simply skip it to the end of the line and return the next token (In a recursion way).</p>
+<p>Finally, if the input does not match any cases above, it is either a operator (e.g., +) or the end of the file. if the input character is an operator, the ascii value of it will be returned. In the case of an EOF, function returns next token.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="title">gettok</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  static int LastChar = '';</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span>(<span class="built_in">isspace</span>(LastChar)) &#123;</span><br><span class="line">    LastChar = getchar();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">isalpha</span>(LastChar))&#123;</span><br><span class="line">    IdentifierStr = LastChar;</span><br><span class="line">    <span class="keyword">while</span> (islanum(LastChar = getchar())) &#123;</span><br><span class="line">      IdentifierStr += LastChar;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (IdentifierStr == <span class="string">"def"</span>)    <span class="keyword">return</span> tok_def;</span><br><span class="line">    <span class="keyword">if</span> (IdentifierStr == <span class="string">"extern"</span>) <span class="keyword">return</span> tok_extern;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> tok_identifier;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">isdigit</span>(LastChar) || LastChar == <span class="string">'.'</span>) &#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> NumStr;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">      NumStr   += LastChar;</span><br><span class="line">      LastChar =  getchar();</span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="built_in">isdigit</span>(LastChar) || LastChar == <span class="string">'.'</span>);</span><br><span class="line"></span><br><span class="line">    NumVal = strtod(NumStr.c_str(), <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">return</span> tok_number;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (LastChar == <span class="string">'#'</span>) &#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">      LastChar = getchar();</span><br><span class="line">    &#125; <span class="keyword">while</span> (LastChar != EOF &amp;&amp; LastChar != <span class="string">'\n'</span> &amp;&amp; LastChar != <span class="string">'\r'</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (LastChar != EOF) &#123;</span><br><span class="line">      <span class="keyword">return</span> gettok();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (LastChar == EOF) &#123;</span><br><span class="line">    <span class="keyword">return</span> tok_eof;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">int</span> ThisChar = LastChar;</span><br><span class="line">  LastChar = getchar();</span><br><span class="line">  <span class="keyword">return</span> ThisChar;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/25/The-Guard-s-Dilemma/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1154,7 +1322,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-count">5</span>
                     <span class="site-state-item-name">posts</span>
                   </a>
                 </div>
@@ -1171,7 +1339,9 @@
                     
                       
                     
-                    <span class="site-state-item-count">2</span>
+                      
+                    
+                    <span class="site-state-item-count">3</span>
                     <span class="site-state-item-name">categories</span>
                   </a>
                 </div>
@@ -1192,7 +1362,9 @@
                     
                       
                     
-                    <span class="site-state-item-count">4</span>
+                      
+                    
+                    <span class="site-state-item-count">5</span>
                     <span class="site-state-item-name">tags</span>
                   </a>
                 </div>

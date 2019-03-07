@@ -104,25 +104,25 @@
 
 
 
-  <meta name="description" content="CTFWargameWargames are similar to CTF but always ongonging. Typically, they are always organized into levels.  Microcorruption  Smashthestack   CTFFollowing the steps in Resources. And reading the Tip">
-<meta name="keywords" content="resolution">
+  <meta name="description" content="The LexerThe Lexer (aka scanner) breaks the source code into tokens, which includes a token code and potentially some metadata (e.g. the numeric value of a number). Each token returned by lexer will b">
+<meta name="keywords" content="LLVM">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Resolution for 2019">
-<meta property="og:url" content="http://yoursite.com/2019/01/03/Resolution-for-2019/index.html">
+<meta property="og:title" content="Implementing a Language &lt;one&gt;">
+<meta property="og:url" content="http://yoursite.com/2019/03/07/Implementing-a-Language-one/index.html">
 <meta property="og:site_name" content="Zhangtong&#39;s Notebook">
-<meta property="og:description" content="CTFWargameWargames are similar to CTF but always ongonging. Typically, they are always organized into levels.  Microcorruption  Smashthestack   CTFFollowing the steps in Resources. And reading the Tip">
+<meta property="og:description" content="The LexerThe Lexer (aka scanner) breaks the source code into tokens, which includes a token code and potentially some metadata (e.g. the numeric value of a number). Each token returned by lexer will b">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2019-02-25T09:35:37.205Z">
+<meta property="og:updated_time" content="2019-03-07T12:41:15.895Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Resolution for 2019">
-<meta name="twitter:description" content="CTFWargameWargames are similar to CTF but always ongonging. Typically, they are always organized into levels.  Microcorruption  Smashthestack   CTFFollowing the steps in Resources. And reading the Tip">
+<meta name="twitter:title" content="Implementing a Language &lt;one&gt;">
+<meta name="twitter:description" content="The LexerThe Lexer (aka scanner) breaks the source code into tokens, which includes a token code and potentially some metadata (e.g. the numeric value of a number). Each token returned by lexer will b">
 
 
 
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2019/01/03/Resolution-for-2019/">
+  <link rel="canonical" href="http://yoursite.com/2019/03/07/Implementing-a-Language-one/">
 
 
 
@@ -132,7 +132,7 @@
   };
 </script>
 
-  <title>Resolution for 2019 | Zhangtong's Notebook</title>
+  <title>Implementing a Language <one> | Zhangtong's Notebook</one></title>
   
 
 
@@ -314,7 +314,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/01/03/Resolution-for-2019/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/07/Implementing-a-Language-one/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Zhangtong">
@@ -331,11 +331,11 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">Resolution for 2019
+          <h1 class="post-title" itemprop="name headline">Implementing a Language <one>
 
               
             
-          </h1>
+          </one></h1>
         
 
         <div class="post-meta">
@@ -357,28 +357,34 @@
                 
               
 
-              <time title="Created: 2019-01-03 15:11:14" itemprop="dateCreated datePublished" datetime="2019-01-03T15:11:14+08:00">2019-01-03</time>
+              <time title="Created: 2019-03-07 20:37:50 / Modified: 20:41:15" itemprop="dateCreated datePublished" datetime="2019-03-07T20:37:50+08:00">2019-03-07</time>
             
 
             
               
 
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">Edited on</span>
-                
-                <time title="Modified: 2019-02-25 17:35:37" itemprop="dateModified" datetime="2019-02-25T17:35:37+08:00">2019-02-25</time>
               
             
           </span>
 
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -407,26 +413,15 @@
       
 
       
-        <h2 id="CTF"><a href="#CTF" class="headerlink" title="CTF"></a>CTF</h2><h3 id="Wargame"><a href="#Wargame" class="headerlink" title="Wargame"></a>Wargame</h3><p>Wargames are similar to CTF but always ongonging. Typically, they are always organized into levels.</p>
-<ol>
-<li><p><a href="https://microcorruption.com/" title="microcorruption" target="_blank" rel="noopener">Microcorruption</a></p>
-</li>
-<li><p><a href="http://smashthestack.org" title="smashthestack" target="_blank" rel="noopener">Smashthestack</a></p>
-</li>
-</ol>
-<h3 id="CTF-1"><a href="#CTF-1" class="headerlink" title="CTF"></a>CTF</h3><p>Following the steps in <a href="https://github.com/ctfs/resources" target="_blank" rel="noopener">Resources</a>.</p>
-<p>And reading the <a href="https://github.com/Naetw/CTF-pwn-tips" target="_blank" rel="noopener">Tips</a>.</p>
-<h2 id="LLVM"><a href="#LLVM" class="headerlink" title="LLVM"></a>LLVM</h2><h3 id="CPP"><a href="#CPP" class="headerlink" title="CPP"></a>CPP</h3><ol>
-<li><p>Finishing the tutorial in <a href="https://www.cplusplus.com/doc/tutorial/" target="_blank" rel="noopener">cplusplus.com</a>.</p>
-</li>
-<li><p>Practices in <a href="https://www.codewars.com/" target="_blank" rel="noopener">Codewars</a>.</p>
-</li>
-</ol>
-<h3 id="Compiler"><a href="#Compiler" class="headerlink" title="Compiler"></a>Compiler</h3><p>Compilers, Principles, Techniques and Tools.pdf</p>
-<h2 id="Paper-Notes"><a href="#Paper-Notes" class="headerlink" title="Paper Notes"></a>Paper Notes</h2><ol>
-<li>Code reuse attack</li>
-<li>side-channel related</li>
-</ol>
+        <h2 id="The-Lexer"><a href="#The-Lexer" class="headerlink" title="The Lexer"></a>The Lexer</h2><p>The Lexer (aka scanner) breaks the source code into <em>tokens</em>, which includes a token code and potentially some metadata (e.g. the numeric value of a number).</p>
+<p>Each token returned by lexer will be either one of the Token enum values or it will be the ascii code value of an <em>unknown</em> character like +.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// The lexer returns tokens[0-255] if it is an unknown character, otherwise one of these for known things.</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">enum</span> Token &#123;</span><br><span class="line">  tok_eof = <span class="number">-1</span>,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// commands</span></span><br><span class="line">  tok_def = <span class="number">-2</span>, tok_extern = <span class="number">-3</span>,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// primary</span></span><br><span class="line">  tok_identifier = <span class="number">-1</span>, tok_number = <span class="number">-5</span>,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">string</span> IdentifierStr; <span class="comment">// Filled in if tok_identifier</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">double</span> NumVal;             <span class="comment">// Filled in if tok_number</span></span><br></pre></td></tr></table></figure>
+<p>The actual implementation of the lexer is a single function named <em>gettok</em>, which return the next token from standard input. Function gettok works by calling C getchar() to read characters one by one from standard input. It recognizes characters and store them into a variable <em>LastChar</em>. Additionally, the white space between tokens was ignored.</p>
+<p>The next thing gettok needs to do is recognize identifiers and specific words like <em>def</em>. We know the identifiers started with a alpha, followed by either number or alpha, ended with a space. Particularly, once the identifiers are the keywords (i.e., def or extern), we will return tok_def or tok_extern.</p>
+<p>For numeric values, we read it as characters from getchar, and store it as numric values into NumVal by C <em>strtod</em> function. Also, we must carefully handle the dot.</p>
+<p>For the comments, we simply skip it to the end of the line and return the next token (In a recursion way).</p>
+<p>Finally, if the input does not match any cases above, it is either a operator (e.g., +) or the end of the file. if the input character is an operator, the ascii value of it will be returned. In the case of an EOF, function returns next token.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="title">gettok</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  static int LastChar = '';</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span>(<span class="built_in">isspace</span>(LastChar)) &#123;</span><br><span class="line">    LastChar = getchar();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">isalpha</span>(LastChar))&#123;</span><br><span class="line">    IdentifierStr = LastChar;</span><br><span class="line">    <span class="keyword">while</span> (islanum(LastChar = getchar())) &#123;</span><br><span class="line">      IdentifierStr += LastChar;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (IdentifierStr == <span class="string">"def"</span>)    <span class="keyword">return</span> tok_def;</span><br><span class="line">    <span class="keyword">if</span> (IdentifierStr == <span class="string">"extern"</span>) <span class="keyword">return</span> tok_extern;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> tok_identifier;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">isdigit</span>(LastChar) || LastChar == <span class="string">'.'</span>) &#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> NumStr;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">      NumStr   += LastChar;</span><br><span class="line">      LastChar =  getchar();</span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="built_in">isdigit</span>(LastChar) || LastChar == <span class="string">'.'</span>);</span><br><span class="line"></span><br><span class="line">    NumVal = strtod(NumStr.c_str(), <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">return</span> tok_number;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (LastChar == <span class="string">'#'</span>) &#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">      LastChar = getchar();</span><br><span class="line">    &#125; <span class="keyword">while</span> (LastChar != EOF &amp;&amp; LastChar != <span class="string">'\n'</span> &amp;&amp; LastChar != <span class="string">'\r'</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (LastChar != EOF) &#123;</span><br><span class="line">      <span class="keyword">return</span> gettok();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (LastChar == EOF) &#123;</span><br><span class="line">    <span class="keyword">return</span> tok_eof;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">int</span> ThisChar = LastChar;</span><br><span class="line">  LastChar = getchar();</span><br><span class="line">  <span class="keyword">return</span> ThisChar;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
       
     </div>
@@ -450,7 +445,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/resolution/" rel="tag"># resolution</a>
+            <a href="/tags/LLVM/" rel="tag"># LLVM</a>
           
         </div>
       
@@ -463,8 +458,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/12/24/hello-world/" rel="next" title="Hello World">
-                <i class="fa fa-chevron-left"></i> Hello World
+              <a href="/2019/02/25/The-Guard-s-Dilemma/" rel="next" title="The Guard's Dilemma">
+                <i class="fa fa-chevron-left"></i> The Guard's Dilemma
               </a>
             
           </div>
@@ -472,10 +467,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2019/01/19/OpenVPN-Setup-Tutorial/" rel="prev" title="OpenVPN Setup Tutorial">
-                OpenVPN Setup Tutorial <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -624,7 +615,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CTF"><span class="nav-number">1.</span> <span class="nav-text">CTF</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Wargame"><span class="nav-number">1.1.</span> <span class="nav-text">Wargame</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CTF-1"><span class="nav-number">1.2.</span> <span class="nav-text">CTF</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LLVM"><span class="nav-number">2.</span> <span class="nav-text">LLVM</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CPP"><span class="nav-number">2.1.</span> <span class="nav-text">CPP</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Compiler"><span class="nav-number">2.2.</span> <span class="nav-text">Compiler</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Paper-Notes"><span class="nav-number">3.</span> <span class="nav-text">Paper Notes</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#The-Lexer"><span class="nav-number">1.</span> <span class="nav-text">The Lexer</span></a></li></ol></div>
             
 
           </div>
