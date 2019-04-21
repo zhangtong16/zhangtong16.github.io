@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.1.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="IntroductionMore recently, researchers have demonstrated the feasibility of enforcing Control-Flow Integrity (CFI) in kernel space. However, in addition to problems discovered in CFI, a more fundament">
+<meta name="keywords" content="code-reuse attack,kernel,data-flow integrity">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Enforcing kernel security invariants with data-flow integrity">
+<meta property="og:url" content="http://yoursite.com/2019/04/21/Enforcing-kernel-security-invariants-with-data-flow-integrity/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="IntroductionMore recently, researchers have demonstrated the feasibility of enforcing Control-Flow Integrity (CFI) in kernel space. However, in addition to problems discovered in CFI, a more fundament">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-04-21T12:57:25.612Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Enforcing kernel security invariants with data-flow integrity">
+<meta name="twitter:description" content="IntroductionMore recently, researchers have demonstrated the feasibility of enforcing Control-Flow Integrity (CFI) in kernel space. However, in addition to problems discovered in CFI, a more fundament">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2019/04/21/Enforcing-kernel-security-invariants-with-data-flow-integrity/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Enforcing kernel security invariants with data-flow integrity | Zhangtong's Notebook</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="default">
+
+  
+  
+    
+  
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Zhangtong's Notebook</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>Home</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>Tags</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>Archives</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/21/Enforcing-kernel-security-invariants-with-data-flow-integrity/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Enforcing kernel security invariants with data-flow integrity
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-04-21 20:54:22 / Modified: 20:57:25" itemprop="dateCreated datePublished" datetime="2019-04-21T20:54:22+08:00">2019-04-21</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>More recently, researchers have demonstrated the feasibility of enforcing Control-Flow Integrity (CFI) in kernel space. However, in addition to problems discovered in CFI, a more fundamental problem is that because OS kernel are mainly data-driven, CFI can be easily by passed by non-control-data attacks.</p>
+<p>The objective of this work is to provide a defense system that is both <em>principled</em> and <em>practical</em>. We achieve the first goal by utilizing Data-Flow Integrity. Similar to CFI, DFI guarantees that runtime data-flow cannot deviate from the data-flow graph generated from static analysis. For example, data from a string buffer should never flow to the return address on the stack (control-data) or the <code>uid</code> (non-control-data). In this work, we focus on enforcing invariants that are related to kernel access control mechanisms (a.k.a., reference monitors) so as to defeat privilege escalation attacks.</p>
+<p>While this approach sounds intuitive at high level, enforcing it with practical runtime performance overhead is very challenging. First, access control checks are scattered through out the kernel, and related data are mixed with other data. Therefore, the protection must be deployed kernel-wide. Moreover, without hardware support, software-based DFI implementation can be every expensive.</p>
+<p>We propose a system called KENALI, which consists of two key techniques. Our first technique, INFERDISTS, is based on the observation that although the protection has to be kernel-wide, only a small portion of data is essential for enforcing the two security invariants. For ease of discussion, we refer to this set of data as <em>distinguishing regions</em>. Our technique, INFERDISTS, overcomes these challenges with a new program-analysis-based approach. Specifically, by leveraging implicit program semantics, INFERDISTS is able to infer security checks with out any manual annotation. After this, by considering both data and control-dependencies of data that can affect each security check, as well as sensitive pointers, INFERDISTS generates a <em>complete</em> set of distinguishing regions.</p>
+<p>Our second technique, PROTECTDISTS, is a new technique to enforce DFI over the distinguishing regions. PROTECTDISTS uses a two-layer protection scheme. The first layer provides a coarse-grained but low overhead data-flow isolation that prevents illegal data-flow from non-distinguishing regions to distinguishing regions. After this separation, the second layer the enforce fine-grained DFI over the distinguishing regions. <strong>Because the access pattern to most data in the distinguishing regions is very asymmetric, read accesses are usually magnitudes more frequent than write accesses</strong>, PROTECTDISTS employs the Write Integrity Test (WIT).</p>
+<h2 id="Problem-scope"><a href="#Problem-scope" class="headerlink" title="Problem scope"></a>Problem scope</h2><h3 id="Threat-model-and-assumptions"><a href="#Threat-model-and-assumptions" class="headerlink" title="Threat model and assumptions"></a>Threat model and assumptions</h3><p>We only consider attacks that originate from unprivileged code. The attacker can read and write word-size value at an arbitrary memory address.</p>
+<h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><ol>
+<li><p><strong>Simple rooting attacks.</strong> CVE-2013-6282 allows attacker to read and write arbitrary kernel memory, which matches our adversary model. (i) Retrieving the address of <code>prepare_kernel_cred()</code> and <code>commit_creds()</code>. Depending on the target system, they can be at fixed address, or obtainable from the kernel symbol table (<code>kallsyms_addresses</code>); (ii) Invoking <code>prepare_kernel_cred()</code> and pass the results to <code>commit_creds()</code>, then the kernel will replace the credential of the current thread with one of root privilege.</p>
+</li>
+<li><p><strong>Bypassing CFI with non-control-data attacks.</strong> The above attack can be prevented by kernel wide CFI. But CFI can be easily bypassed by locating the <code>cred</code> structure and overwriting the <code>euid</code> field. The <code>cred</code> structure can be located in many ways. (i) if <code>kallsyms</code> is available and contains the address of <code>init_task</code>, we can traverse the process list to locate the <code>task_struct</code> of the current process, then <code>task_struct-&gt;cred</code> (ii) if there is a vulnerability that leaks the stack address, attackers can directly obtain the address of the <code>thread_info</code>, then follows the links to locate the <code>task_struct</code>.</p>
+</li>
+<li><p><strong>Diversity of non-control-data attacks.</strong> From the target kernel we evaluated, we found that 2419 data structures contain critical data.</p>
+</li>
+</ol>
+<h2 id="Technical-approach"><a href="#Technical-approach" class="headerlink" title="Technical approach"></a>Technical approach</h2><h3 id="Inferring-distinguishing-regions"><a href="#Inferring-distinguishing-regions" class="headerlink" title="Inferring distinguishing regions"></a>Inferring distinguishing regions</h3><p>The challenge is that for security, our solution must be sound (i.e., no false positives), but for performance, we want the size of the inference result to be as small as possible.</p>
+<ol>
+<li><p><em>Control-Data</em></p>
+</li>
+<li><p><em>Non-Control-Data:</em> Access controls are implemented as security checks, and while a kernel may have many security checks scattered throughout different components, they all follow one consistent semantic: <strong>if a security check fails, it should return a security related error codes.</strong> Leveraging this observation, we can collect security check without manual annotation. Then, distinguishing regions can be constructed via standard dependency analysis over the conditional variables of security check.</p>
+</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">acl_permission_check</span> <span class="params">(struct inode * inode, <span class="keyword">int</span> mask)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> mode = inode -&gt; i_mode;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (current_cred -&gt; fsuid == inode -&gt; i_uid)</span><br><span class="line">        mode &gt;&gt;= <span class="number">6</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (in_group_p (inode -&gt; i_gid))</span><br><span class="line">        mode &gt;&gt;= <span class="number">3</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((mask &amp; ~mode &amp; (MAY_READ | MAY_WRITE | MAY_EXEC)) == <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> -EACCES;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>We must consider branches that dominate a security check. However, naively including all dominators will introduce many false positives. To reduce false positives, INFERDISTS conservatively excludes two cases: (i) a branch can lead to non-related error return and (ii) a branch instruction is post-dominated by either a security check or checks in (a).</p>
+<ol start="3">
+<li><em>Sensitive pointers:</em> pointers to sensitive regions must be protected as well; otherwise, attackers can indirectly control the data in distinguishing regions by manipulating the pointers.</li>
+</ol>
+<h3 id="Protecting-distinguishing-regions"><a href="#Protecting-distinguishing-regions" class="headerlink" title="Protecting distinguishing regions"></a>Protecting distinguishing regions</h3><p>The challenge for this step is how to minimize the performance overhead on commodity processors that lack support for fine-grained data-flow tracking. To address this challenge, our key observation is that, <strong>after separating the memory into distinguishing region and non-distinguishing region, there could be three types of data-flow: (i) within non-distinguishing region, (ii) between two regions, and (iii) within distinguishing regions.</strong></p>
+<p>We design a two-layer scheme: lightweight data-flow isolation on second type, and more expensive DFI enforcement to prevent illegal data-flow of the third type.</p>
+<ol>
+<li><p><em>Data-flow isolation:</em> We explored the feasibility of hardware-based data-flow isolation for AArch64. We developed a novel, virtual address space-based isolation mechanism by tagging the TLB with an identifier (i.e., Process Context ID)</p>
+</li>
+<li><p><em>Write Integrity Test:</em> In addition to preventing illegal data-flow from non-distinguishing regions to distinguishing regions, we use DFI to prevent illegal data-flow within distinguishing regions. We leveraged the write integrity test.</p>
+</li>
+<li><p><em>Shadow Objects:</em> As a hardware protection unit (e.g., page) may contain both distinguishing and non-distinguishing regions, once we write-protect that page, we also have to pay additional overhead for accessing non-distinguishing regions. Our solution to this problem is <em>shadow objects</em>: a normal copy for non-distinguishing regions and a shadow copy for distinguishing regions.</p>
+</li>
+<li><p><em>Safe Stack:</em> Using <em>shadow stack</em>.</p>
+</li>
+</ol>
+<h2 id="A-prototype-for-Android"><a href="#A-prototype-for-Android" class="headerlink" title="A prototype for Android"></a>A prototype for Android</h2><h3 id="Data-flow-isolation"><a href="#Data-flow-isolation" class="headerlink" title="Data-flow isolation"></a>Data-flow isolation</h3><ol>
+<li><p><em>AArch64 VMSA (Virtual Memory System Architecture):</em> The AArch64 supports a maximum of 48-bit virtual address (VA), which is split into two parts: the bottom part is for user space, and the top part is for kernel space.</p>
+</li>
+<li><p><em>Shadow Address Space:</em> Our data-flow isolation implementation leverages the ASID (Address Space IDentifier) tagging feature and is based on shadow address space. Under this isolation scheme, the same physical page is mapped into two different address spaces with different permissions.</p>
+</li>
+<li><p><em>Atomic Primitive Operations:</em> Considering the security of the shadow address space, we make every operation under the shadow address space atomic, such as write a single data, <code>memcpy</code> and <code>memset</code>.</p>
+</li>
+</ol>
+<h3 id="MMU-integrity"><a href="#MMU-integrity" class="headerlink" title="MMU integrity"></a>MMU integrity</h3><p>Three additional security invariants: (i) <strong>MMU isolation:</strong> Only MMU management code can modify MMU-related data. (ii) <strong>Code integrity:</strong> Kernel code integrity. (iii) <strong>Dedicated entry and exit:</strong> MMU management code is always invoked through dedicated entries and exits.</p>
+<h3 id="Shadow-objects"><a href="#Shadow-objects" class="headerlink" title="Shadow objects"></a>Shadow objects</h3><ol>
+<li><p><em>SLUB Allocator:</em> In our target kernel, most distinguishing regions are allocated from the SLUB allocator. When SLUB allocates pages for a new slab, we allocate a shadow slab of the same size and map it read-ony at a fixed offset (4GB) from the original slab.</p>
+</li>
+<li><p><em>Global Objects:</em> While most distinguishing regions are dynamically allocated, some of them are statically allocated in the form of global objects. We allocate shadow memory for entire <code>.data</code> section, copy all the contents to populate the shadow memory and then map it.</p>
+</li>
+<li><p><em>Analysis and instrumentation:</em> We first identify all allocation sites for objects in distinguishing regions and modify the allocation flag. Next, we identify all pointer arithmetic operations for accessing distinguishing regions and modify them to access the shadow objects. Finally, we identify all write to distinguishing regions, and modify them to invoke our atomic operations instead. <strong>inline assembly needs to be handled manually.</strong></p>
+</li>
+</ol>
+<h3 id="Kernel-stack-randomization"><a href="#Kernel-stack-randomization" class="headerlink" title="Kernel stack randomization"></a>Kernel stack randomization</h3><p>We map kernel stack to a unused AV above the logical map (top 256GB), because kernel stacks are small (16KB), we have around 24-bit of entropy available.</p>
+<p>We contain the risk of information leak as follows. First, we mark functions like <code>copy_to_user</code> as unsafe. Then, we store the real stack pointer in a redirection table and replace the original pointer with an index into the table, which mapped as inaccessible under normal context. So does the page tables of shadow stack.</p>
+<h2 id="Evaluation"><a href="#Evaluation" class="headerlink" title="Evaluation"></a>Evaluation</h2><h3 id="Distinguishing-regions-discovery"><a href="#Distinguishing-regions-discovery" class="headerlink" title="Distinguishing regions discovery"></a>Distinguishing regions discovery</h3><p>For control data, our analysis identified 6192 code pointers, 991 are function args, 11 are return addresses, both of them are protected by safe stack. 1490 are global variables, and 3699 are fields over 783 data structures.</p>
+<p>For non-control data, the error codes we used were <code>EPERM</code>, <code>EACCES</code>, and <code>EROFS</code>. 526 functions as capable of returning permission-related errors; 1077 function args, 279 global variable, and 1731 data fields over 855 data structures as security-critical.</p>
+<p>For sensitive pointers, we combined both control and non-control data to result a total of 4096 data fields over 1316 data structures as the sensitive pointer inference. Futher, there are 4002 fields over 1103 structures as distinguishing regions. <strong>For the target kernel, we should protect about 27.30% of all data structures.</strong></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/code-reuse-attack/" rel="tag"># code-reuse attack</a>
+          
+            <a href="/tags/kernel/" rel="tag"># kernel</a>
+          
+            <a href="/tags/data-flow-integrity/" rel="tag"># data-flow integrity</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/04/11/Shining-Light-on-Shadow-Stacks/" rel="next" title="Shining Light on Shadow Stacks">
+                <i class="fa fa-chevron-left"></i> Shining Light on Shadow Stacks
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.png" alt="Zhangtong">
+            
+              <p class="site-author-name" itemprop="name">Zhangtong</p>
+              <div class="site-description motion-element" itemprop="description"></div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">10</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">3</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">8</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Problem-scope"><span class="nav-number">2.</span> <span class="nav-text">Problem scope</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Threat-model-and-assumptions"><span class="nav-number">2.1.</span> <span class="nav-text">Threat model and assumptions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Motivation"><span class="nav-number">2.2.</span> <span class="nav-text">Motivation</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Technical-approach"><span class="nav-number">3.</span> <span class="nav-text">Technical approach</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Inferring-distinguishing-regions"><span class="nav-number">3.1.</span> <span class="nav-text">Inferring distinguishing regions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Protecting-distinguishing-regions"><span class="nav-number">3.2.</span> <span class="nav-text">Protecting distinguishing regions</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#A-prototype-for-Android"><span class="nav-number">4.</span> <span class="nav-text">A prototype for Android</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Data-flow-isolation"><span class="nav-number">4.1.</span> <span class="nav-text">Data-flow isolation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MMU-integrity"><span class="nav-number">4.2.</span> <span class="nav-text">MMU integrity</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Shadow-objects"><span class="nav-number">4.3.</span> <span class="nav-text">Shadow objects</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Kernel-stack-randomization"><span class="nav-number">4.4.</span> <span class="nav-text">Kernel stack randomization</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Evaluation"><span class="nav-number">5.</span> <span class="nav-text">Evaluation</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Distinguishing-regions-discovery"><span class="nav-number">5.1.</span> <span class="nav-text">Distinguishing regions discovery</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.1.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.0"></script>
+
+  <script src="/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.0"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.0"></script>
+<script src="/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
