@@ -303,6 +303,207 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/29/Shuffler-Fast-and-Deployable-Continuous-Code-Re-Randomization/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/04/29/Shuffler-Fast-and-Deployable-Continuous-Code-Re-Randomization/" class="post-title-link" itemprop="url">Shuffler: Fast and Deployable Continuous Code Re-Randomization</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-04-29 19:51:07 / Modified: 19:52:46" itemprop="dateCreated datePublished" datetime="2019-04-29T19:51:07+08:00">2019-04-29</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>We propose a system, called <em>Shuffler</em>, which provides a deployable defense against JIT-ROP and other code reuse attacks. Other defenses have had significant barriers to deployment: some utilize a custom hypervisor; others involve a modified compiler, runtime, or operating system kernel. In comparison, Shuffler runs in userspace along side the target program, and requires no system modification beyond a minimal patch to the loader.</p>
+<p>Shuffler operates by performing continuous code re-randomization at runtime, within the same address space as the program it defends. Additional, we bootstrap into a self-hosted and self modifying <em>egalitarian</em> environment — Shuffler always shuffles itself.</p>
+<p>We achieve a <em>shuffle period</em> on the order of tens of milliseconds, so fast that is nearly impossible to form a complete exploit. Shuffler creates new function permutations asynchronously in a separate thread, and then atomically migrates program execution from one copy of code to the next. This migration requires a vanishingly small global pause time, as program threads continue to execute unhindered 99.7% of the time. Thus, if the host machine has a spare CPU core, shuffling at faster rates does not significant impact the target’s performance.</p>
+<p>Our system operates on program binaries, analyzing them and performing binary rewriting.</p>
+<h2 id="Threat-model"><a href="#Threat-model" class="headerlink" title="Threat model"></a>Threat model</h2><p>We assume that the protection against code injection (W^X) is in place, and that an x86_64 architecture is in use. Our system does not require (and, in fact, is orthogonal to) other defensive techniques.</p>
+<h2 id="Design"><a href="#Design" class="headerlink" title="Design"></a>Design</h2><h3 id="Architecture"><a href="#Architecture" class="headerlink" title="Architecture"></a>Architecture</h3><p>Shuffer is design to require minimal system modifications. To aviod kernel changes, it runs entirely in userspace; to avoid requiring source or a modified compiler, it operates on program binaries. Performing re-randomization soundly requires complete and precise pointer analysis, we leverage symbol and relocation information from the (unmodified) compiler and linker.</p>
+<p>At load-time, Shuffler transforms the program’s code using binary rewriting. The goal of rewriting is to be able to track and update all code pointers at runtime. We leverage our complete and accurate disassembly to transform all code pointers into unique identifiers —indices into a <em>code pointer table</em>. These indices cannot be altered after load time. We handle return addresses (dynamically generated code pointers) differently, encrypting them on stack rather than using indices.</p>
+<p>Our system performs re-randomization at the level of functions within a specific <em>shuffle period</em>, a randomization deadline specific in milliseconds. Shuffler runs in a separate thread and prepares a new shuffled copy of code within this deadline. The vast majority of the re-randomization process is performed as asynchronously: creating new copies of code, fixing up instruction displacements, updating pointers in the code table. The threads are globally paused only to atomically update return addresses. Since any existing return addresses reference the old copy of code, we must revisit saved stack frames and update them.</p>
+<p>To prevent our own code from being used in a code reuse attack, Shuffer randomizes it the same way it does all other code. In fact, our scheme uses binary rewriting to transform all code in a userspace application (the program, Shuffler, and all shared libraries) into a single code sandbox, essentially turning it into a staticlly linked application at runtime.</p>
+<h3 id="Challenges"><a href="#Challenges" class="headerlink" title="Challenges"></a>Challenges</h3><p><strong>Changing function pointer behavior.</strong> Normal program’s memory layout remains consistent and function pointers have indefinite lifetime. Re-randomization introduces an arbitrary lifetime for each block of code, and it becomes an exercise in avoiding dangling code pointers.</p>
+<p>Hence, we need to accurately track and update every code pointer during the re-randomization process. We opt to statically transform all code pointers into unique identifiers—namely, indices into a hidden <em>code pointer table</em>. Then wherever the code pointer is copied throughout memory, it will continue to refer to the same entry in the table.</p>
+<p>Some code pointers are dynamically generated, in particular, return addresses on the stack. We could dynamically allocated table indices, but <code>call</code>/<code>ret</code> pairs are highly optimized, and replacing them with table mechanism would involve a large performance degradation. Instead, we allow ordinary calls to proceed as usual, and at re-randomization time we unwind the stack and update return addresses to new values. Rather than leave return addresses exposed on the stack, we encrypt each address with an XOR cipher.</p>
+<p><strong>Augmented binary analysis.</strong> We propose a <em>augment binary analysis</em>, which involves analyzing program binaries that have additional information included by the compiler.</p>
+<p>The common problems with binary analysis are distinguishing code from data, and distinguishing pointers from integers. To tackle these problems, we require that (i) the compiler preserve the symbol table, and (ii) that the linker preserve relocations. The symbol table indicates all valid <code>call</code> targets and makes disassembly straightforward—we iterate through symbols and disassemble each one independently. Reloactions are used to indicate portions of an object file (or executable) that needs to be patched up once its base address is known. Since each base address is initially zero, every absolute code pointer must have a relocation—but as object files are linked together, most code pointers get resolved and their relocations are discarded. We simply ask the linker to preserve these relocations.</p>
+<p><strong>bootstrapping into shuffled code.</strong> Shuffler defends its own code the same way it defends all other code. Shuffled code cannot start running until the code pointer table is initialized, requiring some unshuffled startup code. Shuffled and original code are incompatible if they use code pointers; the process of transforming code pointers to indices overwrites data that the original code accesses, and then the original code will no longer execute correctly. Hence, we would have to call new function as they became available, and carefully order the function-pointer rewrite process to avoid invalidating any functions currently on the call stack.</p>
+<p>Instead, we opted for a simpler and more general solution. Shuffler is split into two stages, a minimal and a runtime stage. The minimal stage is completely self-contained, and it can safely transform all other code, including <code>libc</code> and the second-stage Shuffle. The it jumps to the shuffled second stage, which erases the previous stage (and all other original code). The second stage inherits all the data structures created in the first so that is can easily create new shuffled code copies.</p>
+<h2 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h2><p>Code pointers are directed through the code pointer table and return address are stored on the stack, encrypted with an XOR cipher. In each shuffle period, Shuffler makes a new copy of code, updates the code pointer table and sends a signal to tell all threads (including its self); each thread unwinds and fixes up its stack. Shuffler waits on a barrier until all threads have finished unwinding, then erases the previous code copy.</p>
+<p>Our Shuffler Implementation supports many system-level features, including shared libraries, multiple threads, forking, <code>{set/long}jmp</code>, system call re-entry, and signals.</p>
+<h3 id="Transformation-to-support-shuffling"><a href="#Transformation-to-support-shuffling" class="headerlink" title="Transformation to support shuffling"></a>Transformation to support shuffling</h3><p><strong>Code pointer abstraction.</strong> We allocate the code pointer table at load-time and set the base address of the <code>GS</code> segment at it. Then, we transform every function pointer at its initialization point from an address value to an index into this table. Jump tables are handled similarily, with indices assigned to each offset within a function that is used as a target.</p>
+<p>Every instruction which originally used a function pointer value is rewritten to instead indirect through the <code>%gs</code> table. This adds an extra memory dereference. Since x86 instruction can contain at most one memory reference, if there is already a memory reference, we use the caller-saved register <code>%r11</code> as scratch space. For (position-dependent) jump tables, there is no register we can safely overwrite, so we use a thread-local variable allocated by Shuffler as a scratch space (denoted as <code>%fs: 0x88</code>).</p>
+<p><strong>Return address encryption.</strong> We encrypt return address on the stack with a per-thread XOR key. We reuse the stack canary storage location for our key; our scheme operates similarly to stack canaries, but does not affect the layout of the stack frame. We add two instruction <code>mov %fs:0x28, %r11; xor r11, (%rsp)</code> at the beginning of every function and before every exit jump; after each <code>call</code>, we insert a <code>mov</code> instruction to erase the now-visible return address on the stack. We again use <code>%r11</code> as a scratch register, since it is a caller-saved register according to the x86-64 ABI.</p>
+<p><strong>Displacement reach.</strong> A normal call instruction has a 32-bit displacement and must be within ± 2GB of its target to “reach” it. Shared libraries use Procedure Linkage Table trampolines to jump anywhere in the 64-bit address space.</p>
+<h3 id="Completeness-of-disassembly"><a href="#Completeness-of-disassembly" class="headerlink" title="Completeness of disassembly"></a>Completeness of disassembly</h3><p>While shuffling some libraries and programs, we encountered myriad special cases. The issues boil down to: (a) dealing with inaccurate/missing metadata, especially in the symbol table; (b) handling special types of symbols and relocations; and (c) discovering jump table entries and invocations.</p>
+<p>Our major challenge is identifying whether relocations are part of jump tables, and distinguishing between indirect tail-recursive jumps and jump-table jumps. If we fail to realize a relocation in a jump table, we will calculate its target incorrectly and the jump will branch to the wrong location; if we decide that a jump table’s jump is actually tail recursive, we will insert return-address decryption instruction before it, corrupting <code>%11</code> and scrambling the top of the stack.</p>
+<p>GCC generates jump tables differently in position-dependent and position-independent code (PIC). Position-dependent jump tables use 8-byte direct pointers, and are nearly always invoked by an instruction of the form <code>jmpq *(%rax, %rbx, 8)</code> in any optimization level. PIC jump tables use 4-byte relative offsets added to the address of the beginning of the table—and the <code>lea</code> that loads the table address may be quite distant from the final indirect jump. To find PIC jump tables, we use outgoing <code>%rip</code>-relative references from functions as bounds and check if they point at sequences of relocation in the data section.</p>
+<p>It is difficult to tell whether a <code>jmpq *%rax</code> instruction is used for indirect tail recursion, or a PIC jump table. We use a liner sweep to record <code>push</code> instructions in the function’s first basic block, and keep a log of the <code>pop</code> instruction seen since the last jump. If an indirect jump is preceded by <code>pop</code> instructions that are in the reverse order of the <code>push</code> instructions, we assume we have found a function epilogue and that the jump is indirect tail recursive.</p>
+<h3 id="bootstrapping-and-requirements"><a href="#bootstrapping-and-requirements" class="headerlink" title="bootstrapping and requirements"></a>bootstrapping and requirements</h3><p>We carefully bootstrap into shuffled code using two libraries (stage 1 and stage 2), so that the system never overwrites code pointers for the module that is currently executing. The constructor of stage 1 is called before any other via the linker mechanism <code>-z initfirst</code>. Then, stage 1 make sure all other constructors run in shuffled code. The last constructor to be called is stage 2’s own constructor; stage 2 creates a dedicated Shuffler thread.</p>
+<ol>
+<li><p><strong>Compiler flags.</strong> We require the program binary and all dependent libraries to be compiled with <code>-Wl, -q</code>, a link flag that preserves relocations, and <code>-gdwarf-2</code>, when compiling with c++. Since we require symbols and DWARF unwind information, the user must avoid <code>-s</code> and <code>-fno-asynchronous-unwind-tables</code>.</p>
+</li>
+<li><p><strong>System modifications.</strong> The <code>-z initfirst</code> loader feature currently only supports one shared library, and <code>libpthread</code> already use it. Since shuffled functions must be within ± 2GB of each other, we simplify Shuffler’s task and map all ELF <code>PT_LOAD</code> sections into the lower 32 bits of the address space. Finally, we disabled a manually-constructed jump table in the <code>vfprintf</code> of <code>glibc</code>.</p>
+</li>
+</ol>
+<h3 id="Implementation-Optimizations"><a href="#Implementation-Optimizations" class="headerlink" title="Implementation Optimizations"></a>Implementation Optimizations</h3><p><strong>Generating new code.</strong> The Shuffer thread maintains a large code <em>sandbox</em> that stores shuffled functions. In each shuffle period, every function within the sandbox is duplicated and the old copies are erased. The sandbox is split in half, so that one half may be erased with a single <code>mprotect</code> system call. We maintain servral <em>buckets</em> and each function is placed in a random bucket; when a bucket fills up, it is committed with an <code>mprotect</code> call and a fresh bucket is allocated.</p>
+<p>We use a Binary Indexed Tree for function allocations. Our tree keeps track of all valid addresses for new buckets, storing disjoint intervals; it also tracks the sum of interval lengths.</p>
+<p><strong>Stack unwinding.</strong> We wrote a custom unwind library with a straightforward DWARF state machine.</p>
+<p><strong>Binary rewritting.</strong> Suffler’s load-time transformations are all implemented through binary rewriting. We disassemble each function with diStorm and produce intermediate data structures which we call <em>rewrite blocks</em>. Rewrite blocks are similar to basic blocks but may be split at arbitrary points to accommodate newly inserted instructions.</p>
+<h2 id="Security-analysis"><a href="#Security-analysis" class="headerlink" title="Security analysis"></a>Security analysis</h2><h3 id="Analysis-of-traditional-attacks"><a href="#Analysis-of-traditional-attacks" class="headerlink" title="Analysis of traditional attacks"></a>Analysis of traditional attacks</h3><p><strong>Normal ROP.</strong> Absolutely.</p>
+<p><strong>Indirect JIT-ROP.</strong> Indirect JIT-ROP relies on leaked code pointers and computes gadgets accordingly. Because code pointers are replaced with table indices, the attack cannot gather code pointers from data structures; nor can the attacker infer code pointers from data pointers, since the relative offset between code and data sections changes continuously.</p>
+<p><strong>Direct JIT-ROP.</strong> In direct JIT-ROP, the attacker is assumed to know one valid code address, and employs a memory disclosure recursively, harvesting code pages and finding enough gadgets for a ROP attack. The entire attack must be completed within the shuffle period of <em>r</em> milliseconds.</p>
+<p><strong>Blind ROP.</strong> BlindROP tries to infer the layout of a server process by probing it workers, which are <code>fork</code>ed from the parent and have the same layout. The attack uses a timing channel to inter information about the parent based on whether the child crashed or not. Shuffler easily thwarts this attack because it randomizes child and parent processes independently.</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/21/Enforcing-kernel-security-invariants-with-data-flow-integrity/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2295,156 +2496,13 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/24/hello-world/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2018/12/24/hello-world/" class="post-title-link" itemprop="url">Hello World</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2018-12-24 19:41:45" itemprop="dateCreated datePublished" datetime="2018-12-24T19:41:45+08:00">2018-12-24</time>
-            
-
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
+  <nav class="pagination">
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+  </nav>
+
 
 
           </div>
@@ -2486,7 +2544,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">10</span>
+                    <span class="site-state-item-count">11</span>
                     <span class="site-state-item-name">posts</span>
                   </a>
                 </div>
@@ -2544,7 +2602,7 @@
                     
                       
                     
-                    <span class="site-state-item-count">8</span>
+                    <span class="site-state-item-count">9</span>
                     <span class="site-state-item-name">tags</span>
                   </a>
                 </div>
