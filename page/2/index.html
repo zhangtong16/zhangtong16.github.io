@@ -419,32 +419,44 @@
       
         
           
-            <h2 id="Installation"><a href="#Installation" class="headerlink" title="Installation"></a>Installation</h2><h3 id="Via-source-code"><a href="#Via-source-code" class="headerlink" title="Via source code"></a>Via source code</h3><ol>
-<li><p>Download tar ball from <a href="https://openvpn.net/index.php/download/community-downloads.html" target="_blank" rel="noopener">release link</a></p>
-</li>
-<li><p>Dependencies</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">apt install libssl-dev liblzo2-dev libpam0g-dev</span><br><span class="line">apt install easy-rsa</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Build source code</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">tar xfz ./openvpn&lt;version&gt;.tar.gz</span><br><span class="line">cd openvpn&lt;version&gt;</span><br><span class="line">./configure</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-<h3 id="Via-official-apt-repositories"><a href="#Via-official-apt-repositories" class="headerlink" title="Via official apt repositories"></a>Via official apt repositories</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wget -O - https://swupdate.openvpn.net/repos/repo-public.gpg|apt-key add -</span><br><span class="line">echo "deb http://build.openvpn.net/debian/openvpn/stable xenial main" &gt; /etc/apt/sources.list.d/openvpn-aptrepo.list</span><br><span class="line">apt update &amp;&amp; apt install openvpn</span><br></pre></td></tr></table></figure>
-<h3 id="Via-script"><a href="#Via-script" class="headerlink" title="Via script"></a>Via script</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -O https://raw.githubusercontent.com/Angristan/openvpn-install/master/openvpn-install.sh</span><br><span class="line">chmod +x openvpn-install.sh</span><br><span class="line">./openvpn-install.sh</span><br></pre></td></tr></table></figure>
-<h2 id="Setup"><a href="#Setup" class="headerlink" title="Setup"></a>Setup</h2><h3 id="CA"><a href="#CA" class="headerlink" title="CA"></a>CA</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make-cadir CA &amp;&amp; cd CA</span><br></pre></td></tr></table></figure>
-<p>In <em>CA</em> directory, edit the <em>vars</em> file and set the KEY_COUNTRY, KEY_PROVINCE, KEY_CITY, KEY_ORG and KEY_EMAIL parameters.<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">source ./vars</span><br><span class="line">./clean-all</span><br><span class="line">./build-ca</span><br></pre></td></tr></table></figure></p>
-<h3 id="Key-generation"><a href="#Key-generation" class="headerlink" title="Key generation"></a>Key generation</h3><p>In <em>keys</em> directory, generate the private keys, certification and Diffie Hellman parameters.</p>
+            <h2 id="installation"><a class="markdownIt-Anchor" href="#installation"></a> Installation</h2>
+<h3 id="via-source-code"><a class="markdownIt-Anchor" href="#via-source-code"></a> Via source code</h3>
 <ol>
-<li><p>Server key generation</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./build-key-server server</span><br></pre></td></tr></table></figure>
+<li>
+<p>Download tar ball from <a href="https://openvpn.net/index.php/download/community-downloads.html" target="_blank" rel="noopener">release link</a></p>
 </li>
-<li><p>Client key generation</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">./build-key client1</span><br><span class="line">./build-key client2</span><br><span class="line">./build-key client3</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Diffie Hellman parameters generation</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./build-dh</span><br></pre></td></tr></table></figure>
+<li>
+<p>Dependencies</p>
 </li>
 </ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">apt install libssl-dev liblzo2-dev libpam0g-dev</span><br><span class="line">apt install easy-rsa</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>Build source code</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">tar xfz ./openvpn&lt;version&gt;.tar.gz</span><br><span class="line">cd openvpn&lt;version&gt;</span><br><span class="line">./configure</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<h3 id="via-official-apt-repositories"><a class="markdownIt-Anchor" href="#via-official-apt-repositories"></a> Via official apt repositories</h3>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wget -O - https://swupdate.openvpn.net/repos/repo-public.gpg|apt-key add -</span><br><span class="line">echo "deb http://build.openvpn.net/debian/openvpn/stable xenial main" &gt; /etc/apt/sources.list.d/openvpn-aptrepo.list</span><br><span class="line">apt update &amp;&amp; apt install openvpn</span><br></pre></td></tr></table></figure>
+<h3 id="via-script"><a class="markdownIt-Anchor" href="#via-script"></a> Via script</h3>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -O https://raw.githubusercontent.com/Angristan/openvpn-install/master/openvpn-install.sh</span><br><span class="line">chmod +x openvpn-install.sh</span><br><span class="line">./openvpn-install.sh</span><br></pre></td></tr></table></figure>
+<h2 id="setup"><a class="markdownIt-Anchor" href="#setup"></a> Setup</h2>
+<h3 id="ca"><a class="markdownIt-Anchor" href="#ca"></a> CA</h3>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make-cadir CA &amp;&amp; cd CA</span><br></pre></td></tr></table></figure>
+<p>In <em>CA</em> directory, edit the <em>vars</em> file and set the KEY_COUNTRY, KEY_PROVINCE, KEY_CITY, KEY_ORG and KEY_EMAIL parameters.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">source ./vars</span><br><span class="line">./clean-all</span><br><span class="line">./build-ca</span><br></pre></td></tr></table></figure>
+<h3 id="key-generation"><a class="markdownIt-Anchor" href="#key-generation"></a> Key generation</h3>
+<p>In <em>keys</em> directory, generate the private keys, certification and Diffie Hellman parameters.</p>
+<ol>
+<li>Server key generation</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./build-key-server server</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>Client key generation</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">./build-key client1</span><br><span class="line">./build-key client2</span><br><span class="line">./build-key client3</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>Diffie Hellman parameters generation</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./build-dh</span><br></pre></td></tr></table></figure>
 <p>Here is an explanation of the relevant files in <em>keys</em> subdir:</p>
 <table>
 <thead>
@@ -500,19 +512,21 @@
 </tr>
 </tbody>
 </table>
-<h3 id="Configuration"><a href="#Configuration" class="headerlink" title="Configuration"></a>Configuration</h3><ul>
+<h3 id="configuration"><a class="markdownIt-Anchor" href="#configuration"></a> Configuration</h3>
+<ul>
 <li>In VPNServer, put <em>server.conf</em>, <em>ca.crt</em>, <em>server.crt</em>, <em>server.key</em> and <em>dh{n}.pem</em> in the same directory(e.g. /etc/openvpn/).</li>
 <li>In Client, put <em>client.conf</em>, <em>client{n}.crt</em>, <em>client{n}.key</em> and <em>ca.crt</em> in the same directory.</li>
 <li>In <em>client.conf</em>, modify the <strong>remote</strong> value to VPNServer’s IPv4 address, modify <strong>cert</strong> and <strong>key</strong> to corresponding filename.</li>
 </ul>
-<h3 id="Running"><a href="#Running" class="headerlink" title="Running"></a>Running</h3><ol>
-<li><p>In VPNServer:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openvpn --config /etc/openvpn/server.conf --daemon</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>In Client:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openvpn --config /etc/openvpn/client&#123;n&#125;.conf --daemon</span><br></pre></td></tr></table></figure>
-</li>
+<h3 id="running"><a class="markdownIt-Anchor" href="#running"></a> Running</h3>
+<ol>
+<li>In VPNServer:</li>
 </ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openvpn --config /etc/openvpn/server.conf --daemon</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>In Client:</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openvpn --config /etc/openvpn/client&#123;n&#125;.conf --daemon</span><br></pre></td></tr></table></figure>
 
           
         
@@ -667,23 +681,34 @@
       
         
           
-            <h2 id="CTF"><a href="#CTF" class="headerlink" title="CTF"></a>CTF</h2><h3 id="Wargame"><a href="#Wargame" class="headerlink" title="Wargame"></a>Wargame</h3><p>Wargames are similar to CTF but always ongonging. Typically, they are always organized into levels.</p>
+            <h2 id="ctf"><a class="markdownIt-Anchor" href="#ctf"></a> CTF</h2>
+<h3 id="wargame"><a class="markdownIt-Anchor" href="#wargame"></a> Wargame</h3>
+<p>Wargames are similar to CTF but always ongonging. Typically, they are always organized into levels.</p>
 <ol>
-<li><p><a href="https://microcorruption.com/" title="microcorruption" target="_blank" rel="noopener">Microcorruption</a></p>
+<li>
+<p><a href="https://microcorruption.com/" title="microcorruption" target="_blank" rel="noopener">Microcorruption</a></p>
 </li>
-<li><p><a href="http://smashthestack.org" title="smashthestack" target="_blank" rel="noopener">Smashthestack</a></p>
+<li>
+<p><a href="http://smashthestack.org" title="smashthestack" target="_blank" rel="noopener">Smashthestack</a></p>
 </li>
 </ol>
-<h3 id="CTF-1"><a href="#CTF-1" class="headerlink" title="CTF"></a>CTF</h3><p>Following the steps in <a href="https://github.com/ctfs/resources" target="_blank" rel="noopener">Resources</a>.</p>
+<h3 id="ctf-2"><a class="markdownIt-Anchor" href="#ctf-2"></a> CTF</h3>
+<p>Following the steps in <a href="https://github.com/ctfs/resources" target="_blank" rel="noopener">Resources</a>.</p>
 <p>And reading the <a href="https://github.com/Naetw/CTF-pwn-tips" target="_blank" rel="noopener">Tips</a>.</p>
-<h2 id="LLVM"><a href="#LLVM" class="headerlink" title="LLVM"></a>LLVM</h2><h3 id="CPP"><a href="#CPP" class="headerlink" title="CPP"></a>CPP</h3><ol>
-<li><p>Finishing the tutorial in <a href="https://www.cplusplus.com/doc/tutorial/" target="_blank" rel="noopener">cplusplus.com</a>.</p>
+<h2 id="llvm"><a class="markdownIt-Anchor" href="#llvm"></a> LLVM</h2>
+<h3 id="cpp"><a class="markdownIt-Anchor" href="#cpp"></a> CPP</h3>
+<ol>
+<li>
+<p>Finishing the tutorial in <a href="https://www.cplusplus.com/doc/tutorial/" target="_blank" rel="noopener">cplusplus.com</a>.</p>
 </li>
-<li><p>Practices in <a href="https://www.codewars.com/" target="_blank" rel="noopener">Codewars</a>.</p>
+<li>
+<p>Practices in <a href="https://www.codewars.com/" target="_blank" rel="noopener">Codewars</a>.</p>
 </li>
 </ol>
-<h3 id="Compiler"><a href="#Compiler" class="headerlink" title="Compiler"></a>Compiler</h3><p>Compilers, Principles, Techniques and Tools.pdf</p>
-<h2 id="Paper-Notes"><a href="#Paper-Notes" class="headerlink" title="Paper Notes"></a>Paper Notes</h2><ol>
+<h3 id="compiler"><a class="markdownIt-Anchor" href="#compiler"></a> Compiler</h3>
+<p>Compilers, Principles, Techniques and Tools.pdf</p>
+<h2 id="paper-notes"><a class="markdownIt-Anchor" href="#paper-notes"></a> Paper Notes</h2>
+<ol>
 <li>Code reuse attack</li>
 <li>side-channel related</li>
 </ol>
@@ -826,13 +851,18 @@
         
           
             <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+<h2 id="quick-start"><a class="markdownIt-Anchor" href="#quick-start"></a> Quick Start</h2>
+<h3 id="create-a-new-post"><a class="markdownIt-Anchor" href="#create-a-new-post"></a> Create a new post</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
 <p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+<h3 id="run-server"><a class="markdownIt-Anchor" href="#run-server"></a> Run server</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
 <p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+<h3 id="generate-static-files"><a class="markdownIt-Anchor" href="#generate-static-files"></a> Generate static files</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
 <p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+<h3 id="deploy-to-remote-sites"><a class="markdownIt-Anchor" href="#deploy-to-remote-sites"></a> Deploy to remote sites</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
 <p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
 
           
