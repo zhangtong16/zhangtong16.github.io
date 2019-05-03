@@ -303,6 +303,206 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/03/IMIX-In-Process-Memory-Isolation-EXtension/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/05/03/IMIX-In-Process-Memory-Isolation-EXtension/" class="post-title-link" itemprop="url">IMIX: In-Process Memory Isolation EXtension</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-05-03 20:18:09 / Modified: 20:19:42" itemprop="dateCreated datePublished" datetime="2019-05-03T20:18:09+08:00">2019-05-03</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+<p>Defenses against memory-corruption typically reduce the attack surface by preventing the adversary from corrupting part of the application’s memory which is essential for a successful attack, such as W⨁X, CFI, CPI, and DFI.</p>
+<p>Some of these defenses can be implemented efficiently using mechanisms that reside entirely outside the underlying application process. For instance, the kernel configures W⨁X and the hardware enforces it. However, using an external mechanism is not always feasible in practice due to high performance overhead. For instance, CFI requires run-time checks and a <em>shadow stack</em>, which is updated every time a function is invoked or returns. CPI requires run-time checks and a <em>safe region</em>, which contains meta-data about the program’s variables. This data cannot be stored outside of the process, e.g., in kernel memory, because accessing it would impose an impratical performance overhead due to the time needed for a context switch. Hence, to prevent the adversary from accessing the data some form of <em>in-process memory isolation</em> is needed.</p>
+<p><strong>Goals and Contribution.</strong> In this paper, we present IMIX, which enables lightweight in-process memory isolation for memory-corruption defenses that target the x86 architecture. IMIX enables <em>isolated pages</em>, which marked with a special flag. Isolated pages can only be accessed using a single new instruction called <code>smov</code>.</p>
+<h2 id="adversary-model"><a class="markdownIt-Anchor" href="#adversary-model"></a> Adversary model</h2>
+<ul>
+<li>
+<p><strong>Memory corruption.</strong> We assume the presence of a memory-corruption vulnerability, which the adversary can repeatedly exploit to read and write data according to memory access permissions.</p>
+</li>
+<li>
+<p><strong>Sandboxed code execution.</strong> We assume memory-corruption mitigations cannot be bypassed unless the attacker can corrupt the mitigation’s metadata.</p>
+</li>
+<li>
+<p><strong>Immutable code.</strong> The adversary cannot inject new code or modify existing code.</p>
+</li>
+</ul>
+<h2 id="imix"><a class="markdownIt-Anchor" href="#imix"></a> IMIX</h2>
+<p>Like for applications, the correct functionality of defenses relies on the integrity of their code and data. Thus, the attacker may leverage a memory-corruption vulnerability in the application to bypass those defense. Traditionally, defense developers enforce the integrity of the code using W⨁X or execute-only memory, which forces defense developers to choose between high performance overheads and compromised security. IMIX allocates data belonging to run-time mitigations in <em>isolated pages</em>, which can only be accessed by <code>smov</code>.</p>
+<p>In addition to rhe <code>smov</code> instruction and the associated access permissions, IMIX includes a kernel extension and compiler support.</p>
+<p><strong>Hardware.</strong> For IMIX, we extend two of the CPU’s main responsibilities, instruction processing and memory management. We add <code>smov</code> instruction to the instruction set, reusing the logic of regular memory access instruction. The memory access logic is modified so that it will generate a fault if (1) an instruction other than <code>smov</code> is used to access a page protected by IMIX, or if (2) an <code>smov</code> instruction is used to access a normal page.</p>
+<p><strong>Kernel.</strong> We extend the kernel to support an additional access permission, which identifies all pages protected by IMIX. This enables protected memory allocation for code generated at runtime.</p>
+<p><strong>Compiler.</strong> IMIX provides two high-level primitives: one for allocating protected memory and one for accessing it. Mitigations like CPI are implemented as an LLVM optimization pass that works at the IR level. For applications developers, IMIX provides source code annotations.</p>
+<h2 id="implementation"><a class="markdownIt-Anchor" href="#implementation"></a> Implementation</h2>
+<p>Developers can build programs with IMIX, using our extented Clang compiler. We also modified its backend to support <code>smov</code> instructions. Programs protects by IMIX mark isolated pages using the system call <code>mprotect</code> with a special flag. Therefore, we extented the kernel’s existing page-level memory protection functionality to support this flag and mark isolated pages appropriately. To support IMIX, the CPU must be modified to support the <code>smov</code> instruction and must perform the appropriate checks when accessing memory.</p>
+<h3 id="cpu-extension"><a class="markdownIt-Anchor" href="#cpu-extension"></a> CPU extension</h3>
+<p>We mapped the IMIX protection flag to an ignored bit in the PTE; specifically, we chose bit 52, as it is the first bit not reserved, and is normally ignored by the MMU. We used a hardware simulator to show the feasibility of our design.</p>
+<p><strong>Simulated hardware.</strong> We use Wind River Simics, a full system simulator, in order to simulator a complete computer which supports IMIX. And we use the complementary Intel Simulation and Analysis Engine (SAE) add-on to boot the Linux kernel and test our Linux extension. SAE supports emulating an x86 system running in a full operating system within its processes, while allowing various architecture instrumentations. This is done using extensions, called <em>ztools</em>.</p>
+<p>To instrument a simulated system, ztools registers callback for specific hooks either at initialization time or dynamically. First, we make sure that our ztool is initialized by registering a callback for the initialization hook. Then, we register a callback that is executed when an instruction is added to the CPU’s instruction cache. If either a <code>mov</code> or <code>smov</code> instruction that accesses memory is found, we register an instruction replacement callback.</p>
+<p>First, we check the protection flag of the memory accessed by the instruction. To identify protected memory, we look up the related PTE by combining the virtual address and the base address of the page table hierarchy linked from the <code>cr3</code> register.</p>
+<p>If a regular instruction attempts to access regular memory, we execute the original instruction to avoid instruction cache changes. For <code>smov</code> instruction attempting to access an isolated page, we first remove the instruction from the instruction cache, and the execute our ztool implementation of this instruction.</p>
+<p><strong>Real hardware.</strong> Adding IMIX support to a real CPU would require extending the CPU’s instruction decoder to make it aware of our <code>smov</code> instruction. Moreover, we need to modify the MMU to perform necessary checks.</p>
+<h3 id="operating-system-extension"><a class="markdownIt-Anchor" href="#operating-system-extension"></a> Operating system extension</h3>
+<p>The isolated pages need to be marked as such in the PTEs, which are located in kernel memory. We add a dedicated <code>PROT_IMIX</code> flag into the <code>mprotect</code> system call. Note that once a pages is marked as <code>PORT_IMIX</code>, the only way to remove this flag from a page is by unmapping it first.</p>
+<h3 id="compiler-extension"><a class="markdownIt-Anchor" href="#compiler-extension"></a> Compiler extension</h3>
+<p>Our modification mainly concerns the IR to provide access to the <code>smov</code> instruction to mitigations like CPI, and the x86 backend to emit the instruction. Further, we introduced an attribute that can be used the protect a single variable by allocating it in an isolated page.</p>
+<p><strong>IR Extension.</strong> Runtime defenses are usually implemented as LLVM optimization passes that interact with and modify LLVM’s IR. In order to allow those defenses to generate <code>smov</code> instructions, we extended the IR instruction set. We created two IMIX instructions: <em>sload</em> and <em>sstore</em>.</p>
+<p>LLVM IR instructions are implemented as C++ classes and therefore supports inheritance. We implemented our IR instructions to as subclass of their regular counterparts in order to reuse the existing translation functionality from LLVM IR to machine code, called <em>lowering</em> in LLVM parlance.</p>
+<p>To allocate memory in isolated pages, we implemented an LLVM function that can be called from an optimization pass, which allocates memory at page granularity using <code>malloc</code> and sets the IMIX permission using <code>mprotect</code>.</p>
+<p><strong>Attribute support.</strong> We added a IMIX attribute which can be used to annotate C/C++ variables which should be allocated in isolated pages. All instructions accessing those annotated variables will use the IMIX IR instructions instead of regular ones. We implemented this as an LLVM optimization pass that replaces regular variable allocations with indexed slots in a IMIX protected safe region (one per compilation module).</p>
+<p><strong>Modification to x86 backend.</strong> In the backend, we added the code needed to process <em>sload</em> and <em>sstore</em> instructions. The process of lowering IR instructions to machine code is two-staged. First, the <em>FastEmit</em> mechanism is used. It consists of transformation rules explicitly coded in C++ that are too complex to be processed using regular expressions. The mechanism can be used either generate machine code directly, or to assign a rule that should be applied in the next stage. In the second stage, LLVM applies rule-based lowering using pattern matching. The IR instructions and its operands are matched against string pattern in LLVM’s <em>TableGen</em> definitions. We modified both stage of the lowering process, similarly to how <em>load</em> and <em>store</em> are handled.</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/02/SGX-Shield-Enabling-Address-Space-Layout-Randomization-for-SGX-programs/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2297,270 +2497,6 @@ For uses of variables, the set of reaching definitions is the union of the set c
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/25/The-Guard-s-Dilemma/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/02/25/The-Guard-s-Dilemma/" class="post-title-link" itemprop="url">The Guard's Dilemma</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-02-25 17:28:09 / Modified: 17:34:33" itemprop="dateCreated datePublished" datetime="2019-02-25T17:28:09+08:00">2019-02-25</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
-<p>SGX isolates sensitive code and data from the OS, hypervisor, BIOS and other applications. Besides, SGX code and data is always encrypted as soon as it leaves the CPU. sensitive data, e.g. cryptographic keys, of applications is protected by SGX containers called <em>enclaves</em>, which can be dynamiclly created while the applications, known as <em>hosts</em>, is running. enclaves provide predefined entry points to hosts performing sensitive computation.</p>
-<p>Ideally, the enclave code only includes minimal carefully-inspected code, which could be formally proven to be free of vulnerabilities. However, legacy applications can be adapted as well to run inside SGX enclaves with necessary modifications. Formally proving or manually inspecting legacy applications is not feasible, meaning that memory corruption vulnerabilities occurs in enclaves with high probability.</p>
-<p>Recently, Dark-ROP[1] was proposed to leverage memory-corruption against SGX. Dark-ROP is based on several oracles, which inform the attackers about the internal status of encalves, and return-oriented programming. However, Dark-ROP requires a non-randomized memory layout to locate secret code and data after crashing. Therefore, an implementation of SGX randomization called SGX-Shield[2] mitigates Dark-ROP attack.</p>
-<p>However, SGX-Shield does not randomize the part of SGX SDK that handles transitions between host code and enclave code, which contains a number of <em>gadgets</em> to mount a ROP attack. This paper demonstrates that the interface code is enough to mount powerful run-time attacks and bypass SGX-Shield without requiring kernel privileges.</p>
-<h2 id="the-guards-dilemma"><a class="markdownIt-Anchor" href="#the-guards-dilemma"></a> The Guard’s Dilemma</h2>
-<p>Controlling registers is essential in any code-reuse attack, which can prepare data for subsequent gadgets or set arguments for function calls. Thus, attackers always use specific register-setting gadgets, e.g. <em>pop gadgets</em>, to control registers. But, this paper allows attacker to use whole functions in tRTS as building blocks instead of small gadgets. Here lies the dilemma: the SDK is an important part in creating enclaves, but in this case it is actually exposing them to attacks.</p>
-<p>two new exploitation primitives:</p>
-<ul>
-<li><strong>The ORET primitive</strong> allows attacker to gain access to a critical set of CPU registers by exploiting a stack overflow vulnerability.</li>
-<li><strong>The CONT primitive</strong> allows attacker to gain access to all general-purpose registers, with the control of a register (on x86_64, rdi).</li>
-</ul>
-<h3 id="overview-and-attack-workflow"><a class="markdownIt-Anchor" href="#overview-and-attack-workflow"></a> Overview and Attack Workflow</h3>
-<h4 id="primitives"><a class="markdownIt-Anchor" href="#primitives"></a> Primitives</h4>
-<ul>
-<li>
-<p><strong>ORET primitive.</strong> asm_oret function is used to restore the CPU context after a OCALL. Once the attacker control the instruction pointer(hijacking control flow) and stack contents, e.g. stack overflow or format string, she can set a subset of CPU registers, e.g. rdi, rip.</p>
-</li>
-<li>
-<p><strong>CONT primitive.</strong>  continue_execution function is meant to restore CPU context after an exception. The prerequisite is calling this function with a controlled rdi register, e.g. exploiting a memory corruption affecting a function pointer. The attacker can control over all general-purpose CPU registers.</p>
-</li>
-<li>
-<p><strong>ORET+CONT loop.</strong> the basic idea behind the attack is to use CONT primitive repeatedly to invoke the various gadgets with correct register values.</p>
-</li>
-</ul>
-<p>Each iteration of this loop executes one gadget and is stuctured as follows:</p>
-<ol>
-<li>A CONT primitive manipulates the stack pointer to hijack it into attack-controlled memory and executes a gadget.</li>
-<li>Once the gadget completes, the previous stack manipulation cause the execution of an ORET primitive.</li>
-<li>The ORET primitive triggers the CONT primitive for next gadget, continuing the cycle from the first step.</li>
-</ol>
-<h4 id="workflow"><a class="markdownIt-Anchor" href="#workflow"></a> Workflow</h4>
-<ol>
-<li>
-<p>Payload preparation<br>
-The attack performs static analysis on the enclave binary to determine the gadgets in the non-randomized part of binary, e.g. tRTS. Next, she construct a gadgets chain and defines the register states that should be set before executing each gadget, e.g. function argument register. According to Threat Model, attacker knows the memory address layout, including enclave binary offset. Also, she has to determine the offset of asm_oret and continue_execution(both in tRTS).</p>
-</li>
-<li>
-<p>Fake structures preparation<br>
-The primitives work by abusing functions intended to restore CPU contexts by tricking them into restore fake contexts. Contrast to a standard ROP exploit, attacker requires a number of memory structures to hold the fake context and execution primitives.</p>
-</li>
-</ol>
-<ul>
-<li>
-<p>Multiple fake exception information structures</p>
-</li>
-<li>
-<p>Fake stack is a supporting structure for the ORET+CONT loop that serves two purpose. On the one hand, it is used to bring control back to an ORET primitive after a gadget executes. On the other one hand, it contains fake context for the transition from the ORET primitive to the CONT primitive to continue the loop.</p>
-</li>
-</ul>
-<ol start="3">
-<li>Attack execution<br>
-When the vulnerability satisfies the CONT preconditions (e.g., exploitation of an indirect function call), the attacker can execute the first CONT directly. When the vulnerability satisfies the ORET preconditions (e.g., stack overflow), the attacker can set the first function argument register and the instruction pointer.</li>
-</ol>
-<h3 id="details"><a class="markdownIt-Anchor" href="#details"></a> Details</h3>
-<h4 id="oret-primitives"><a class="markdownIt-Anchor" href="#oret-primitives"></a> ORET Primitives</h4>
-<p>ORET primitive abuses the asm_oret function to restore CPU context from the OCALL frame saved on the stack. The prototype of this function is:</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">sgx_status_t</span> asm_oret(<span class="keyword">uintptr_t</span> sp, <span class="keyword">void</span> *ms);</span><br></pre></td></tr></table></figure>
-<p>the first argument (sp) points to the OCALL frame, which contains the partial CPU context to be restored, including saved values for rbp, rdi, rsi, and r12 to r15.</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">ocall_context_t</span> &#123;</span></span><br><span class="line">  <span class="keyword">uintptr_t</span> r15;</span><br><span class="line">  <span class="keyword">uintptr_t</span> r14;</span><br><span class="line">  <span class="keyword">uintptr_t</span> r13;</span><br><span class="line">  <span class="keyword">uintptr_t</span> r12;</span><br><span class="line">  <span class="keyword">uintptr_t</span> xbp;  <span class="comment">//rbp</span></span><br><span class="line">  <span class="keyword">uintptr_t</span> xdi;  <span class="comment">//rdi</span></span><br><span class="line">  <span class="keyword">uintptr_t</span> xsi;  <span class="comment">//rsi</span></span><br><span class="line">  <span class="keyword">uintptr_t</span> xbx;  <span class="comment">//rbx</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">uintptr_t</span> ocall_ret</span><br><span class="line">&#125; <span class="keyword">ocall_context_t</span>;</span><br></pre></td></tr></table></figure>
-<p>Attacker able to control the OCALL frame can set all registers mentioned; moreover, the new instruction pointer (rip) can also be set.</p>
-<p>The values of rsp and rip after asm_oret depend on the SGX SDK version. For versions earlier than 2.0, the stack pointer is set to point to the ocall_ret field before issuing a ret instruction. Hence, the new instruction pointer will be the value of ocall_ret, and the new stack pointer will pointer to the memory location immediately following the OCALL frame.</p>
-<p>From the version 2.0, a more traditional epilogue is used: the base pointer(rbp) is moved into rsp, the rbp is popped from the stack, and finally a ret is issued. Therefore, rbp in the OCALL frame points to a memory area containing two 64-bit words: the new value for rbp, and the return address(new instruction pointer).</p>
-<p>The first operation done by asm_oret is shifting rsp to the sp argument, i.e., the top of OCALL frame. A attacker can jump to the code after the function prologue and let asm_oret believe that the OCALL frame is at the top of the current stack. It is always possible to abuse asm_oret to restore a fake OCALL frame at the top of the stack, without the need to control the first argument, by jumping to an appropriate instruction inside asm_oret.</p>
-<p>An attacker who has control over the stack contents can reuse asm_oret to set the registers. The application is vulnerable to a buffer overflow error on the stack. The attacker exploits this to overwrite the return address with the address of asm_oret, properly adjusted to account for skipped instructions. Moreover, she places a fake ocall_context_t immediately after the return address. Once function call returns, control is transferred to asm_oret with the fake OCALL frame at the top of stack.</p>
-<h4 id="cont-primitive"><a class="markdownIt-Anchor" href="#cont-primitive"></a> CONT Primitive</h4>
-<p>The CONT primitive is based on exception handle function continue_execution, which used to restore CPU context from a exception information structure.</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">continue_execution(<span class="keyword">sgx_exception_info_t</span> *info);</span><br></pre></td></tr></table></figure>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">sgx_exception_info_t</span> &#123;</span></span><br><span class="line">  <span class="keyword">sgx_cpu_context_t</span>       cpu_context;</span><br><span class="line">  <span class="keyword">sgx_exception_vector_t</span>  exception_vector;</span><br><span class="line">  <span class="keyword">sgx_exception_type_t</span>    exception_type;</span><br><span class="line">&#125;<span class="keyword">sgx_exception_info_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">cpu_context_t</span> &#123;</span></span><br><span class="line">  <span class="keyword">uint64_t</span>  rax;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rcx;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rdx;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rbx;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rsp;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rbp;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rsi;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rdi;</span><br><span class="line">  <span class="keyword">uint64_t</span>  r8;</span><br><span class="line">  <span class="comment">//...</span></span><br><span class="line">  <span class="keyword">uint64_t</span>  r15;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rflags;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rip;</span><br><span class="line">&#125; <span class="keyword">cpu_context_t</span>;</span><br></pre></td></tr></table></figure>
-<p>Note that the stack pointer(rsp) and the instruction pointer(rip) are part of this context, attacker can control stack pointer and hijack it to attacker-controled memory(<em>fake stack</em>). This technique is known as <em>stack pivoting</em>.</p>
-<p>As a example, continue_execution can be reused by corrupting a function pointer and hijacking it to it, moreover the attacker needs to control rdi or the memory pointed to by rdi.</p>
-<h4 id="fake-stack"><a class="markdownIt-Anchor" href="#fake-stack"></a> Fake stack</h4>
-<p>The fake stack is used to chain CONT to ORET, and it is composed of a sequences of frames, which consists of the address of asm_oret(properly adjusted) followed by an ocall_context_t structure. The CONT in the loop invokes a gadget with stack pointer set to the top of fake stack. The address of asm_oret will be at the top of the stack before gadget return. Therefore, the gadget will return to asm_oret, launching an ORET primitive and restore the fake context from frame. The fake context is set up so the rdi points to a fake exception structure and the instruction pointer is set to continue_execution.</p>
-<h4 id="fake-exception-information"><a class="markdownIt-Anchor" href="#fake-exception-information"></a> Fake exception information</h4>
-<p>For each gadget, the attack sets up a fake sgx_exception_info_t structure with desired register values and instruction pointer to the gadget’s address. The stack pointer is set to the top of fake stack.</p>
-<h2 id="attacking-sgx-shield"><a class="markdownIt-Anchor" href="#attacking-sgx-shield"></a> Attacking SGX-Shield</h2>
-<h3 id="overview-on-sgx-shield"><a class="markdownIt-Anchor" href="#overview-on-sgx-shield"></a> Overview on SGX-Shield</h3>
-<ul>
-<li>Fine-grained randomization</li>
-<li>Software DEP</li>
-<li>Software Fault Isolation</li>
-<li>Coarse-grained Control Flow Integrity</li>
-</ul>
-<p>Because SGX-Shield needs writable code pages during loading, the enclave code will stay writable for the whole enclave’s lifecycle.</p>
-<h3 id="exploit"><a class="markdownIt-Anchor" href="#exploit"></a> Exploit</h3>
-<p><strong>Assumption:</strong> a stack overflow vulnerability in the enclave.<br>
-<strong>Observation:</strong> SGX-Shield enclaves feature writable code pages.<br>
-<strong>Idea:</strong> the first stage, based on code reuse, injects the second-stage code, also known as <em>shellcode</em>.</p>
-<h3 id="first-stage"><a class="markdownIt-Anchor" href="#first-stage"></a> First stage</h3>
-<ol>
-<li><strong>Payload preparation.</strong> The attacker starts by determining the offsets of asm_oret and continue_execution. Next, for the code-injection attack, the attackers needs a gadget (from do_rdrand function in tRTS) to write to memory.</li>
-</ol>
-<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">mov</span> <span class="built_in">eax</span>, (<span class="built_in">rcx</span>)</span><br><span class="line"><span class="keyword">mov</span> <span class="number">1</span>  , <span class="built_in">eax</span></span><br><span class="line"><span class="keyword">ret</span></span><br></pre></td></tr></table></figure>
-<p>Our chain repeatedly invoke this gadget to write the shellcode 4 bytes a time. The address to place the shellcode at is taken from the writeable SGX-Shield code pages.</p>
-<ol start="2">
-<li>
-<p><strong>Fake structures preparation.</strong> The attacker starts by creating a fake stack that contains the address of continue_execution repeated n-1 times, where n is the number of gadgets in the chain. A sgx_exception_info_t structure is set up for all registers, with rip is set up for the shellcode’s address and the other registers at the attacker’s discretion.</p>
-</li>
-<li>
-<p><strong>Attack execution.</strong> The attacker triggers the stack overflow in the enclave. She overwrites a return address with the address of asm_oret, and place a fake ocall_context_t after the address. The ocall_ret set to the address of continue_execution and the rdi set to the fake sgx_exception_info_t as the argument. This will result in continue_execution being called on fake exception structure, which starts the chain. The fake exception structure set up the rip to gadget’s address, the rax and rcx to proper value to place attacker’s code in SGX-Shield code pages. The rsp will point at fake stack, which are all continue_execution.</p>
-</li>
-</ol>
-<h3 id="second-stage"><a class="markdownIt-Anchor" href="#second-stage"></a> Second stage</h3>
-<p>The Shell code has full control over the enclave. In this case, attacker extract cryptographic keys used during remote attestation process through the shellcode. Therefore, she can sent these keys to remote server.</p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2609,7 +2545,7 @@ When the vulnerability satisfies the CONT preconditions (e.g., exploitation of a
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-count">14</span>
                     <span class="site-state-item-name">posts</span>
                   </a>
                 </div>
@@ -2669,7 +2605,9 @@ When the vulnerability satisfies the CONT preconditions (e.g., exploitation of a
                     
                       
                     
-                    <span class="site-state-item-count">10</span>
+                      
+                    
+                    <span class="site-state-item-count">11</span>
                     <span class="site-state-item-name">tags</span>
                   </a>
                 </div>
