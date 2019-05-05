@@ -303,6 +303,217 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/05/ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/05/05/ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations/" class="post-title-link" itemprop="url">ProbeGuard: Mitigating Probing Attacks Through Reactive Program Transformations</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-05-05 19:29:31 / Modified: 19:31:48" itemprop="dateCreated datePublished" datetime="2019-05-05T19:29:31+08:00">2019-05-05</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+<p>As a defense, <em>information hiding</em> is more efficient than <em>integrity-based defenses</em>. In particular, randomization is almost ‘free’, as even a sophisticated defense against code reuse attacks such as Code Pointer Integrity adds a modest 2.9% performance overhead.</p>
+<p>Unfortunately, recent research demonstrates that attackers bypass even the most advanced information-hiding defenses. They show that, by repeatedly <code>probing</code> the address space (either directly or by means of side channels), it is possible to break the underlying randomization and reveal the sensitive data.</p>
+<p>In this paper, we show that we can transforming from fast information hiding to strong software integrity if (and only when) attacks start probing to break the randomization.</p>
+<p><strong>Derandomization primitives.</strong> To break randomization, attackers make use a number of derandomization primitives. Since one-shot leaks are rare in modern defenses—as the defenses move all sensitive information (e.g., code pointers) out of reach of the attacker, state-of-art derandomization primitives invariably must <em>probe</em> by repeatedly executing an operation to exhaust the entropy.</p>
+<p><strong>Selective hardening.</strong> The key idea we present is that, in a software protected by a fast baseline defense (information hiding), we keep monitoring the running program for any occurrence of probing attempts. When we encounter any such attempt, we automatically locate it origin, and patch <em>only</em> the offending piece of code at runtime with stronger and more expensive integrity-based defenses.</p>
+<p>The first stage of ProbeGuard is form of anomaly detection. We detect probing attempts that characterize derandomization primitives. For most varieties of probing attacks, the anomaly detection itself is simple and non-intrusive (e.g., detecting of repeated exceptions).</p>
+<p>The second stage, namely probe analysis, uncovers the particular code site the attacker abused for probing. Doing so is complicated in the general case. However, by leveraging fast control-flow tracing feature (e.g., Intel Processor Trace), ProbeGuard conservatively pinpoints the offending code fragment in a secure way.</p>
+<p>Finally, ProbeGuard hotpatch the program by selectively replacing the offending code fragment with a harden variant. In principle, ProbeGuard is agnostic to the hotpatching technique it itself. A simple and elegent way is to create a binary that already contains multiple versions of all code fragments, where each version offers different levels of protection.</p>
+<h2 id="threat-model"><a class="markdownIt-Anchor" href="#threat-model"></a> Threat model</h2>
+<p>We consider a determined remote attacker who aims to mount a code reuse attack over the network on a <em>server application</em> hardened by any <em>ideal</em> state-of-art information hiding-base defenses. ProbeGuard’s goal is to address the fundamental weakness of practical (information-hiding based) code reuse defenses, making them resistant to attacks that bypass the defense by derandomizing hidden memory regions.</p>
+<p>We trust the underlying operating system, and we assume a modern processor that provides efficient control flow tracing, such as Intel Processor Trace.</p>
+<p>We assume a determined attacker who has access to derandomization primitives to probe the victim’s address space. Further, we assume that the attacker has unlimited probing attempts as the application recovers automatically upon any crash.</p>
+<h2 id="design"><a class="markdownIt-Anchor" href="#design"></a> Design</h2>
+<p>An application employs information-hiding based on state-of-art defenses. ProbeGuard must ensure what is hidden remain hidden. We embed <em>anomaly detectors</em> within the application that sense probing attacks and a <em>secure code cache</em> consisting of a collection of code fragments hardened by applying LLVM-based integrity checking instrumentations. A separate <em>reactive defense</em> server decodes execution traces obtained by Intel PT and performs fast <em>probe analyses</em>. ProbeGuard then reactively activates hardened code fragments by <em>hotpatching</em> when under attack.</p>
+<h3 id="anomaly-detection"><a class="markdownIt-Anchor" href="#anomaly-detection"></a> Anomaly detection</h3>
+<p><strong>Arbitrary reads and writes.</strong> An attacker may exploit an arbitrary memory read or write vulnerability in the application with the goal of derandomization the hidden region. Typically, only a very small fraction of the application’s virtual address is actually mapped. When the attacker uses such a vulnerability to access random address, it is highly likely to hit an unmapped virtual memory address leading to a segmentation fault (or a crash). We detect such probing attacks by simply handling and proxying the signal using a custom <code>SIGSEGV</code> handler.</p>
+<p><strong>Kernel reads and writes.</strong> Attackers prefer probing silently and avoid detection. Hence, to avoid the crashes, they could also attempt to derandomize the victim application’s address space by probing memory via the kernel. Certain system calls (e.g., <code>read</code>) accepts memory addresses in their argument list and return specific error codes (e.g., <code>EFAULT</code>) if the argument is a pointer to an inaccessible or unallocated memory location. Using arbitrary-read/write primitives on such arguments, they could attempt CROP attacks to enable probes eliminating application crashes (thereby not generating <code>SIGSEGV</code> signals). We can detect such probing attacks by intercepting system calls, either in <code>glibc</code> or directly in the kernel, and inspecting their results.</p>
+<p><strong>Arbitrary jumps.</strong> Attacker can use this primitive to scanning the address space, and looking for valid code pointers, and then locating gadgets. An attempt to execute unmapped or non-executable memory results in either a segmentation fault (raising a <code>SIGSEGV</code> signal) or an illegal instruction exception (raising a <code>SIGILL</code> signal). Thus, we extend our custom signal handler to handle both the signals.</p>
+<p><strong>Allocation oracles.</strong> Such probes exploit memory allocation functions in the target application by attempting to allocate large memory areas. Success or failure of the allocation leaks information about the sizeof holes in the address space, which in turn, helps locate the hidden region. We hook into <code>glibc</code> to intercept the system calls used to allocate memory (e.g., <code>mmap()</code> and <code>brk</code>). We choose a configurable threshold on allocation size, above which our detector triggers reactive hardening (half of the address space by default).</p>
+<h3 id="probe-analysis"><a class="markdownIt-Anchor" href="#probe-analysis"></a> Probe analysis</h3>
+<p>Upon an anomaly detector flagging a potential attack, ProbeGuard must locate the offending code fragment. To locate the probing primitive, we employ hardware-assisted branch tracing to fetch to control flow prior to when we detectd the anomaly. We build a reverse mapping to fetch source-level information from the trace.</p>
+<p>We obtain past executed control-flow using Intel PT, which offers low-overhead and secure branch tracing. Control bits in the CPU’s model-specific registers (MSRs) allow an operating system kernel to turn this hardware feature to on or off. The buffer size is configurable, typical values range from 2 MB to 4 MB or more. The backward trace analysis can limit itself to the relevant recent control-flow history and avoid decoding all of the trace in its entirely.</p>
+<p>We use <code>perf record</code> command interface’s snapshot mode and dump the trace when required. Although the decoded trace provided, it’s hard to mapping them back to the source file and determining the offending code fragment.</p>
+<p>The <em>probe analyzer</em> must locate the affected spot in the source code. We repurpose a field in LLVM’s debug metadata that normally carries <code>column number</code> of the source code location to instead place respective basic block identifiers. This only simplifies out prototype implementation to let LLVM’s default code generator pass on the metadata through DWARF 4.0 symbols onto the resulting application binarym instead of having to use a new metadata stream and write the supporting code.</p>
+<p>We choose to mark the entire parent function that includes the probing primitive and use this for hardening.</p>
+<h3 id="hotpatching"><a class="markdownIt-Anchor" href="#hotpatching"></a> Hotpatching</h3>
+<p>To facilitate hotpatching, we first transform the program using our LLVM compiler passes. The goal is to be able to quickly and efficiently replace each vanilla variant of a function with a different (hardened) variant of the same function at runtime. We clone all functions found in the target application’s LLVM IR and selectively invoke security-hardening instrumentation passes on specific functions clones at <em>compiler time</em>.</p>
+<p>A global <code>switchboard</code> (which we insert in the application) allows switching between each function variant at runtime. It contains an entry for each function in the program, controlling which of the variants to use during execution.</p>
+<p>To deter attacks against ProbeGuard, we mark the switchboard <strong>as read-only during normal execution</strong>.</p>
+<h3 id="selective-security-hardening"><a class="markdownIt-Anchor" href="#selective-security-hardening"></a> Selective security hardening</h3>
+<p><strong>Arbitrary memory reads and writes.</strong> Software Fault Isolation mitigates probing attempts that use arbitrary reads and writes. It simply instruments every load or store operation in the application binary by masking the target memory location with a bit mask (47th bit of the memory pointer).</p>
+<p><strong>Kernel reads and writes.</strong> We mask all pointer arguments to library calls.</p>
+<p><strong>Arbitrary jumps.</strong> We implemented a type-based CFI policy for forward-edge protection, and a per-thread shadow stack for backward-edge protection.</p>
+<p><strong>Allocation oracles.</strong> A white-list based threshold on the size arguments of library functions.</p>
+<h2 id="implementation"><a class="markdownIt-Anchor" href="#implementation"></a> Implementation</h2>
+<p>ProbeGuard’s implementation consists of the following:</p>
+<ol>
+<li>
+<p>A static library linked with the application: it houses a signal handler registered at startup, and helps in hotpatching to support switching between function variants at runtime.</p>
+</li>
+<li>
+<p><code>glibc</code> modifications to intercept <code>mmap()</code>, and syscalls that results in <code>EFAULT</code>.</p>
+</li>
+<li>
+<p>LLVM compiler passes to generate and propagate function identifying markers onto the binary via DWARF 4.0 symbols, and function cloning to facilitate hotpatching.</p>
+</li>
+<li>
+<p>A seprate reactive defense server that does probe analysis by fetching Intel PT traces using <code>libipt</code> to map them onto the binary by reading the markers using <code>libdwarf</code></p>
+</li>
+</ol>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/03/IMIX-In-Process-Memory-Isolation-EXtension/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2327,176 +2538,6 @@ For uses of variables, the set of reaching definitions is the union of the set c
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/07/Implementing-a-Language-one/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/03/07/Implementing-a-Language-one/" class="post-title-link" itemprop="url">Implementing a Language <one></one></a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-03-07 20:37:50 / Modified: 20:41:15" itemprop="dateCreated datePublished" datetime="2019-03-07T20:37:50+08:00">2019-03-07</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="the-lexer"><a class="markdownIt-Anchor" href="#the-lexer"></a> The Lexer</h2>
-<p>The Lexer (aka scanner) breaks the source code into <em>tokens</em>, which includes a token code and potentially some metadata (e.g. the numeric value of a number).</p>
-<p>Each token returned by lexer will be either one of the Token enum values or it will be the ascii code value of an <em>unknown</em> character like +.</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// The lexer returns tokens[0-255] if it is an unknown character, otherwise one of these for known things.</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">enum</span> Token &#123;</span><br><span class="line">  tok_eof = <span class="number">-1</span>,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// commands</span></span><br><span class="line">  tok_def = <span class="number">-2</span>, tok_extern = <span class="number">-3</span>,</span><br><span class="line"></span><br><span class="line">  <span class="comment">// primary</span></span><br><span class="line">  tok_identifier = <span class="number">-1</span>, tok_number = <span class="number">-5</span>,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">string</span> IdentifierStr; <span class="comment">// Filled in if tok_identifier</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">double</span> NumVal;             <span class="comment">// Filled in if tok_number</span></span><br></pre></td></tr></table></figure>
-<p>The actual implementation of the lexer is a single function named <em>gettok</em>, which return the next token from standard input. Function gettok works by calling C getchar() to read characters one by one from standard input. It recognizes characters and store them into a variable <em>LastChar</em>. Additionally, the white space between tokens was ignored.</p>
-<p>The next thing gettok needs to do is recognize identifiers and specific words like <em>def</em>. We know the identifiers started with a alpha, followed by either number or alpha, ended with a space. Particularly, once the identifiers are the keywords (i.e., def or extern), we will return tok_def or tok_extern.</p>
-<p>For numeric values, we read it as characters from getchar, and store it as numric values into NumVal by C <em>strtod</em> function. Also, we must carefully handle the dot.</p>
-<p>For the comments, we simply skip it to the end of the line and return the next token (In a recursion way).</p>
-<p>Finally, if the input does not match any cases above, it is either a operator (e.g., +) or the end of the file. if the input character is an operator, the ascii value of it will be returned. In the case of an EOF, function returns next token.</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="title">gettok</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  static int LastChar = '';</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span>(<span class="built_in">isspace</span>(LastChar)) &#123;</span><br><span class="line">    LastChar = getchar();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">isalpha</span>(LastChar))&#123;</span><br><span class="line">    IdentifierStr = LastChar;</span><br><span class="line">    <span class="keyword">while</span> (islanum(LastChar = getchar())) &#123;</span><br><span class="line">      IdentifierStr += LastChar;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (IdentifierStr == <span class="string">"def"</span>)    <span class="keyword">return</span> tok_def;</span><br><span class="line">    <span class="keyword">if</span> (IdentifierStr == <span class="string">"extern"</span>) <span class="keyword">return</span> tok_extern;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> tok_identifier;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">isdigit</span>(LastChar) || LastChar == <span class="string">'.'</span>) &#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> NumStr;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">      NumStr   += LastChar;</span><br><span class="line">      LastChar =  getchar();</span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="built_in">isdigit</span>(LastChar) || LastChar == <span class="string">'.'</span>);</span><br><span class="line"></span><br><span class="line">    NumVal = strtod(NumStr.c_str(), <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">return</span> tok_number;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (LastChar == <span class="string">'#'</span>) &#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">      LastChar = getchar();</span><br><span class="line">    &#125; <span class="keyword">while</span> (LastChar != EOF &amp;&amp; LastChar != <span class="string">'\n'</span> &amp;&amp; LastChar != <span class="string">'\r'</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (LastChar != EOF) &#123;</span><br><span class="line">      <span class="keyword">return</span> gettok();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (LastChar == EOF) &#123;</span><br><span class="line">    <span class="keyword">return</span> tok_eof;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">int</span> ThisChar = LastChar;</span><br><span class="line">  LastChar = getchar();</span><br><span class="line">  <span class="keyword">return</span> ThisChar;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2545,7 +2586,7 @@ For uses of variables, the set of reaching definitions is the union of the set c
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">14</span>
+                    <span class="site-state-item-count">15</span>
                     <span class="site-state-item-name">posts</span>
                   </a>
                 </div>
@@ -2607,7 +2648,9 @@ For uses of variables, the set of reaching definitions is the union of the set c
                     
                       
                     
-                    <span class="site-state-item-count">11</span>
+                      
+                    
+                    <span class="site-state-item-count">12</span>
                     <span class="site-state-item-name">tags</span>
                   </a>
                 </div>
