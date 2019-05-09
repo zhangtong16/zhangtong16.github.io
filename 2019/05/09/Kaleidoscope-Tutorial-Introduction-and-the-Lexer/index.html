@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.1.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="The Basic Language Kaleidoscope 是一个面向过程的语言, 允许你定义函数, 使用条件判断, 数学计算等. 在后面的教程中, 我们还会扩展    Kaleidoscope 使它支持 if/then/else 结构, 循环结构和用户定义的操作符. Kaleidoscope 中唯一的数据类型是 64 bit 的浮点类型 (double in C). 下面是使用 Kalei">
+<meta name="keywords" content="llvm">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kaleidoscope: Tutorial Introduction and the Lexer">
+<meta property="og:url" content="http://yoursite.com/2019/05/09/Kaleidoscope-Tutorial-Introduction-and-the-Lexer/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="The Basic Language Kaleidoscope 是一个面向过程的语言, 允许你定义函数, 使用条件判断, 数学计算等. 在后面的教程中, 我们还会扩展    Kaleidoscope 使它支持 if/then/else 结构, 循环结构和用户定义的操作符. Kaleidoscope 中唯一的数据类型是 64 bit 的浮点类型 (double in C). 下面是使用 Kalei">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-05-09T11:39:09.858Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Kaleidoscope: Tutorial Introduction and the Lexer">
+<meta name="twitter:description" content="The Basic Language Kaleidoscope 是一个面向过程的语言, 允许你定义函数, 使用条件判断, 数学计算等. 在后面的教程中, 我们还会扩展    Kaleidoscope 使它支持 if/then/else 结构, 循环结构和用户定义的操作符. Kaleidoscope 中唯一的数据类型是 64 bit 的浮点类型 (double in C). 下面是使用 Kalei">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2019/05/09/Kaleidoscope-Tutorial-Introduction-and-the-Lexer/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Kaleidoscope: Tutorial Introduction and the Lexer | Zhangtong's Notebook</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="default">
+
+  
+  
+    
+  
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Zhangtong's Notebook</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>Home</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>Tags</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>Archives</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/09/Kaleidoscope-Tutorial-Introduction-and-the-Lexer/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Kaleidoscope: Tutorial Introduction and the Lexer
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-05-09 19:37:42 / Modified: 19:39:09" itemprop="dateCreated datePublished" datetime="2019-05-09T19:37:42+08:00">2019-05-09</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="the-basic-language"><a class="markdownIt-Anchor" href="#the-basic-language"></a> The Basic Language</h2>
+<p>Kaleidoscope 是一个面向过程的语言, 允许你定义函数, 使用条件判断, 数学计算等. 在后面的教程中, 我们还会扩展    Kaleidoscope 使它支持 <code>if/then/else</code> 结构, 循环结构和用户定义的操作符.</p>
+<p>Kaleidoscope 中唯一的数据类型是 64 bit 的浮点类型 (<code>double</code> in C). 下面是使用 Kaleidoscope 实现的斐波拉契数列.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Compute the x'th Fibonacci Number</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">fib</span><span class="params">(x)</span></span></span><br><span class="line"><span class="function">    <span class="title">if</span> <span class="title">x</span> &lt; 3</span></span><br><span class="line"><span class="function">    <span class="title">then</span> 1</span></span><br><span class="line"><span class="function">    <span class="title">else</span> <span class="title">fib</span><span class="params">(x<span class="number">-1</span>)</span> + <span class="title">fib</span><span class="params">(x<span class="number">-2</span>)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"># <span class="title">This</span> <span class="title">expression</span> <span class="title">will</span> <span class="title">compute</span> <span class="title">the</span> 40<span class="title">th</span> <span class="title">number</span></span></span><br><span class="line"><span class="function"><span class="title">fib</span><span class="params">(<span class="number">40</span>)</span></span></span><br></pre></td></tr></table></figure>
+<p>我们还允许 Kaleidoscope 能够调用标准库函数 (LLVM JIT 能够轻易的实现它). 你可以使用 <code>extern</code> 关键字来定义一个函数.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="title">sin</span><span class="params">(arg)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="title">cos</span><span class="params">(arg)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="title">atan2</span><span class="params">(arg1 arg2)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">atan2</span>(<span class="built_in">sin</span>(<span class="number">.4</span>), <span class="built_in">cos</span>(<span class="number">42</span>))</span><br></pre></td></tr></table></figure>
+<h2 id="the-lexer"><a class="markdownIt-Anchor" href="#the-lexer"></a> The Lexer</h2>
+<p>当实现一个语言时, 第一件事就是能够处理源代码文件, 并知道它想表达的意思. 传统的做法是使用 lexer (scanner) 将输入的源文件处理为 tokens. Lexer 返回的每个 token 都包括一个 token code 和一些 metadata (比如数字的值). 首先我们定义这些可能使用到的数据:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// The lexer return tokens [0-255]</span></span><br><span class="line"><span class="comment">// if it is an unknown character,</span></span><br><span class="line"><span class="comment">// otherwise one of these known things.</span></span><br><span class="line"><span class="keyword">enum</span> Token &#123;</span><br><span class="line">    tok_eof = <span class="number">-1</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// commands</span></span><br><span class="line">    tok_def    = <span class="number">-2</span>,</span><br><span class="line">    tok_extern = <span class="number">-3</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// primary</span></span><br><span class="line">    tok_identifier = <span class="number">-4</span>,</span><br><span class="line">    tok_number     = <span class="number">-5</span>,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Filled in if tok_identifier</span></span><br><span class="line"><span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">string</span> IdentifierStr;</span><br><span class="line"><span class="comment">// Filled in if tok_number</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">double</span> NumVal;</span><br></pre></td></tr></table></figure>
+<p>Lexer 返回的每个 token 要么是 Token 枚举中的值, 要么是一个 “未知” 的字符的 <code>ascii</code> 值, 比如 <code>+</code>. 如果当前的 token 是一个标识符, 那么 <code>IdentifierStr</code> 会保存它的名字. 如果当前 token 是一个数字, 那么 <code>NumVal</code> 会保存它的值.</p>
+<p>Lexer 实现是 <code>gettok()</code> 函数, <code>gettok()</code> 被调用之后, 会返回从标注输入中获取的下一个 token.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">gettok</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">int</span> LastChar = <span class="string">' '</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Skip any whitespace</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="built_in">isspace</span>(LastChar))</span><br><span class="line">    &#123;</span><br><span class="line">        LastChar = getchar();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p><code>gettok</code> 通过调用 <code>getchar()</code> 从标准输入中读取字符, 并忽略 tokens 之间的空格, 它仅仅是将字符存储到 <code>LastChar</code> 中, 不进行处理.</p>
+<p><code>gettok</code> 接下来要识别标识符和关键字.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">isalpha</span>(LastChar)) &#123;</span><br><span class="line">    IdentifierStr = LastChar;</span><br><span class="line">    <span class="keyword">while</span> (<span class="built_in">isalnum</span>(LastChar = getchar()))</span><br><span class="line">    &#123;</span><br><span class="line">        IdentifierStr += LastChar;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (IdentifierStr == <span class="string">"def"</span>) <span class="keyword">return</span> tok_def;</span><br><span class="line">    <span class="keyword">if</span> (IdentifierStr == <span class="string">"extern"</span>) <span class="keyword">return</span> tok_extern;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> tok_identifier;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果不是标识符和关键字，那进一步判断是否为数字.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">isdigit</span>(LastChar) || LastChar == <span class="string">'.'</span>) &#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> NumStr;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">        NumStr += LastChar;</span><br><span class="line">        LastChar = getchar();</span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="built_in">isdigit</span>(LastChar) || LastChar == <span class="string">'.'</span>);</span><br><span class="line"></span><br><span class="line">    NumVal = strtod(NumStr.c_str(), <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">return</span> tok_number;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当读取的字符为数字时, 使用 <code>strtod()</code> 将它转化为 <code>double</code> 并存储在 <code>NumVal</code> 中. 这一步没有做异常处理, 有需要的可以添加.</p>
+<p>然后我们处理注释:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (LastChar == <span class="string">'#'</span>) &#123;</span><br><span class="line">    <span class="comment">// Comment until end of line</span></span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">        LastChar = getchar();</span><br><span class="line">    &#125; <span class="keyword">while</span> (LastChar != EOF &amp;&amp; LastChar != <span class="string">'\n'</span> &amp;&amp; LastChar != <span class="string">'\r'</span>);</span><br><span class="line">    <span class="comment">// Return the next token</span></span><br><span class="line">    <span class="keyword">if</span> (LastChar != EOF)</span><br><span class="line">        <span class="keyword">return</span> gettok();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注释会跳过 <code>#</code> 后面所有的字符，直到下一行或者 <code>EOF</code>. 当跳过之后, 需要重新进行处理并返回下一个 token， 所以直接尾递归调用 <code>gettok()</code> 即可. 如果输入不匹配标识符和关键字, 也不匹配数字, 只有可能是 <code>+</code> 之类的操作符, 和 <code>EOF</code>.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Check for end of file. Don't eat EOF</span></span><br><span class="line">    <span class="keyword">if</span> (LastChar == EOF) &#123;</span><br><span class="line">        <span class="keyword">return</span> tok_eof;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Otherwise, just return the character as its ascii value</span></span><br><span class="line">    <span class="keyword">int</span> ThisChar = LastChar;</span><br><span class="line">    LastChar = getchar();</span><br><span class="line">    <span class="keyword">return</span> ThisChar;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上就是 Kaleidoscope 的 lexer.</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/llvm/" rel="tag"># llvm</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/05/05/ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations/" rel="next" title="ProbeGuard: Mitigating Probing Attacks Through Reactive Program Transformations">
+                <i class="fa fa-chevron-left"></i> ProbeGuard: Mitigating Probing Attacks Through Reactive Program Transformations
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/05/09/Kaleidoscope-Implementing-a-Parser-and-AST/" rel="prev" title="Kaleidoscope: Implementing a Parser and AST">
+                Kaleidoscope: Implementing a Parser and AST <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.png" alt="Zhangtong">
+            
+              <p class="site-author-name" itemprop="name">Zhangtong</p>
+              <div class="site-description motion-element" itemprop="description"></div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">15</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">3</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#the-basic-language"><span class="nav-number">1.</span> <span class="nav-text"> The Basic Language</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#the-lexer"><span class="nav-number">2.</span> <span class="nav-text"> The Lexer</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.1.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.0"></script>
+
+  <script src="/js/motion.js?v=7.1.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.0"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.0"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.0"></script>
+<script src="/js/post-details.js?v=7.1.0"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

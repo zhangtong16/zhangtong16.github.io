@@ -303,6 +303,622 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/09/Kaleidoscope-Code-generation-to-LLVM-IR/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/05/09/Kaleidoscope-Code-generation-to-LLVM-IR/" class="post-title-link" itemprop="url">Kaleidoscope: Code generation to LLVM IR</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-05-09 19:40:53 / Modified: 19:41:45" itemprop="dateCreated datePublished" datetime="2019-05-09T19:40:53+08:00">2019-05-09</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="chapter-3-introduction"><a class="markdownIt-Anchor" href="#chapter-3-introduction"></a> Chapter 3 Introduction</h2>
+<p>本章主要是将 <a href="./Chapter2.md">Chapter 2</a> 中构建的抽象语法树 (AST) 转化成 LLVM IR. 这章主要讲述 LLVM 能做哪些工作, 并且告诉你怎么使用.</p>
+<p><strong>Note:</strong> 这章的代码需要 LLVM 3.7 或更新版.</p>
+<h2 id="code-generation-setup"><a class="markdownIt-Anchor" href="#code-generation-setup"></a> Code Generation Setup</h2>
+<p>为了能生成 IR, 我们首先在每个 AST 类中定义一个生成代码的虚方法 (virtual code generation method).</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ExprAST - Base class for all expression nodes</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExprAST</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">virtual</span> ~ExprAST()&#123;&#125;;</span><br><span class="line">    <span class="keyword">virtual</span> llvm::<span class="function">Value *<span class="title">codegen</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NumberExprAST - Expression class for numeric literals like "1.0"</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">NumberExprAST</span> :</span> <span class="keyword">public</span> ExprAST</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">double</span> Val;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    NumberExprAST(<span class="keyword">double</span> Val) : Val(Val) &#123;&#125;</span><br><span class="line">    <span class="keyword">virtual</span> llvm::<span class="function">Value *<span class="title">codegen</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>codegen()</code> 方法会根据每个不同的类生成 IR, 都返回一个 <code>class Value</code> 对象的指针. <code>class Value</code> 表示 LLVM 中的一个 SSA (Static Single Assignment) register 或者 SSA value. SSA 表示每个变量都只能被赋值一次, 而且必须在使用前被定义.</p>
+<p>同时我们添加一个 <code>LogError()</code> 方法来记录生成 IR 时的错误:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">llvm::<span class="function">Value *<span class="title">LogErrorV</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *Str)</span> </span>&#123;</span><br><span class="line">    LogError(Str);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>并声明可能需要的静态变量:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> llvm::LLVMContext TheContext;</span><br><span class="line"><span class="keyword">static</span> llvm::IRBuilder&lt;&gt; Builder&#123;TheContext&#125;;</span><br><span class="line"><span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;llvm::Module&gt; TheModule;</span><br><span class="line"><span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">map</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>, llvm::Value *&gt; NamedValues;</span><br></pre></td></tr></table></figure>
+<p><code>LLVMContext TheContext</code> 是一个包含大量 LLVM 核心数据结构的对象, 比如包含类型和常量表 (the type and constant value tables). <code>IRBuilder Builder</code> 是一个辅助对象, 能简化 LLVM 指令的生成. 这个对象能够追踪当前需要插入指令的位置, 并有创建新指令的方法. <code>class Module</code> 的实例用来存储和 一个LLVM module 相关的所有信息. 在 LLVM 中, 一个 Module 表示能被处理的单个代码单元 (a single unit of code that is to be processed together), <s>差不多就是一个源代码文件</s>. <code>TheModule</code> 会拥有我们生成所有 IR 的内存, 这就是我们申明 <code>codegen()</code> 时, 让它返回裸指针 <code>Value *</code> 而不是 <code>unique_ptr&lt;Value&gt;</code> 的原因. <code>map&lt;string, Value *&gt; NamedValues</code> 主要追踪当前作用域内定义的值, 和它们的 LLVM representation. 换句话说 <code>NamedValues</code> 就是一个符号表 (symbol table for the code). 目前在 Kaleidoscope 中, 只有函数参数能被引用, 所以当生成函数体里面的代码时, 我们就会用到存储在它里面的函数参数.</p>
+<p>我们现在假设 <code>IRBuilder Builder</code> 已经被设置好可以生成代码.</p>
+<h2 id="expression-code-generation"><a class="markdownIt-Anchor" href="#expression-code-generation"></a> Expression Code Generation</h2>
+<p>为表达式节点生成 LLVM code 非常直接, 直接调用相应的函数即可, 首先是对数字常量表达式的代码生成:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">llvm::Value *NumberExprAST::codegen() &#123;</span><br><span class="line">    <span class="keyword">return</span> llvm::ConstantFP::get(TheContext, llvm::APFloat(Val));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在 LLVM IR 中, 字面常量是用 <code>class ConstantFP</code> 表示的, 字面常量的值由 <code>class APFloat</code> 持有, 即后者是前者的一个成员变量 (AP 表示 Arbitrary Precision). 然后是变量表达式的 <code>codegen()</code>:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">llvm::Value *VariableExprAST::codegen() &#123;</span><br><span class="line">    llvm::Value *V = NamedValues[Name];</span><br><span class="line">    <span class="keyword">if</span> (!V) &#123;</span><br><span class="line">        LogErrorV(<span class="string">"Unknown variable name"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> V;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>目前针对变量的引用只有在函数体内才有, 所以我们先检查被引用的变量名是否在 <code>map&lt;string, Value*&gt; NamedValues</code> 中, 然后直接返回它的值即可. 在教程后面我们会加上对循环变量和局部变量的支持 (loop induction variables and local variables).</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">llvm::Value *BinaryExprAST::codegen() &#123;</span><br><span class="line">    llvm::Value *L = LHS -&gt; codegen();</span><br><span class="line">    llvm::Value *R = RHS -&gt; codegen();</span><br><span class="line">    <span class="keyword">if</span> (!L || !R)&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (Op)</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="string">'+'</span>:</span><br><span class="line">        <span class="keyword">return</span> Builder.CreateFAdd(L, R, <span class="string">"addtmp"</span>);</span><br><span class="line">    <span class="keyword">case</span> <span class="string">'-'</span>:</span><br><span class="line">        <span class="keyword">return</span> Builder.CreateFSub(L, R, <span class="string">"subtmp"</span>);</span><br><span class="line">    <span class="keyword">case</span> <span class="string">'*'</span>:</span><br><span class="line">        <span class="keyword">return</span> Builder.CreateFMul(L, R, <span class="string">"multmp"</span>);</span><br><span class="line">    <span class="keyword">case</span> <span class="string">'&lt;'</span>:</span><br><span class="line">        L = Builder.CreateFCmpULT(L, R, <span class="string">"cmptmp"</span>);</span><br><span class="line">        <span class="comment">// Convert bool 0/1 to double 0.0 or 1.0</span></span><br><span class="line">        <span class="keyword">return</span> Builder.CreateUIToFP(L, llvm::Type::getDoubleTy(TheContext), <span class="string">"booltmp"</span>);</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">        <span class="keyword">return</span> LogErrorV(<span class="string">"invalid binary operator"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>二元操作符表达式也是递归进行操作, 左表达式先进行代码生成, 然后是右表达式, 然后生成二元操作符表达式的代码. 在上述代码中, <code>class IRBuilder</code> 调用自己的成员方法, 例如 <code>CreateFAdd()</code>, 通过传入的参数来生成新的指令. 在 <code>CreateFAdd()</code> 方法中传入的名字仅仅只是一个提示, 如果上面的代码生成函数有多个 <code>CreateFAdd(L, R, &quot;addtmp&quot;)</code>, 那么 LLVM 会自动给每个都加上一个唯一的后缀.</p>
+<p>LLVM 指令是被严格约束的: 对于加法指令, 左操作数和右操作数必须是相同类型, 且结果的类型和操作数的类型必须相同. Kaleidoscope 中的所有值都是 <code>double</code>, 所以这里不需要考虑类型.</p>
+<p>并且, 在 LLVM 文档中, <code>fcmp</code> 指令返回的是 1个 bit 的整数 <code>i1</code>. 我们的数据类型中没有整数, 所以我们要转化为 0.0 或者 1.0. 所有我们使用 <code>uitofp</code> 指令, 它将第一个参数视为无符号的整数类型， 并把它转化为第二个参数表示的浮点类型 (double). 同时 <code>sitofp</code> 指令也可以完成类似的功能, 不过它是把第一个参数视为有符号的整数类型.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">llvm::Value *CallExprAST::codegen() &#123;</span><br><span class="line">    <span class="comment">// Lookup the name in the global module table</span></span><br><span class="line">    llvm::Function *CalleeF = TheModule -&gt; getFunction(Callee);</span><br><span class="line">    <span class="keyword">if</span> (!CalleeF) &#123;</span><br><span class="line">        LogErrorV(<span class="string">"Unknown function referenced"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Argument checking</span></span><br><span class="line">    <span class="keyword">if</span> (CalleeF -&gt; arg_size() != Args.size()) &#123;</span><br><span class="line">        <span class="keyword">return</span> LogErrorV(<span class="string">"Incorrect number of arguments passed"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;llvm::Value *&gt; ArgsV;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">unsigned</span> i = <span class="number">0</span>, e = Args.size(); i != e; ++i) &#123;</span><br><span class="line">        ArgsV.push_back(Args[i] -&gt; codegen());</span><br><span class="line">        <span class="keyword">if</span> (!ArgsV.back()) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> Builder.CreateCall(CalleeF, ArgsV, <span class="string">"calltmp"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>函数调用的代码生成也是很直接的, 首先在 LLVM Module 的符号表里面查找这个函数名. LLVM Module 是用来持有函数的容器, 并且通过解析 Module 的符号表, 我们就能引用这些函数.</p>
+<p>一旦我们找到函数之后, 就检查它在符号表中的参数数量和实际获取的参数数量是否一致. 并且递归的解析传给它的每个参数. 然后就能创建一个 LLVM <code>call</code> 指令.</p>
+<h2 id="function-code-generation"><a class="markdownIt-Anchor" href="#function-code-generation"></a> Function Code Generation</h2>
+<p>对函数原型和函数定义的代码生成包含不少细节, 不像上面表达式生成代码时那么直观和简洁. 但是我们同时也能看到一些比较重要的概念. 下面是函数原型的代码生成:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">llvm::Function *PrototypeAST::codegen() &#123;</span><br><span class="line">    <span class="comment">// Make the function prototype: double(double, double).</span></span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;llvm::Type *&gt; Doubles(Args.size(), llvm::Type::getDoubleTy(TheContext));</span><br><span class="line">    llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getDoubleTy(TheContext), Doubles, <span class="literal">false</span>);</span><br><span class="line">    llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, Name, TheModule.get());</span><br></pre></td></tr></table></figure>
+<p>这部分的代码包含了很多重要内容. 首先 <code>Function *PrototypeAST::codegen()</code> 返回值的类型是 <code>Function *</code> 而不是 <code>Value *</code>, 因为一个函数原型主要是表示函数的外部接口, 而不是像表达式一样能被计算出值. 对 <code>FunctionType::get()</code> 的调用可以得到函数类型, 第一个参数是返回值类型, 第二个参数是参数类型的列表, 第三个是是否支持可变参数列表.</p>
+<p>最后一行就是实际生成 IR 代码的一行, <code>Function::Create()</code> 的参数分别为函数类型, Linkage 类型 (一般熟知的有 external linkage 和 internal linkage, 分别表示能被外部 translation unit (Module) 访问和不能. 例如 c/c++ 关键字 <code>extern</code> 和 <code>static</code>), 函数名, 和 <code>TheModule</code>. <s>在之前版本的 LLVM 文档中, 直接传了 <code>TheModule</code> (unique_ptr) 而不是 <code>TheModule.get()</code>, 会造成编译器错误.</s></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">    <span class="comment">// Set names for all arguments</span></span><br><span class="line">    <span class="keyword">unsigned</span> Idx = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> &amp;Arg: F -&gt; args()) &#123;</span><br><span class="line">        Arg.setName(Args[Idx++]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> F;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后根据函数原型的参数名字, 给 IR 的参数命名, 增加 IR 生成之后的可读性, 并且后续操作中, 能直接根据参数名对参数进行引用, 不需要再到函数原型的 AST 节点中查找.</p>
+<p>然后就是函数定义:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">llvm::Function *FunctionAST::codegen() &#123;</span><br><span class="line">    <span class="comment">// Check for an existing function from a previous `extern` declaration</span></span><br><span class="line">    llvm::Function *TheFunction = TheModule -&gt; getFunction(Proto -&gt; getName());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!TheFunction) &#123;</span><br><span class="line">        TheFunction = Proto -&gt; codegen();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!TheFunction) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!TheFunction -&gt; empty()) &#123;</span><br><span class="line">        <span class="keyword">return</span> (llvm::Function *)LogErrorV(<span class="string">"Function cannot be redefined"</span>);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>对于函数定义, 我们首先查找 <code>TheModule</code> 的符号表, 看看有没有匹配的函数名. 这样就可以看出这个函数有没有使用 <code>extern</code> 的前向声明. 如果没有声明, 那么我们就生成函数原型的代码. 并且, 我们断言这个时候函数体是没有生成代码的, 也就是说我们这次定义并不是重复定义.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Create a new Basic Block to start insertion into.</span></span><br><span class="line">llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, <span class="string">"entry"</span>, TheFunction);</span><br><span class="line">Builder.SetInsertPoint(BB);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Record the function arguments in the NamedValues map.</span></span><br><span class="line">NamedValues.clear();</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">auto</span> &amp;Arg : TheFunction -&gt; args()) &#123;</span><br><span class="line">    NamedValues[Arg.getName()] = &amp;Arg;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>第一行创建了一个新的 basic block, 并把它插入到 <code>TheFunction</code> 中. 第二行就告诉 <code>Builder</code>, 新的指令应该被插入到这个 basic block 的末尾. Basic block 定义了 LLVM 中的控制流图 (Control flow graph). 虽然我们现在没有控制流, 但在 <a href="./Chapter5.md">Chapter 5</a> 会加上.</p>
+<p>然后就是将函数参数添加到 <code>map&lt;string, Value *&gt; NamedValues</code>, 这样 VariableExprAST 的节点就能在函数定义里面来引用它们.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">    <span class="keyword">if</span> (llvm::Value *RetVal = Body -&gt; codegen()) &#123;</span><br><span class="line">        <span class="comment">// Finish off the function</span></span><br><span class="line">        Builder.CreateRet(RetVal);</span><br><span class="line">        <span class="comment">// Validate the generated code, checking for consistency</span></span><br><span class="line">        llvm::verifyFunction(*TheFunction);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> TheFunction;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    TheFunction -&gt; eraseFromParent();</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>一旦代码的插入点被设置完毕, 我们就调用函数体的 <code>codegen()</code> 方法, 如果没有错误发生的话, 它就会将生成函数体里面表达式的代码, 然后将这些代码插入到上面定义的 entry basic block 中, 然后返回这些表达式计算出来的值. 接着创建 <code>ret</code> 指令完成函数. 生成完毕后使用 <code>verifyFunction()</code> 来检查生成代码的一致性. 如果生成函数体代码失败, 那就调用 <code>eraseFromParent()</code> 删除生成的函数.</p>
+<p>但是这部分的代码也有问题, 如果 <code>FunctionAST::codegen()</code> 方法已经找到一个存在的函数声明, 那么它就跳过了函数原型代码的生成, 就导致跳过了对参数名的设置, 所以当前向声明中的参数名和函数定义使用的参数名不一致时, 会发生错误:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="title">foo</span><span class="params">(a)</span></span>;   <span class="meta"># ok, declare foo</span></span><br><span class="line"><span class="function">def <span class="title">foo</span><span class="params">(b)</span></span>;      # Error: Unknown variable name</span><br></pre></td></tr></table></figure>
+<h2 id="driver-changes-and-closing-thoughts"><a class="markdownIt-Anchor" href="#driver-changes-and-closing-thoughts"></a> Driver changes and Closing Thoughts</h2>
+<p>主要就是在 <code>main()</code> 和相应的 <code>HandleDefinition()</code> 之类的函数中， 相应的更改用 preprocess macro 做了判断, 直接看代码即可.</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/09/Kaleidoscope-Implementing-a-Parser-and-AST/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/05/09/Kaleidoscope-Implementing-a-Parser-and-AST/" class="post-title-link" itemprop="url">Kaleidoscope: Implementing a Parser and AST</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-05-09 19:39:37 / Modified: 19:42:23" itemprop="dateCreated datePublished" datetime="2019-05-09T19:39:37+08:00">2019-05-09</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="chapter-2-introduction"><a class="markdownIt-Anchor" href="#chapter-2-introduction"></a> Chapter 2 Introduction</h2>
+<p>这一章将会使用 <a href="./Chapter1.md">Chapter 1</a> 中实现的 lexer 来构造 Kaleidoscope 的 parser. 一旦我们完成 parser 的实现, 我们就能定义并且构造一个抽象语法树 (Abstract Syntax Tree, AST).</p>
+<h2 id="the-abstract-syntax-tree-ast"><a class="markdownIt-Anchor" href="#the-abstract-syntax-tree-ast"></a> The Abstract Syntax Tree (AST)</h2>
+<p>AST 是源代码语法结构的抽象表示, 它以树状的形式来表示源代码中的语法结构, 树上的每个节点都表示源代码中的一种结构, 从而能建模这个语言, 方便编译器后续的解释 (code generation). 在 Kaleidoscope 中, 我们有表达式 (expressions), 函数原型 (prototype), 函数对象 (function object). 我们先从表达式开始:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ExprAST - Base class for all expression nodes</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExprAST</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">virtual</span> ~ExprAST() &#123;&#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NumberExprAST - Expression class for numeric literals like "1.0"</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">NumberExprAST</span> :</span> <span class="keyword">public</span> ExprAST</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">double</span> Val;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    NumberExprAST(<span class="keyword">double</span> Val) : Val(Val) &#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>上述的代码表示了基类 <code>ExprAST</code> 和它的一个子类 <code>NumberExprAST</code> 的定义. <code>NumberExprASR</code> 将数字常量的值存储到实例中的成员变量, 使得编译器能够在后面的步骤中对它进行处理.</p>
+<p>然后是其他 AST 节点的定义：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// VariableExprAST - Expression class for referencing a variable, like "a"</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">VariableExprAST</span> :</span> <span class="keyword">public</span> ExprAST</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> Name;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    VariableExprAST(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span> &amp;Name) : Name(Name) &#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// BinaryExprAST - Expression class for a binary operator</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BinaryExprAST</span> :</span> <span class="keyword">public</span> ExprAST</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">char</span> Op;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; LHS, RHS;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    BinaryExprAST(<span class="keyword">char</span> Op, <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; LHS, <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; RHS) : Op (Op), LHS (<span class="built_in">std</span>::move(LHS)), RHS(<span class="built_in">std</span>::move(RHS)) &#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// CallExprAST - Expression class for function calls</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CallExprAST</span> :</span> <span class="keyword">public</span> ExprAST &#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> Callee;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt;&gt; Args;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    CallExprAST(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span> &amp;Callee, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt;&gt; args) : Callee(Callee), Args(<span class="built_in">std</span>::move(Args)) &#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>以上的定义都比较直接, 使用一个 <code>std::string Name</code> 变量来获取变量的名字; 二元操作符使用 <code>char Op</code> 来获取操作符, 然后使用 <code>std::unique_ptr&lt;ExprAST&gt; LHS, RHS</code> 分别持有左边和右边的表达式; 函数调用使用 <code>std::string Callee</code> 来存储被调用的函数名, 使用 <code>std::vector&lt;std::unique_ptr&lt;ExprAST&gt;&gt; args</code> 来持有函数的参数列表.</p>
+<p>对于我们最基本的语言, <strong>目前</strong>没有条件跳转的控制流, 所以还不是图灵完全的. 我们会在之后添加条件跳转. 接下来我们讨论函数接口和函数定义:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// PrototypeAST - This class represents the "prototype"</span></span><br><span class="line"><span class="comment">// for a function, which captures its name, and its</span></span><br><span class="line"><span class="comment">// argument names (thus implicitly the number of</span></span><br><span class="line"><span class="comment">// arguments the function takes)</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">PrototypeAST</span> &#123;</span></span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> Name;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; Args;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    PrototypeAST(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span> &amp;Name, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; Args) : Name(Name), Args(<span class="built_in">std</span>::move(Args)) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> <span class="built_in">std</span>::<span class="function"><span class="built_in">string</span> &amp;<span class="title">getName</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123;<span class="keyword">return</span> Name&#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// FunctionAST - This class represents a function definition itself</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">FunctionAST</span> &#123;</span></span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;PrototypeAST&gt; Proto;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; Body;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    FunctionAST(<span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;PrototypeAST&gt; Proto, <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; Body) : Proto (<span class="built_in">std</span>::move(Proto)), Body (<span class="built_in">std</span>::move(Body)) &#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>注意, 在 Kaleidoscope 中,函数原型和函数定义并不是表达式, 所以没有继承 <code>class ExprAST</code>. 由于在 Kaleidoscope 中只有 <code>double</code> 类型, 所以函数的类型也仅仅和参数数量有关. 在更为复杂的语言中, <code>class ExprAST</code> 会有一个 field 专门存放类型信息.</p>
+<h2 id="parser-basics"><a class="markdownIt-Anchor" href="#parser-basics"></a> Parser Basics</h2>
+<p>我们需要使用一个 parser 来构造 AST. 例如, 我们想解析 <code>x + y</code> 这类的表达式, 并生成一个 AST 时， 我们可以进行如下的操作:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> LHS = <span class="built_in">std</span>::make_unique&lt;VariableExprAST&gt;(<span class="string">"x"</span>);</span><br><span class="line"><span class="keyword">auto</span> RHS = <span class="built_in">std</span>::make_unique&lt;VariableExprAST&gt;(<span class="string">"y"</span>);</span><br><span class="line"><span class="keyword">auto</span> Result = <span class="built_in">std</span>::make_unique&lt;BinaryExprAST&gt;(<span class="string">'+'</span>, <span class="built_in">std</span>::move(LHS), <span class="built_in">std</span>::move(RHS));</span><br></pre></td></tr></table></figure>
+<p>为了实现上述操作， 我们先定义一些基本的辅助过程:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// CurTok - CurTok is the current token the parser is looking at.</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> CurTok;</span><br><span class="line"><span class="comment">// getNextToken - getNextToken reads another token from the lexer and update CurTok with its values.</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getNextToken</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> CurTok = gettok();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这在 lexer 的基础上实现了一个简单的 token buffer. 使得我们能够保存 lexer 返回的 token. Parser 中的函数都假定 <code>static int CurTok</code> 是当前需要被处理的 token.</p>
+<p>然后是一些简单的错误处理函数:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LogError* - These are little helper functions for error handling</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; LogError(<span class="keyword">const</span> <span class="keyword">char</span> *Str) &#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"LogError: %s\n"</span>, Str);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;PrototypeAST&gt; LogErrorP(<span class="keyword">const</span> <span class="keyword">char</span> *Str) &#123;</span><br><span class="line">    LogError(Str);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="basic-expression-parsing"><a class="markdownIt-Anchor" href="#basic-expression-parsing"></a> Basic Expression Parsing</h2>
+<p>我们首先处理数字常量. 对每种不同的表达式，我们都定义单独的函数进行处理. 下面是对数字常量进行处理的函数:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// numberexpr ::= number</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; ParseNumberExpr() &#123;</span><br><span class="line">    <span class="keyword">auto</span> Result = <span class="built_in">std</span>::make_unique&lt;NumberExprAST&gt; (NumVal);</span><br><span class="line">    <span class="comment">// consume the number</span></span><br><span class="line">    getNextToken();</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">std</span>::move(Result);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当 <code>gettok()</code> 返回 <code>tok_number</code> 时它会被调用. 此时 <code>static int NumVal</code> 已被设置为对应的值, 因此 <code>ParseNumberExpr()</code> 构造一个 <code>NumberExprAST</code> 的节点, 并使 lexer 获取下一个 token, 然后返回构造出的节点.</p>
+<p>所以, 递归下降解析器的特点就是: 将当前表达式的 token 全部获取, 构造出表达式节点. 然后使 lexer 获取下一个 token, 再返回构造出的表达式节点.</p>
+<p>下面是一个带括号的表达式的例子:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// parenexpr ::= '(' expression ')'</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; ParseParenExpr() &#123;</span><br><span class="line">    <span class="comment">// eat '('</span></span><br><span class="line">    getNextToken();</span><br><span class="line">    <span class="keyword">auto</span> V = ParseExpression();</span><br><span class="line">    <span class="keyword">if</span> (!V) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (CurTok != <span class="string">')'</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> LogError(<span class="string">"Expected ')'"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// eat ')'</span></span><br><span class="line">    getNextToken();</span><br><span class="line">    <span class="keyword">return</span> V;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个函数说明了以下几个方法:</p>
+<ol>
+<li>
+<p>告诉我们怎么使用 <code>LogError</code> 函数来打印错误.</p>
+</li>
+<li>
+<p>在处理过程中, 递归调用 <code>ParseExpression</code> 来进行表达式的处理. <code>ParseExpression</code> 调用不同的 parser 函数来对不同的表达式进行处理. 这种递归调用使得我们可以实现递归语法.</p>
+</li>
+</ol>
+<p>接下来是变量引用和函数调用的 parser 函数:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// identifierexpr</span></span><br><span class="line"><span class="comment">//       :: = identifier</span></span><br><span class="line"><span class="comment">//       :: = identifier '(' expression* ')'</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; ParseIdentifierExpr() &#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> IdName = IdentifierStr;</span><br><span class="line">    <span class="comment">// eat identifier</span></span><br><span class="line">    getNextToken();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (CurTok != <span class="string">'('</span>) &#123;</span><br><span class="line">        <span class="comment">// It's a variable ref</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">std</span>::make_unique&lt;VariableExprAST&gt;(IdName);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// It's a functional call</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// eat '('</span></span><br><span class="line">    getNextToken();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt;&gt; Args;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (CurTok != <span class="string">')'</span>) &#123;</span><br><span class="line">        <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">auto</span> Arg = ParseExpression()) &#123;</span><br><span class="line">                Args.push_back(<span class="built_in">std</span>::move(Arg));</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (CurTok == <span class="string">')'</span>) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (CurTok != <span class="string">','</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> LogError(<span class="string">"Expected ')' or ',' in argument list"</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            getNextToken();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// eat '')</span></span><br><span class="line">    getNextToken();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">std</span>::make_unique&lt;CallExprAST&gt;(IdName, <span class="built_in">std</span>::move(Args));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个函数和上面的函数类似, 在 <code>gettok()</code> 返回 <code>tok-identifier</code> 时被调用. 它也有递归处理和错误处理. 它使用 <em>lookahead</em> 来判断这是一个简单的变量引用或者是一个函数调用. 在消耗掉第一个 identifier 之后, 它会看看后面是不是一个 <code>(</code>, 如果是的话, 那就构造一个参数列表, 并返回一个 <code>class CallExprAst</code> 节点; 如果不是, 那就直接返回一个 <code>class VariableExprAST</code> 节点.</p>
+<p>现在我们有了一个简单的 expression-parser 逻辑. 我们可以定义一个辅助的 primary parser 函数来 wrap 这些 parser 函数. 这个 primary 函数能够根据 <code>static int CurTok</code> 来调用对应的 parser.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// primary</span></span><br><span class="line"><span class="comment">//      :: = identifierexpr</span></span><br><span class="line"><span class="comment">//      :: = numberexpr</span></span><br><span class="line"><span class="comment">//      :: = parenexpr</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; ParsePrimary() &#123;</span><br><span class="line">    <span class="keyword">switch</span> (CurTok)</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="keyword">case</span> tok_identifier:</span><br><span class="line">        <span class="keyword">return</span> ParseIdentifierExpr();</span><br><span class="line">    <span class="keyword">case</span> tok_number:</span><br><span class="line">        <span class="keyword">return</span> ParseNumberExpr();</span><br><span class="line">    <span class="keyword">case</span> <span class="string">')'</span>:</span><br><span class="line">        <span class="keyword">return</span> ParseParenExpr();</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">        <span class="keyword">return</span> LogError(<span class="string">"unknown token when expecting an expression"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="binary-expression-parsing"><a class="markdownIt-Anchor" href="#binary-expression-parsing"></a> Binary Expression Parsing</h2>
+<p>由于二义性， 二元表达式更加难以处理. 比如说当给定一个字符串 <code>x + y * z</code>, parser 可以选择解释为 <code>(x + y) * z</code> 也可以解释为 <code>x + (y * z)</code>. 不过一般来讲, 符合常规的是第二种做法.</p>
+<p>所以我们需要使用运算符优先级来处理这个问题, Operator-Precedence Parsing 使用运算符的优先级来告诉我们递归的顺序, 即首先处理哪个表达式. 首先我们定义一个运算符优先级表:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// GetTokPrecedence - Get the precedence of the pending binary operator token.</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">GetTokPrecedence</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!isascii(CurTok)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> TokPrec = BinOpPrecedence[CurTok];</span><br><span class="line">    <span class="comment">// Make sure it's a declared binOp</span></span><br><span class="line">    <span class="keyword">if</span> (TokPrec &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> TokPrec;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// InitTokPrecedence - Install standard binary operators with their precedence</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">initTokPrecedence</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Install standard binary operators</span></span><br><span class="line">    BinOpPrecedence[<span class="string">'&lt;'</span>] = <span class="number">10</span>;</span><br><span class="line">    BinOpPrecedence[<span class="string">'+'</span>] = <span class="number">20</span>;</span><br><span class="line">    BinOpPrecedence[<span class="string">'-'</span>] = <span class="number">20</span>;</span><br><span class="line">    BinOpPrecedence[<span class="string">'*'</span>] = <span class="number">40</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在最基本的 Kaleidoscope 中, 我们只支持 4 个二元操作符. 不过这个可以按需添加. <code>GetTokPrecedence()</code> 会返回当前 <code>static int CurTok</code> 的优先级.</p>
+<p>当定义完上述的辅助函数之后, 我们就可以开始解析二元表达式. 操作符优先级解析器的思路就是, 将具有二义性的表达式拆分成不同的部分. 例如, 针对表达式 <code>a + b + (c + d) * e * f + g</code>, 我们可以将它看作被二元操作符分割的 primary 表达式流 (a stream of primary expressions separated by binary operators). 就这样, 首先处理第一个表达式 <code>a</code>, 然后就是 <code>[+, b], [+, (c + d)], [*, e], [*, f] and [+, g]</code>.</p>
+<p>所以, 一个表达式就是一个 primary 表达式， 加上后面可能存在的 [binOp, primary expr] 序列.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// expression</span></span><br><span class="line"><span class="comment">//      :: = primary binOpRHS</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; ParseExpression() &#123;</span><br><span class="line">    <span class="keyword">auto</span> LHS = ParsePrimary();</span><br><span class="line">    <span class="keyword">if</span> (!LHS)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ParseBinOpRHS(<span class="number">0</span>, <span class="built_in">std</span>::move(LHS));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>ParseBinOpRHS()</code> 能够解析 [binOp, primary expr] 序列流. 它的参数是优先级 (上述例子为 <code>0</code>), 和目前已经被解析的部分 (上述例子为 <code>LHS</code>). 以表达式 <code>x</code> 为例, 它被划分为 <code>x</code> 和一个空的 <code>binOpRHS</code>. 以 <code>a + b + (c + d) * e * f + g</code> 为例, <code>a</code> 是一个合法的 primary 表达式， 即 <code>LHS</code>, 同时 <code>binOpRHS</code> 为 <code>+ b + (c + d) * e * f + g</code>, 当前的 <code>static int CurTok</code> 是 <code>+</code>.</p>
+<p>传给 <code>ParseBinOpRHS()</code> 的第一个参数是优先级值, 它表明了这个函数能处理的最小操作符优先级. 如果当前的 pair stream 是 <code>[+, x]</code> 并且第一个传入的参数为 <code>40</code>, 那它不会再消耗 tokens (因为 <code>+</code> 的优先级为 <code>20</code> 小于 <code>40</code>), 所以:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// binOpRHS</span></span><br><span class="line"><span class="comment">//      :: = ( binOp primary)*</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; ParseBinOpRHS(<span class="keyword">int</span> ExprPrec, <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; LHS)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// if this is a binOp, find its precedence</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">int</span> TokPrec = GetTokPrecedence();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// if this is a binOp that binds at least </span></span><br><span class="line">        <span class="comment">// as tightly as the current binOP, </span></span><br><span class="line">        <span class="comment">// consume it, otherwise we are done.</span></span><br><span class="line">        <span class="keyword">if</span> (TokPrec &lt; ExprPrec) &#123;</span><br><span class="line">            <span class="keyword">return</span> LHS;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// we know it's a binOP</span></span><br><span class="line">        <span class="keyword">int</span> BinOp = CurTok;</span><br><span class="line">        <span class="comment">// eat binOp</span></span><br><span class="line">        getNextToken();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// parse the primary expression after the binOP.</span></span><br><span class="line">        <span class="keyword">auto</span> RHS = ParsePrimary();</span><br><span class="line">        <span class="keyword">if</span> (!RHS) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// If binOP binds less tightly with RHS than the</span></span><br><span class="line">        <span class="comment">// operator after RHS, let the pending operator take</span></span><br><span class="line">        <span class="comment">// RHS and its LHS</span></span><br><span class="line">        <span class="keyword">int</span> NextPrec = GetTokPrecedence();</span><br><span class="line">        <span class="keyword">if</span> (TokPrec &lt; NextPrec) &#123;</span><br><span class="line">            <span class="comment">// a + b * c -&gt; a + (b * c)</span></span><br><span class="line">            RHS = ParseBinOpRHS(TokPrec + <span class="number">1</span>, <span class="built_in">std</span>::move(RHS));</span><br><span class="line">            <span class="keyword">if</span> (!RHS) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// a + b + c -&gt; (a + b) + c</span></span><br><span class="line">        LHS = <span class="built_in">std</span>::make_unique&lt;BinaryExprAST&gt;(BinOp, <span class="built_in">std</span>::move(LHS), <span class="built_in">std</span>::move(RHS));</span><br><span class="line"></span><br><span class="line">        <span class="comment">// loop until the ends of expr.</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>ParseBinOpRHS()</code> 首先比较当前 token 的优先级和传入参数的优先级. 如果当前 binOp 优先级, <code>TokPrec</code> 低于传入参数的优先级, 那么就说明 binOp 左边的 primary 表达式要优先计算, 直接返回 <code>LHS</code> 即可. 若 binOP 的优先级不低于传入参数, 那么就使用 <code>int BinOp</code> 持有当前的这个 binOp, 并调用 <code>getNextToken()</code> 处理好当前 binOp 右边的这个 primary 表达式, 并使用 <code>RHS</code> 持有引用， 所以现在 <code>static int CurTok</code> 表示的是下一个 binOp, 它的优先级是 <code>NextPrec</code>. 然后, 需要判断上面的这个 <code>RHS</code> 是和 <code>LHS</code> 结合的紧还是和下一个 primary 表达式结合的紧. 如果 <code>NextPrec</code> 优先级大于 <code>TokPrec</code>, 那么 <code>RHS</code> 和它右边的 primary 表达式结合的紧, 所以递归调用 <code>ParseBinOpRHS()</code>, 第一个参数为 <code>TokPrec + 1</code>, 第二个为 <code>RHS</code>, 可以将高优先级的序列先处理完毕, 并作为 <code>RHS</code> 返回. 若 <code>NextPrec</code> 不大于 <code>TokPrec</code> 那么, <code>LHS</code> 和 <code>RHS</code> 结合得更紧, 那么先算出 <code>LHS</code> 和 <code>RHS</code>, 之后再将它们的结果作为 <code>LHS</code> 循环算出后面的值.</p>
+<blockquote>
+<p>在遇到优先级高的 binOP, 递归调用 <code>ParseBinOpRHS()</code> 时, 传的参数一定是 <code>TokPrec + 1</code> 才能在第一个条件判断中退出.</p>
+</blockquote>
+<h2 id="parsing-the-rest"><a class="markdownIt-Anchor" href="#parsing-the-rest"></a> Parsing the Rest</h2>
+<p>然后我们要处理函数原型, 和函数定义. 函数原型如下:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// prototype</span></span><br><span class="line"><span class="comment">//      :: = id '(' id* ')'</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;PrototypeAST&gt; ParsePrototype() &#123;</span><br><span class="line">    <span class="keyword">if</span> (CurTok != tok_identifier)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> LogErrorP(<span class="string">"Expected function name in prototype"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> FnName = IdentifierStr;</span><br><span class="line">    <span class="comment">// eat the function name</span></span><br><span class="line">    getNextToken();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (CurTok != <span class="string">'('</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> LogErrorP(<span class="string">"Expected '(' in prototype"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// feed the arg list into vector</span></span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; ArgNames;</span><br><span class="line">    <span class="keyword">while</span> (getNextToken() == tok_identifier)</span><br><span class="line">    &#123;</span><br><span class="line">        ArgNames.push_back(IdentifierStr);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (CurTok != <span class="string">')'</span>)</span><br><span class="line">        <span class="keyword">return</span> LogErrorP(<span class="string">"Expected ')' in prototype"</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// eat ')'</span></span><br><span class="line">    getNextToken();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">std</span>::make_unique&lt;PrototypeAST&gt;(FnName, <span class="built_in">std</span>::move(ArgNames));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>函数定义就是函数原型加上函数体:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// function definition</span></span><br><span class="line"><span class="comment">//          :: = 'def' prototype expression</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;FunctionAST&gt; ParseDefinition() &#123;</span><br><span class="line">    <span class="comment">// eat def</span></span><br><span class="line">    getNextToken();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> Proto = ParsePrototype();</span><br><span class="line">    <span class="keyword">if</span> (!Proto) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">auto</span> E = ParseExpression()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">std</span>::make_unique&lt;FunctionAST&gt;(<span class="built_in">std</span>::move(Proto), <span class="built_in">std</span>::move(E));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>并且我们支持使用 <code>extern</code> 关键字进行前向声明:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// external forward declaration</span></span><br><span class="line"><span class="comment">//          :: = 'extern' prototype</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;PrototypeAST&gt; ParseExtern() &#123;</span><br><span class="line">    <span class="comment">// eat 'extern'</span></span><br><span class="line">    getNextToken();</span><br><span class="line">    <span class="keyword">return</span> ParsePrototype();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后我们允许用户使用任意的顶级 (非嵌套) 表达式 (top-level expressions), 我们使用匿名零元函数 (anonymous nullary function) 来处理:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// toplevelexpr</span></span><br><span class="line"><span class="comment">//      :: = expression</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;FunctionAST&gt; ParseTopLevelExpr() &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">auto</span> E = ParseExpression()) &#123;</span><br><span class="line">        <span class="comment">// anonymous nullary function</span></span><br><span class="line">        <span class="keyword">auto</span> Proto = <span class="built_in">std</span>::make_unique&lt;PrototypeAST&gt;(<span class="string">""</span>, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt;());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">std</span>::make_unique&lt;FunctionAST&gt;(<span class="built_in">std</span>::move(Proto), <span class="built_in">std</span>::move(E));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="the-driver"><a class="markdownIt-Anchor" href="#the-driver"></a> The Driver</h2>
+<p>Driver 就是使用循环来调用不同的 parser 函数 (dispatch loop):</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleDefinition</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (ParseDefinition()) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Parsed a function definition.\n"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        getNextToken();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleExtern</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (ParseExtern()) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Parsed an extern.\n"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        getNextToken();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleTopLevelExpression</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (ParseTopLevelExpr()) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Parsed a top-level expression.\n"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        getNextToken();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// top ::= definition | external | expression | ';'</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">MainLoop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"ready&gt; "</span>);</span><br><span class="line">        <span class="keyword">switch</span> (CurTok) &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">';'</span> : <span class="comment">// ignore top-level semicolons </span></span><br><span class="line">            getNextToken();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> tok_def :</span><br><span class="line">            HandleDefinition();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> tok_extern :</span><br><span class="line">            HandleExtern();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> tok_eof :</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            HandleTopLevelExpression();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/09/Kaleidoscope-Tutorial-Introduction-and-the-Lexer/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/05/09/Kaleidoscope-Tutorial-Introduction-and-the-Lexer/" class="post-title-link" itemprop="url">Kaleidoscope: Tutorial Introduction and the Lexer</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-05-09 19:37:42 / Modified: 19:39:09" itemprop="dateCreated datePublished" datetime="2019-05-09T19:37:42+08:00">2019-05-09</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="the-basic-language"><a class="markdownIt-Anchor" href="#the-basic-language"></a> The Basic Language</h2>
+<p>Kaleidoscope 是一个面向过程的语言, 允许你定义函数, 使用条件判断, 数学计算等. 在后面的教程中, 我们还会扩展    Kaleidoscope 使它支持 <code>if/then/else</code> 结构, 循环结构和用户定义的操作符.</p>
+<p>Kaleidoscope 中唯一的数据类型是 64 bit 的浮点类型 (<code>double</code> in C). 下面是使用 Kaleidoscope 实现的斐波拉契数列.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Compute the x'th Fibonacci Number</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">fib</span><span class="params">(x)</span></span></span><br><span class="line"><span class="function">    <span class="title">if</span> <span class="title">x</span> &lt; 3</span></span><br><span class="line"><span class="function">    <span class="title">then</span> 1</span></span><br><span class="line"><span class="function">    <span class="title">else</span> <span class="title">fib</span><span class="params">(x<span class="number">-1</span>)</span> + <span class="title">fib</span><span class="params">(x<span class="number">-2</span>)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"># <span class="title">This</span> <span class="title">expression</span> <span class="title">will</span> <span class="title">compute</span> <span class="title">the</span> 40<span class="title">th</span> <span class="title">number</span></span></span><br><span class="line"><span class="function"><span class="title">fib</span><span class="params">(<span class="number">40</span>)</span></span></span><br></pre></td></tr></table></figure>
+<p>我们还允许 Kaleidoscope 能够调用标准库函数 (LLVM JIT 能够轻易的实现它). 你可以使用 <code>extern</code> 关键字来定义一个函数.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="title">sin</span><span class="params">(arg)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="title">cos</span><span class="params">(arg)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">extern</span> <span class="title">atan2</span><span class="params">(arg1 arg2)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">atan2</span>(<span class="built_in">sin</span>(<span class="number">.4</span>), <span class="built_in">cos</span>(<span class="number">42</span>))</span><br></pre></td></tr></table></figure>
+<h2 id="the-lexer"><a class="markdownIt-Anchor" href="#the-lexer"></a> The Lexer</h2>
+<p>当实现一个语言时, 第一件事就是能够处理源代码文件, 并知道它想表达的意思. 传统的做法是使用 lexer (scanner) 将输入的源文件处理为 tokens. Lexer 返回的每个 token 都包括一个 token code 和一些 metadata (比如数字的值). 首先我们定义这些可能使用到的数据:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// The lexer return tokens [0-255]</span></span><br><span class="line"><span class="comment">// if it is an unknown character,</span></span><br><span class="line"><span class="comment">// otherwise one of these known things.</span></span><br><span class="line"><span class="keyword">enum</span> Token &#123;</span><br><span class="line">    tok_eof = <span class="number">-1</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// commands</span></span><br><span class="line">    tok_def    = <span class="number">-2</span>,</span><br><span class="line">    tok_extern = <span class="number">-3</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment">// primary</span></span><br><span class="line">    tok_identifier = <span class="number">-4</span>,</span><br><span class="line">    tok_number     = <span class="number">-5</span>,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Filled in if tok_identifier</span></span><br><span class="line"><span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">string</span> IdentifierStr;</span><br><span class="line"><span class="comment">// Filled in if tok_number</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">double</span> NumVal;</span><br></pre></td></tr></table></figure>
+<p>Lexer 返回的每个 token 要么是 Token 枚举中的值, 要么是一个 “未知” 的字符的 <code>ascii</code> 值, 比如 <code>+</code>. 如果当前的 token 是一个标识符, 那么 <code>IdentifierStr</code> 会保存它的名字. 如果当前 token 是一个数字, 那么 <code>NumVal</code> 会保存它的值.</p>
+<p>Lexer 实现是 <code>gettok()</code> 函数, <code>gettok()</code> 被调用之后, 会返回从标注输入中获取的下一个 token.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">gettok</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">int</span> LastChar = <span class="string">' '</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Skip any whitespace</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="built_in">isspace</span>(LastChar))</span><br><span class="line">    &#123;</span><br><span class="line">        LastChar = getchar();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p><code>gettok</code> 通过调用 <code>getchar()</code> 从标准输入中读取字符, 并忽略 tokens 之间的空格, 它仅仅是将字符存储到 <code>LastChar</code> 中, 不进行处理.</p>
+<p><code>gettok</code> 接下来要识别标识符和关键字.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">isalpha</span>(LastChar)) &#123;</span><br><span class="line">    IdentifierStr = LastChar;</span><br><span class="line">    <span class="keyword">while</span> (<span class="built_in">isalnum</span>(LastChar = getchar()))</span><br><span class="line">    &#123;</span><br><span class="line">        IdentifierStr += LastChar;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (IdentifierStr == <span class="string">"def"</span>) <span class="keyword">return</span> tok_def;</span><br><span class="line">    <span class="keyword">if</span> (IdentifierStr == <span class="string">"extern"</span>) <span class="keyword">return</span> tok_extern;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> tok_identifier;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果不是标识符和关键字，那进一步判断是否为数字.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">isdigit</span>(LastChar) || LastChar == <span class="string">'.'</span>) &#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> NumStr;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">        NumStr += LastChar;</span><br><span class="line">        LastChar = getchar();</span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="built_in">isdigit</span>(LastChar) || LastChar == <span class="string">'.'</span>);</span><br><span class="line"></span><br><span class="line">    NumVal = strtod(NumStr.c_str(), <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">return</span> tok_number;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当读取的字符为数字时, 使用 <code>strtod()</code> 将它转化为 <code>double</code> 并存储在 <code>NumVal</code> 中. 这一步没有做异常处理, 有需要的可以添加.</p>
+<p>然后我们处理注释:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (LastChar == <span class="string">'#'</span>) &#123;</span><br><span class="line">    <span class="comment">// Comment until end of line</span></span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">        LastChar = getchar();</span><br><span class="line">    &#125; <span class="keyword">while</span> (LastChar != EOF &amp;&amp; LastChar != <span class="string">'\n'</span> &amp;&amp; LastChar != <span class="string">'\r'</span>);</span><br><span class="line">    <span class="comment">// Return the next token</span></span><br><span class="line">    <span class="keyword">if</span> (LastChar != EOF)</span><br><span class="line">        <span class="keyword">return</span> gettok();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注释会跳过 <code>#</code> 后面所有的字符，直到下一行或者 <code>EOF</code>. 当跳过之后, 需要重新进行处理并返回下一个 token， 所以直接尾递归调用 <code>gettok()</code> 即可. 如果输入不匹配标识符和关键字, 也不匹配数字, 只有可能是 <code>+</code> 之类的操作符, 和 <code>EOF</code>.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Check for end of file. Don't eat EOF</span></span><br><span class="line">    <span class="keyword">if</span> (LastChar == EOF) &#123;</span><br><span class="line">        <span class="keyword">return</span> tok_eof;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Otherwise, just return the character as its ascii value</span></span><br><span class="line">    <span class="keyword">int</span> ThisChar = LastChar;</span><br><span class="line">    LastChar = getchar();</span><br><span class="line">    <span class="keyword">return</span> ThisChar;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上就是 Kaleidoscope 的 lexer.</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/05/ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -869,148 +1485,6 @@
 <p><strong>Bootstrapping.</strong> The bootstrapping simply creates an enclave and loads the secure in-enclave loader to the enclave.</p>
 <p><strong>Secure in-enclave loader.</strong> The secure in-enclave loader is a dynamic loader that conducts the randomization unit-level memory object loading and relocations. It resolves the relocation information for all the memory reference including the absolute address and the PC-relative address. We implements this (parsing the ELF file, randomly loading and relocation ) with a single C file.</p>
 
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/30/Getting-Started-with-LLVM-Core-Libraries/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/04/30/Getting-Started-with-LLVM-Core-Libraries/" class="post-title-link" itemprop="url">Getting Started with LLVM Core Libraries</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-04-30 21:19:54 / Modified: 21:22:19" itemprop="dateCreated datePublished" datetime="2019-04-30T21:19:54+08:00">2019-04-30</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
           
         
       
@@ -1900,603 +2374,6 @@ For uses of variables, the set of reaching definitions is the union of the set c
 <p>We used serveral programs from the SPEC CPU 2000 benchmark suite to measure overhead added by our instrumentation. These benchmarks are CPU-intensive and they spend most time executing instrumented code at user level.</p>
 <p>The first set of experiments measured two variants of the overhead of data-flow integrity enforcement: <em>intraproc</em> DFI only instruments uses of control-data and use of local variables without definitions outside their function, and <em>interproc</em> DFI is the variant described earlier in the paper.</p>
 <p>The average overhead of execution time is 43% for <em>intraproc</em> DFI and 104% for <em>interproc</em> DFI.</p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/01/Block-oriented-programming/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/04/01/Block-oriented-programming/" class="post-title-link" itemprop="url">Block-oriented programming</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-04-01 10:47:46 / Modified: 10:50:14" itemprop="dateCreated datePublished" datetime="2019-04-01T10:47:46+08:00">2019-04-01</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
-<p>Control-flow Integrity still allows the attacker control over the execution along two dimensions: the imprecision in the analysis and CFI’s statelessness; data-only attacks allow an attacker to influence conditional branches arbitrarily. With CFI, exploits become highly program dependent as the set of reachable gadgets is severely limited by CFI policy, so exploits must therefore follow valid paths in the CFG.</p>
-<p>We present BOPC (<em>Block Oriented Programming Compiler</em>), an automatic framework to evaluate a program’s remaining attack surface under strong control-flow hijacking mitigation. BOPC compiles an “exploit” into a program trace, which is executed on top of the orignal program’s CFG. To express the desired exploits flexibly, BOPC provides a Turing-complete, high-level language: SPloit language (SPL). BOPC takes as input an SPL payload and a starting point and returns a trace through the program that encodes the SPL payload.</p>
-<p>First, BOPC translates the SPL payload into constraints for individual statements and, for each statement, searches for basic blocks in the target binary that satisfy these constraints (called <em>candidate blocks</em>). At this point, SPL abstract register assignments from underlying architecture. Second, BOPC infers a resource (register and state) mapping for each SPL statement, iterating through the set of candidate blocks and turing them into <em>functional blocks</em> which can be used to execute a concrete instantiation of the given SPL statement. Third, BOPC constructs a trace that connect each functional block through <em>dispatcher  blocks</em>. Since the mapping process is NP-hard, to find a solution in reasonable time BOPC first prunes the set of functional blocks per statement to constrain the search space and then use a ranking based on the proximity of individual function blocks as a heuristic when searching for dispatcher gadgets.</p>
-<h2 id="assumption-and-threat-model"><a class="markdownIt-Anchor" href="#assumption-and-threat-model"></a> Assumption and threat model</h2>
-<p>Our threat model consists of a binary with a known memory corruption vulnerability that is protected with the state-of-art control-flow hijacking mitigation, such as CFI along with a <em>shadow stack</em>. Futhermore, the binary is also hardened with DEP, ASLR and Stack Canaries.</p>
-<p>We assume that the target binary has an arbitrary memory write vulnerability. The attacker can write any value to any (writable) address which called an <em>Arbitrary memory Write Primitive</em> (AWP). To bypass probabilistic defenses such as ASLR, we assume that the attacker has access to an information leak, i.e., a vulnerability that allows her to read any value from any memory address which called <em>Arbitrary memory Read primitive</em> (ARP).</p>
-<p>We also assume that there exist an entry point, i.e., a location that the program reaches naturally after completion of all AWPs (and ARPs). Thus BOPC does not require code pointer corruption to reach the entry point. Determining an entry point is considered to be a part of the vulnerability discovery process.</p>
-<p>These assumption enable BOPC to inject a payload into a target binary’s address space, modifying its memory state to execute the payload. BOPC assumes that the AWP (and/or ARP) may be triggered multiple times to modify the memory state of the target binary. After the state modification completes, the SPL payload executes without using the AWP (and or ARP) further.</p>
-<h2 id="design"><a class="markdownIt-Anchor" href="#design"></a> Design</h2>
-<ol>
-<li>SPL payload</li>
-<li>Selecting functional blocks</li>
-<li>Searching for dispatcher blocks</li>
-<li>Stiching BOP gagdets</li>
-</ol>
-<p>First, BOPC providing an exploit programming language, called SPL, that enables analysts to define exploits independent of the target program or underlying architecture. Second, to automate SPL gadget discovery, BOPC finds basic blocks from the target program that implement individual SPL statements, called <em>functional blocks</em>. Third, to chain basic blocks together in a manner that adheres with CFI and shadow stacks, BOPC searches the target program for sequences of basic blocks that connect pairs of neighboring functional blocks, which we called <em>dispatcher blocks</em>. Fourth, BOPC simulates the BOP chain to produce a payload that implements that SPL payload from a chosen AWP.</p>
-<p>The BOPC design builds on two key ideas: <em>Block Oriented Programming</em> and <em>Block Constraint Summaries</em>. First, BOP constructs exploit programs called BOP chains from basic block sequences in the valid CFG of a target program. Each BOP gadget is one functional block that implements a statement in an SPL payload and zero or more dispatcher blocks that connect the functional block to the next BOP gadget in a manner that compiles with the CFG.</p>
-<p>Second, BOPC abstracts each basic block from individual instruction into <em>Block Constraint Summaries</em>, enabling blocks to be employed in a varity of different ways. That is, a single block may perform multiple functional and/or dispatching operations by utilizing different sets of register for different purposes. That is, a basic block that modifies a register in a manner that may fulfill an SPL statement may be used as a functional block, otherwise it may be considered to serve as a dispatcher block.</p>
-<p>BOPC leverages Block Constraint Summaries to apply blocks in multiple contexts. There are two cases: either the candidate dispatcher block’s summary constraints indicate that it will modify the register state set and/or the memory state by the functional blocks, called the <em>SPL state</em>, or it will not, enabling the computation to proceed with out disturbing the effects of the functional blocks.</p>
-<p>An important distinction between BOP and ROP is that the problem of computing BOP chains is NP-hard. Conventional ROP assumes that indirect control-flow may target any executable byte in memory while BOP must follow a legal path through the CFG for any chain of blocks, resulting in the need of automation.</p>
-<h3 id="expressing-payloads"><a class="markdownIt-Anchor" href="#expressing-payloads"></a> Expressing Payloads</h3>
-<p>BOPC provides a programming language, called SPloit language that allows analysts to express exploit payloads in a compact high-level language that independent of target program or processor architecture.</p>
-<p>The architecture independence of SPL has important advantages. First, the same payload can be executed under different ISAs or operating systems. Second, SPL uses a set of virtual registers, accessed through reserved volatile variables.</p>
-<p>The environment for SPL differs from that of conventional languages. Instead of running code directly on CPU, our compiler encodes the payload as a mapping of instructions to functional blocks. That is, the underlying runtime environment is the target binary and its program state, where payloads are executed as side effects of the underlying binary.</p>
-<h3 id="selecting-functional-blocks"><a class="markdownIt-Anchor" href="#selecting-functional-blocks"></a> Selecting functional blocks</h3>
-<p>To generate a BOP chain for a SPL payload, BOPC must find a sequnce of blocks that implement each statement in the SPL payload, which called functional blocks.</p>
-<p>Conceptually, BOPC must compare each block to each SPL statement to detemine if the block can implement the statement. However, blocks are in terms of machine code and SPL statements are high-level program statements. BOPC computes <em>Block Constraint Summaries</em>, which define the possible impacts that the block would have on SPL state. Block Constraint Summaries provide flexibly in the matching blocks to SPL statements because there are multiple possible mappings of SPL statements and thier virtual registers to the block and its constraints on register and state.</p>
-<p>The constraint summaries of each basic block are obtained by isolating and symbolically executing it. The effect of executing a basic block creates a set of constraints, mapping input to the resultant output. Such constraints refer to registers, memory locations, jump types and external operatons(e.g., library calls).</p>
-<h3 id="finding-bop-gadgets"><a class="markdownIt-Anchor" href="#finding-bop-gadgets"></a> Finding BOP gadgets</h3>
-<p>The combinaton of a functional block and dispatcher blocks is called a <em>BOP gadgets</em>. However, dispatcher paths between two functional blocks may not exist either because there is no legal path in the CFG between them, or the control flow cannot reach the next block due to unsatisfiable runtime constraint.</p>
-<p>BOP gadgets are volatile: gadget feasibility changes based on the selection of prior gadgets for the target binary. The problem of selecting a suitable sequence of functional blocks, such as that a dispatcher path exists between every possible control flow tansfer in the SPL payload, is NP-hard.</p>
-<p>We propose several heuristics and optimizations to find solutions in reasonable amount of time. BOPC leverages basic block <em>proximity</em> as a metric to “rank” dispatcher paths and organizes this information into a special data structure called a <em>delta graph</em>.</p>
-<h3 id="searching-for-dispatcher-blocks"><a class="markdownIt-Anchor" href="#searching-for-dispatcher-blocks"></a> Searching for dispatcher blocks</h3>
-<p>While each functional block executes a statement, BOPC must chain multiple functional blocks together to execute the SPL payload. Functional blocks are connected through zero or more basic blocks that do not clobber the SPL state computed thus far.</p>
-<p>Finding such blocks is challenging, thus, we propose a graph data structure called <em>delta graph</em>, to represent the state of the search for dispatcher blocks. The delta graph stores, for each functional block, the shortest path to the next candidate blocks.</p>
-<p>The delta graph is a multi-partite, directed graph that has a set of functional block nodes for every payload statement. An edge between two functional blocks represents the <em>minimum</em> number of executed basic blocks to move from one functional block to the other, while avoiding clobbering blocks.</p>
-<p>Calculating the shortest path between two basics in a CFG faces a challenge: while the CFG statically allow multiple targets, at runtime they are context sensitive and only have an concrete target.</p>
-<p>Our context-sensitive shortest path algorithm is a recursive version of Dijkstra’s shortest path algorithm that avoids all clobbering blocks. Initially, each edge on the CFG has a cost of 1. When it encounters a basic block with a call instruction, it recursively calculates the shortest path starting from the calling function’s entry block (Be). if the destination block, Bd, is inside the callee, the shortest path is the concatenation of the two individual shortest paths from the beginning to Be and from Be to Bd. Otherwise, our algorithm finds the shortest path from the Be to the closest return point and uses this value as an edge weight for that callee.</p>
-<p>After creation of delta graph, out algorithm selects exactly one node (i.e, functional block) from each set (i.e payload statement) to minimize the total weight of the resulting induced subgraph.</p>
-<h3 id="stiching-bop-gadgets"><a class="markdownIt-Anchor" href="#stiching-bop-gadgets"></a> Stiching BOP gadgets</h3>
-<p>To find a dispatcher between two functional blocks, BOPC leverages <em>concolic execution</em>, which collects the required constraints that are needed to lead the execution to the next functional block.</p>
-<p>To construct an SPL payload from a BOP chain, BOPC launches concolic execution from the first functional block in the BOP chain, starting with an empty state. At each step BOPC tries the first K shortest dispather path until it finds one that reaches the next functional block. The corresponding constraints are added to the current state. The search therefore incrementally adds BOP gadgets to the BOP chain.</p>
-<h2 id="implementation"><a class="markdownIt-Anchor" href="#implementation"></a> Implementation</h2>
-<p>BOPC requires three distinct inputs:</p>
-<ul>
-<li>The exploit payload expressed in SPL,</li>
-<li>The vulnerable application on top of which the payload runs,</li>
-<li>The entry point in the vulnerable application, which is a location that the program reaches naturally and occurs after all AWPs have been completed.</li>
-</ul>
-<p>The output of BOPC is a sequence of (<em>address</em>, <em>value</em>, <em>size</em>) tuples that describes how the memory should be modified during the state modification phase to execute the payload.</p>
-<h3 id="binary-frontend"><a class="markdownIt-Anchor" href="#binary-frontend"></a> Binary Frontend</h3>
-<p>Using angr to lift the target binary into the VEX intermediate representation to expose the application’s CFG. Then, we translate each basic block into a block constraint summary. BOPC executes each basic block in an isolated environment, where every action (e.g., register and memory accesses) is monitored. Therefore, instead of working with the instructions of each basic block, BOPC utilizes its abstraction for all operations.(<strong>CFGa</strong>)</p>
-<h3 id="spl-frontend"><a class="markdownIt-Anchor" href="#spl-frontend"></a> SPL Frontend</h3>
-<p>The SPL Frontend translates the exploit payload into a graph-based <strong>IR</strong> for further processing. For each statement sequence we build a <em>dependence graph</em> based on a customized version of Kahn’s topological sorting algorithm, to infer all groups of independent statements, Which can be executed out-of-order.</p>
-<h3 id="locating-candidate-block-sets"><a class="markdownIt-Anchor" href="#locating-candidate-block-sets"></a> Locating candidate block sets</h3>
-<p>SPL is a high level language that hides the underlying ABI. Therefore, BOPC finds all possible ways to map individual elements from the SPL environment to the ABI (though candidate blocks).</p>
-<p>Once CFGa and IR are generated, BOPC searches for and marks candidate basic blocks. For a block to be a candidate, it must “semantic match” with one (or more) payload statement. Note that variable assignments, unconditional jumps, and returns do not require a basic block and therefore are excluded from the search.</p>
-<p>All statement that assign or modify registers require the basic block to apply the same operation on the same. For function calls, the requirement for the basic block is to invoke the same call, either as a system call or as a library call.</p>
-<p>Upon a successful matching, BPC builds the following data stuctures:</p>
-<ul>
-<li>
-<p>The Register Mapping Graph, which is a bipartite undirected graph. The nodes in the two sets represent the virtual and hardware registers respectively. The edges represent potential associations between them.</p>
-</li>
-<li>
-<p>The Variable Mapping Graph, which associates payload variables to underlying memory addresses.</p>
-</li>
-<li>
-<p>The Memory Dereference Set, which has all memory addresses that are dereferenced and their values are loaded into registers.</p>
-</li>
-</ul>
-<h3 id="identifying-functional-block-sets"><a class="markdownIt-Anchor" href="#identifying-functional-block-sets"></a> Identifying functional block sets.</h3>
-<p>BOPC iteratively identifies, for each SPL statement, which candidate blocks can serve as functional blocks. This step determines for each candidate block if there is a resource mapping that satisfies the block constraints.</p>
-<p>BOPC identifiers the concrete set of hardware registers and memory addresses that execute the desired statement.</p>
-<p>This step determines, for each statement, which concrete registers and memory addresses are reserved. Merging this information with the set of candidate blocks constructs each block’s SPL state, enabling the removal of candidate blocks that are unsatisfiable.</p>
-<h3 id="selecting-functional-blocks-2"><a class="markdownIt-Anchor" href="#selecting-functional-blocks-2"></a> Selecting functional blocks</h3>
-<p>Given the functional block set Fb, this step searches for a subset that executes all payload statements. The goal is to select exactly one functional block for every IR statement and find dispather blocks to chain them together.</p>
-<p>Once the delta graph is generated, this step locates the minimum induced subgraph, that contains the complete set of functional blocks to execute the SPL payload. If the subgraph does not result in a solution, the algorithm tries the next minimum induced subgraph, until a solution is found or a limit is reached.</p>
-<p>If the resulting deleta graph does not lead to a solution, this step “shuffle” out-of-order payload statement and build a new delta graph.</p>
-<h3 id="discovering-dispatcher-blocks"><a class="markdownIt-Anchor" href="#discovering-dispatcher-blocks"></a> Discovering dispatcher blocks</h3>
-<p>The simulation phase takes the individual functional blocks and tried to find appropriate dispatcher blocks to compose the BOP gadgets. It returns a set of memory assignments for the corresponding dispatcher blocks.</p>
-<p>BOPC is called to find a dispatcher path for every edge in the minimum induced subgraph. That is, we need to simulate every control flow transfer in the adjacency matrix of SPL payload. However, dispatchers are built on the binary’s execution state so far, so BOP gadgets must be stiched with the respect to the program’s current flow originating from the entry point.</p>
-<p>Finding dispatcher blocks relies on concolic execution. Our algorithm utilizes functional block proximity as a metric for dispatcher path quality. However, it cannot predict which constrains will take exponential time to solve. Therefore, concolic execution selects the K shortest dispatcher paths relative to current BOP chain, and tries them in order until one produces a set of satisfiable constraints.</p>
-<p>When simulation starts it also initializes any SPL variables at locations that are reserved during the variable mapping. These addresses are marked as immutable, so any unintended modification raises an exception.</p>
-<p>Simulation traverse the minimum induced subgraph, and incrementally extends the SPL state from one BOP gadget to the next, ensuring that newly added constraints remain satisfiable. When encounting a conditional statement, BOPC clones the current state and continues building the trace for both paths independently.</p>
-<h3 id="synthesizing-exploits"><a class="markdownIt-Anchor" href="#synthesizing-exploits"></a> Synthesizing exploits</h3>
-<p>If the simulation module returns a solution, the final step is to encode the execution trace as a set of memory writes in the target binary.</p>
-<h2 id="discussion-and-future-work"><a class="markdownIt-Anchor" href="#discussion-and-future-work"></a> Discussion and future work</h2>
-<p>BOPC is limited by the granularity of basic blocks. That is, a combination of basic blocks could potentially lead to execution of a desired SPL statement, while individual blocks might not.</p>
-<p>BOPC sets several upper bounds defined by user inputs. These configurable bounds include the upper limit of (i) SPL payload permutations P, (2) length of continuous block L, (3) of minimum induced subgraphs extracted from the delta graph N, (4) dispatcher paths between a pair of functional blocks K. These upper bounds along with the timeout for symbolic execution, reduce the search space, but prune some potentially valid solutions.</p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/23/Data-Oriented-Programming/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/03/23/Data-Oriented-Programming/" class="post-title-link" itemprop="url">Data-Oriented Programming</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-03-23 16:38:19" itemprop="dateCreated datePublished" datetime="2019-03-23T16:38:19+08:00">2019-03-23</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">Edited on</span>
-                
-                <time title="Modified: 2019-03-24 20:29:01" itemprop="dateModified" datetime="2019-03-24T20:29:01+08:00">2019-03-24</time>
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
-<p>Control-flow hijacking attacks are the predominant category of memory exploits today. In response, numerous principled defenses which aim to ensure legal control flow has been proposed.</p>
-<p>A natural question is to analyze the limits of protection offered by control-flow defenses, and the remaining capabilities of the adversary. Control-flow defenses aim to ensure the execution of the program stay legitimate, by protecting the integrity of the <em>control plane</em> memory of by directly checking the targets of control transfers. However, the data plane of memory can offer an additional source of advantage for adversaries (e.g., <em>non-control data attacks</em>).</p>
-<p>In this paper, we show that non-control data attacks with rich expressiveness can be crafted using systematic construction techniques. The key idea in our contribution is to find <em>data-oriented gadgets</em>. then we find <em>gadget dispatchers</em> which are fragment of logic that chain together disjoint gadgets in an arbitrary sequence.</p>
-<h2 id="problem"><a class="markdownIt-Anchor" href="#problem"></a> Problem</h2>
-<h3 id="non-control-data-attacks"><a class="markdownIt-Anchor" href="#non-control-data-attacks"></a> Non-control Data Attacks</h3>
-<p>Non-control data attacks tamper with or leak security-sensitive memory, which is not directly used in control-flow transfer instruction.  The attack payloads, however, exhibit limited expressiveness, such as writing a target variable of choice or leaking contents of a sensitive memory region. Such simple payloads can enable privilege escalation and sensitive data-leakage attacks.</p>
-<p>However, non-control data attacks cannot divert the control flow to arbitrary location, unlike ROP attacks, the expressiveness is believed to be very limited.</p>
-<h3 id="example"><a class="markdownIt-Anchor" href="#example"></a> Example</h3>
-<p>In fact, non-control data attacks can offer rich exploits from common vulnerabilities.</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">server</span>&#123;</span> <span class="keyword">int</span> * cur_max, total, typ;&#125; *srv;</span><br><span class="line"><span class="keyword">int</span> connect_limit = MAX_CONN; <span class="keyword">int</span> *size, *type;</span><br><span class="line"><span class="keyword">char</span> buf[MAXLEN];</span><br><span class="line">size = &amp;buf[<span class="number">8</span>]; type = &amp;buf[<span class="number">12</span>];</span><br><span class="line">...</span><br><span class="line"><span class="keyword">while</span> (connect_limit--) &#123;</span><br><span class="line">  readData(socketfd, buf);        <span class="comment">// stack bof</span></span><br><span class="line">  <span class="keyword">if</span> (*type == NONE)  <span class="keyword">break</span>;      </span><br><span class="line">  <span class="keyword">if</span> (*type == STREAM) &#123;          <span class="comment">// condition</span></span><br><span class="line">    * size = * (srv -&gt; cur_max);  <span class="comment">// dereference</span></span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    srv -&gt; typ = * type;          <span class="comment">// assignment</span></span><br><span class="line">    srv -&gt; total += * size;       <span class="comment">// addition</span></span><br><span class="line">  &#125;</span><br><span class="line">...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>This code does not invoke any security-critical functions in its benign control-flow, and the vulnerability just corrupts a handful of local variables.</p>
-<p>The assignment, dereference and the addition operation can be considered as <em>data-oriented gadgets</em>. The loop structure is called <em>gadget dispatchers</em>.</p>
-<h2 id="data-oriented-programming"><a class="markdownIt-Anchor" href="#data-oriented-programming"></a> Data-Oriented Programming</h2>
-<h3 id="dop-overview"><a class="markdownIt-Anchor" href="#dop-overview"></a> DOP Overview</h3>
-<p>The key is to manipulate non-control data such the executed instructions do the attacker’s bidding. In order to give a concrete and systematic construction, we define a simple mini-language called MINDOP with a virtual instruction set and virtual register operands, in which payload we can specific.</p>
-<p>The MINDOP language has 6 kinds of virtual instructions, each operating on virtual register operands. Each virtual operation is simulated by real x86 instruction sequences available in the vulnerable program, which we call data-oriented gadgets. The control structure allows chaining of gadgets, and the x86 code sequences that simulate the virtual control operations are referred to as gadget dispatchers. None of the gadgets or dispatchers modify any code-pointers or violate CFI in the real program execution.</p>
-<table>
-<thead>
-<tr>
-<th>Semantics</th>
-<th style="text-align:center">Instructions in C</th>
-<th style="text-align:center">Data-Oriented Gadgets in DOP</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>arithmetic/logical</td>
-<td style="text-align:center">a op b</td>
-<td style="text-align:center">*p op *q</td>
-</tr>
-<tr>
-<td>assignment</td>
-<td style="text-align:center">a = b</td>
-<td style="text-align:center">*p = *q</td>
-</tr>
-<tr>
-<td>load</td>
-<td style="text-align:center">a = *b</td>
-<td style="text-align:center">*p = **q</td>
-</tr>
-<tr>
-<td>store</td>
-<td style="text-align:center">*a = b</td>
-<td style="text-align:center">**p = *q</td>
-</tr>
-<tr>
-<td>jump</td>
-<td style="text-align:center"><strong>goto</strong> L</td>
-<td style="text-align:center">vpc = &amp;input</td>
-</tr>
-<tr>
-<td>conditional jump</td>
-<td style="text-align:center"><strong>if</strong> a <strong>goto</strong> L</td>
-<td style="text-align:center">vpc = &amp;input if *p</td>
-</tr>
-</tbody>
-</table>
-<h3 id="data-oriented-gadgets"><a class="markdownIt-Anchor" href="#data-oriented-gadgets"></a> Data-Oriented Gadgets</h3>
-<p>Virtual operations in MINDOP are simulated using concrete x86 instruction sequences in the vulnerable program execution. Such instruction sequences or gadgets read inputs from and write output to memory locations which simulate virtual register operands in MINDOP. Gadgets is within the legitimate CFG of the program, therefore, between two gadgets there maybe several uninteresting instructions which out of the attacker’s control.</p>
-<p>Conceptually, a data-oriented gadget simulates three logical micro-operations: the load micro-operation, the intended virtual operation’s semantics, which are different for each gadget, and the final store micro-operation.</p>
-<table>
-<thead>
-<tr>
-<th>C code</th>
-<th style="text-align:left">srv -&gt; total += *size</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ASM Code</td>
-<td style="text-align:left">1. mov (%esi), %ebx  // load micro-op<br> 2. mov 0x4(%edi), %eax   // load micro-op<br> 3. add %ebx, %eax  // addition <br> 4. mov %eax, 0x4(%edi)  //store micro-op</td>
-</tr>
-</tbody>
-</table>
-<p>Data-oriented gadgets are similar to code gadgets employed in return-oriented programming or in jump-oriented programming. However, there are two differences between data-oriented gadgets and code gadgets. First, data-oriented gadgets require to deliver operation result with memory. Second, data-oriented gadgets must execute in at least one legitimate control flow, and need not execute immediately one after another.</p>
-<p><strong>Simulating Arithmetic Operations.</strong> With addition over arbitrary values, it is possible to simulate multiplication efficiently if the language supports conditional jumps. MINDOP supports conditional jumps which allow to check if a value is smaller / greater than a constant. This can help us to compute the bit-decomposition of a finite-size integer. With bit-decomposition, simulating a multiplication a * b reduces to the efficient shift-and-add procedure, adding a to itself in each step conditional on the bits in b.</p>
-<p><strong>Simulating Assignment Operations.</strong> In MINDOP, assignment gadgets read data from one memory location and directly write to another memory location, e.g., load -&gt; move -&gt; store.</p>
-<p><strong>Simulating Dereference (Load/Store) Operations.</strong> In data-oriented programming. registers are simulated by memory, therefore the memory dereference is simulated by two memory dereferences.</p>
-<h3 id="gadget-dispatcher"><a class="markdownIt-Anchor" href="#gadget-dispatcher"></a> Gadget Dispatcher</h3>
-<p>Various gadgets can be chained sequentially by gadget dispatchers to enable recursive computation. Gadget dispatchers are sequences of x86 instructions that equip attackers with the ability to repeat gadget invocations and, for each invocation, to selectively activate specific gadgets.</p>
-<p>Each iteration executes a subset of gadgets using outputs from gadgets in the previous iteration, which done by change the load address if iteration i+1 to the store addresses of iteration i. Additionally, the selector’s behavior is controlled by attackers through the memory error. The corruption is done in a way that it enables only the gadgets of the attacker’s choice. These gadgets take as input the outputs of the previous round’s gadget by selectively corrupting operand pointers. The remaining gadgets may still get executed, but their inputs and outputs are set up such that they behave like NOPs.</p>
-<p>An <em>interactive</em> attack means attacker can prepare the memory state at the start of loop iteration i in a way that the desired gadget works as required and other gadgets operate on unused memory.</p>
-<p>Another class of DOP attacks are <em>non-interactive</em>, whereby the attacker provides the entire malicious input as a single data transmission. In such a scenario, all the memory setup and conditions for deciding loop termination and selective gadget activation need to be encoded in a single malicious payload. To support such attacks, MINDOP has two virtual operations that enable conditional chaining of operations, or virtual jumps. The basic idea is as follows: the attacker provides the memory configuration Mj necessary for each gadget j to be selectively executed in a particular iteration in the input payload. In addition, it keeps a pointer called <em>virtual PC</em> which points to the desired configuration Mj at the start of each iteration. It suffices to corrupt only the virtual PC, so that the program execution in that iteration operates on the configuration Mj. To decide how to switch to Mk in the next instruction, MINDOP provides virtual operations that set the virtual PC, conditionally or unconditionally.</p>
-<p><strong>Simulating Jump Operations.</strong> The key here is to identify a suitable variable to implement a virtual PC which can be corrupted in each loop iteration. To simulate an unconditional jump, attackers just prepare the memory configuration to trigger another operation gadget (e.g., addition, assignment) to change the value of the virtual PC.</p>
-<h2 id="dop-attack-construction"><a class="markdownIt-Anchor" href="#dop-attack-construction"></a> DOP Attack Construction</h2>
-<h3 id="challenges"><a class="markdownIt-Anchor" href="#challenges"></a> Challenges</h3>
-<p>Though the concept of data-oriented programming is intuitive, it is challenging to construct data-oriented attacks in real-world programs:</p>
-<ul>
-<li>
-<p><strong>Data-oriented gadget identification.</strong> We use static analysis as an aid in identifying these gadgets.</p>
-</li>
-<li>
-<p><strong>Gadget dispatcher identification.</strong> Our gadget dispatcher requires a loop with various gadgets and a selector controlled by the memory error. But it is possible to have the selector and gadgets inside the functions called from loop body.</p>
-</li>
-<li>
-<p><strong>Data-oriented gadget stitching.</strong> The reachability of gadgets depends on concrete memory errors. We need to find malicious input that makes the program execute selected gadgets with the expected addresses and order.</p>
-</li>
-</ul>
-<h3 id="gadget-identification"><a class="markdownIt-Anchor" href="#gadget-identification"></a> Gadget Identification</h3>
-<p>A useful data-oriented gadget needs to satisfy the following requirements:</p>
-<ul>
-<li><strong>MINDOP semantics.</strong> It should have instructions for the load micro-operation, the store micro-operation, and others simulating semantics of MINDOP.</li>
-<li><strong>Gadget internal order.</strong> The three micro-operations should appear in the load-operation-store order, and this correct order should show up in at  least one legitimate control flow.</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">Input:  G:- the vulnerable program</span><br><span class="line">Output: S:- data-oriented gadget <span class="built_in">set</span></span><br><span class="line"></span><br><span class="line">S = ∅;</span><br><span class="line">FuncSet = getFuncSet(G)</span><br><span class="line">foreach f ∈ FuncSet <span class="keyword">do</span></span><br><span class="line">    cfg = getCFG(f)</span><br><span class="line">    <span class="keyword">for</span> instr = getNextInstr(cfg) <span class="keyword">do</span></span><br><span class="line">        <span class="keyword">if</span> isMemStore(instr) then</span><br><span class="line">            gadget = getBackwardSlice(instr, f)</span><br><span class="line">            input = getInput(gadget)</span><br><span class="line">            <span class="keyword">if</span> isMemLoad(input) then</span><br><span class="line">                S = S ∪ &#123;gadget&#125;</span><br></pre></td></tr></table></figure>
-<p>We compile the program source code into LLVM intermediate representation (IR) and perform our analysis on LLVM IR. Our analysis iterates through all functions in the program. We treat each store instruction in the function as a store micro-operation of a new potential gadget. Then our analysis uses a backward data-flow analysis to identify the definitions of the operands in the store instruction. The generated data-flow contains the instructions that derive the operands, like loaded from memory or calculated from registers.</p>
-<p><strong>Gadget Classification.</strong> We classify data-oriented gadgets into different categories based on their semantics and computed variables. Gadgets with the same semantics are functional-equivalent to simulate one MINDOP operation. <strong>There are no function call gadgets in data-oriented programming, as it does not change the  control data.</strong> Based on the computed variables, we further classify gadgets into three categories: <em>global gadget</em>, <em>function-parameter gadget</em> and <em>local gadget</em>.</p>
-<h3 id="dispatcher-identification"><a class="markdownIt-Anchor" href="#dispatcher-identification"></a> Dispatcher Identification</h3>
-<p>We use static analysis on LLVM IR for the initial pharse of dispatcher identification. Since loops are necessary for attackers to repeatedly connect gadgets, we first identify all possible loops in the program. For each loop, we scan the instructions in the loop body to find interesting gadgets. For function calls within the loop, we step into functions through the call graph and iterate through all instruction inside.</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">Input: G:- the vulnerable program</span><br><span class="line">Output: D:- gadget dispatcher <span class="built_in">set</span></span><br><span class="line"></span><br><span class="line">D = ∅;</span><br><span class="line">FuncSet = getFuncSet(G)</span><br><span class="line">foreach f ∈ FuncSet <span class="keyword">do</span></span><br><span class="line">    foreach loop = getLoop(f) <span class="keyword">do</span></span><br><span class="line">        loop.gadgets = ∅</span><br><span class="line">        foreach instr = getNextInstr(loop) <span class="keyword">do</span></span><br><span class="line">            <span class="keyword">if</span> isMemStore(instr) then</span><br><span class="line">                loop.gadgets ∪= getGadget(instr)</span><br><span class="line">            <span class="keyword">else</span> <span class="keyword">if</span> isCall(instr) then</span><br><span class="line">                target = getTarget(instr)</span><br><span class="line">                loop.gadgets ∪= getGadget(target)</span><br><span class="line">        <span class="keyword">if</span> loop.gadgets != ∅ then</span><br><span class="line">            D = D ∪ &#123;loop&#125;</span><br></pre></td></tr></table></figure>
-<p>The second phase of dispatchers identification correlates the identified dispatcher candidates with a known memory error. In this phase, we use a static-dynamic approach to provide identification results with varying degrees of coverage and precision. We mark a loop as reachable if it enfolds the given memory error.</p>
-<h3 id="attack-construction"><a class="markdownIt-Anchor" href="#attack-construction"></a> Attack Construction</h3>
-<p>For a given concrete memory error, the available gadgets and dispatchers rely on the location of the vulnerable code in the program, while the stitchability of gadgets depends on the corruptibility of the memory error. To connect two disjoint data-oriented gadgets, attackers should have the control over the address in the load micro-operation of the second gadget or the address in the store micro-operation of the first gadget.</p>
-<ol>
-<li>
-<p><strong>Gadget preparation (semi-automated).</strong> Given a memory error, we locate the vulnerable function from the source code. Then we identify the gadget dispatchers that enfold the vulnerable code and collect data-oriented gadgets.</p>
-</li>
-<li>
-<p><strong>Exploit chain construction (Manual).</strong> We take the expected malicious MINDOP program as input.</p>
-</li>
-<li>
-<p><strong>Stichability verification (Manual).</strong> We feed concrete input to the program to trigger memory errors to connect expected gadgets.</p>
-</li>
-</ol>
-<h2 id="evaluation"><a class="markdownIt-Anchor" href="#evaluation"></a> Evaluation</h2>
-<h3 id="feasibility-of-dop"><a class="markdownIt-Anchor" href="#feasibility-of-dop"></a> Feasibility of DOP</h3>
-<p>We study 9 applications and measure how many x86 gadgets in these programs can simulate MINDOP operations. We aim to evaluate the following four aspects in our analysis:</p>
-<ul>
-<li>Empirically justify the choice of operations in MINDOP based on the prevalence of x86 gadgets.</li>
-<li>Study the distribution of various types of gadgets based on the scope of input operands.</li>
-<li>Measure the reachability of these x86 gadgets in concrete executions in presence of an exploitable memory corruption.</li>
-<li>Verify if the memory error (in the public CVEs) have the capability to control the input operands and activate the gadgets in concrete executions.</li>
-</ul>
-<p><strong>Gadgets classification.</strong> We classify data-oriented gadgets into three categories based on the scope of the operands, such as global gadgets, function-parameter gadgets and hybrid gadgets</p>
-<p><strong>Execution reachability from memory errors.</strong> We run the vulnerable program with given CVE PoC to get dynamic function call trace, including the vulnerable function. From function call trace, we identify the function invoked by the vulnerable function during the execution. The gadgets inside the invoked function and enfolding loops are the reachable gadgets from the dispatcher.</p>
-<h3 id="turing-complete-examples"><a class="markdownIt-Anchor" href="#turing-complete-examples"></a> Turing-Complete examples</h3>
-<p>ProFTPD is a file server and it’s 1.2-1.3 versions have a stack-based buffer overflow vulnerability in the sreplace function.</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">sreplace</span><span class="params">(<span class="keyword">char</span> *s, ...)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">char</span> *src; *cp, **mptr, **rptr;</span><br><span class="line">    <span class="keyword">char</span> *marr[<span class="number">33</span>], *rarr[<span class="number">33</span>];</span><br><span class="line">    <span class="keyword">char</span> buf[PR_TUNABLE_PATH_MAX] = &#123;<span class="string">'0'</span>&#125;;</span><br><span class="line">    src = s; cp = buf; mptr = marr; rptr = rarr;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">while</span> (*src) &#123;</span><br><span class="line">        <span class="keyword">for</span> (; *mptr; mptr++, rptr++) &#123;</span><br><span class="line">            sstrncpy(cp, *rptr, blen - <span class="built_in">strlen</span>(pbuf));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/*memory error &amp; assignment*/</span></span><br></pre></td></tr></table></figure>
-<ul>
-<li>Conditional assignment operation. We use the sstrncpy function to simulate an assignment which moves data from on arbitrary location to another. In the first iteration of the while loop, the memory error corrupts the variable cp and the content of the array rarr. So in the next iteration, both the source and the target of the string copy sstrncpy are controlled by the attacker. This way, the attacks simulate a assignment operation which is conditional because the attacker can corrupt src.</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">pr_display_file</span><span class="params">(...)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    outs = sreplace(p, buf, ..., <span class="string">"%V"</span>, main_server -&gt; ServerName,);</span><br><span class="line">    pr_response_send_raw(<span class="string">"%s-%s"</span>, code, outs);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">pr_response_send_raw</span><span class="params">(<span class="keyword">const</span> chat *fmt, ...)</span> </span>&#123;</span><br><span class="line">    vsnprintf(resp_buf, size, fmt, msg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li>Dereference operations(Load/Store). The load operations takes two memory addresser as input(p and q) and performs operation *p == ** q. We decompose the operation into two sub-operations: * ptmp = * q and * p = * tmp, such that the ptmp is the address of tmp. We use the assignment gadgets to move data from resp_buf to &amp;ServerName as the first dereference. Then we use the fuction pr_display_file, which reads the contents of ServerName to the buffer resp_buf as the second dereference. These two dereference from MINDOP load operation *resp_buf = ** resp_buf.</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">MODRET <span class="title">xfer_log_retr</span><span class="params">(cmd_rec *cmd)</span> </span>&#123;</span><br><span class="line">    session.total_bytes_out += session.xfer.total_bytes;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li>Addition operation. The structure session is a global variable and hence all the operands of this gadget are under attacker’s control. To achieve an addition operation on arbitrary memory locations, we use the MINDOP assignment operation to load operands from desired source locations to the session structure, perform the addition, and then move the result to the desired destination location.</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">void cmd_loop( server)rec * server, conn_t *c) &#123;</span><br><span class="line">    <span class="keyword">while</span> (True) &#123;</span><br><span class="line">        pr_netio_telnet_gets(buf, ..);</span><br><span class="line">        cmd = make_ftp_cmd(buf, ...);</span><br><span class="line">        pr_cmd_dispatch(cmd);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">char</span> * <span class="title">pr_netio_telnet_gets</span><span class="params">(<span class="keyword">char</span> * buf, ...)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (* pbuf -&gt; current != <span class="string">'\n'</span> &amp;&amp; toread &gt; <span class="number">0</span>)</span><br><span class="line">        * buf++ = * pbuf -&gt; current++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li>(Conditional) jump operation. pbuf -&gt; current is a pointer to next command in the input, thus forming a virtual PC for attacker’s MINDOP program. By corrupting  pbuf -&gt; current, the attacker can select a particular input that invokes a specific MINDOP operation. We use assignment operation to conditionally update virtual PC, thus simulating a conditional jump operation.</li>
-</ul>
-<hr>
-<p>Wireshark is a widely used network packet analyzer and its versions before 1.80 have a stack-based buffer overflow vulnerability. The buffer pd in function packet_list_dissect_and_cache_record accepts frame data from a mpeg trace file. If the attacker sends a malicious trace file containing a large frame, the frame data overflows the buffer. This is used to overwrite variables col, cinfo, and parameter packet_list with malicious input.</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">packet_list_dissect_and_cache_record</span> <span class="params">(PacketList * packet_list, ...)</span> </span>&#123;</span><br><span class="line">    gint col; column_info * cinfo;</span><br><span class="line">    guint8 pd[WTAP_MAX_PACKET_SIZE];    <span class="comment">// vul buf</span></span><br><span class="line">    <span class="comment">// memory error function</span></span><br><span class="line">    cf_read_frame_r(..., fdata, ..., pd);</span><br><span class="line">    packet_list_change_record(packet_list, ..., col, cinfo);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">packet_list_change_record</span><span class="params">(PacketList * packet_list, ..., gint col, column_info * cinfo)</span> </span>&#123;</span><br><span class="line">    record = packet_list -&gt; physical_rows[row];</span><br><span class="line">    record -&gt; col_text[col] = (gchar * )cinfo -&gt; col_data[col];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!record-&gt; col_text_len[col])</span><br><span class="line">        ++packet_list -&gt; const_strings;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">gtk_tree_view_column_cell_set_cell_data</span><span class="params">(...)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (cell_list = tree_column -&gt; cell_list; cell_list;</span><br><span class="line">         cell_list = cell_list -&gt; next) &#123;</span><br><span class="line">             ...</span><br><span class="line">             <span class="comment">// finally calls vulnerable function</span></span><br><span class="line">             show_cell_data_func();</span><br><span class="line">         &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li>
-<p>Assignment operation. Line <code>record -&gt; col_text[col] = (gchar * )cinfo -&gt; col_data[col];</code> shows the gadget. The attacker corrupts record and cinfo to point to controllable memory location.</p>
-</li>
-<li>
-<p>Dereference operation(Load / Store). To simulate a load operation, the attacker corrupts record-&gt;col_text and cinfo. To simulate a store operation, the attacker can change the value of record and cinfo-&gt;col_data.</p>
-</li>
-<li>
-<p>Conditional addition operation. <code>if (!record-&gt; col_text_len[col])</code> and <code>++packet_list -&gt; const_strings;</code> if the attacker corrupts packet_list, she can invoke it to perform add operation on the target location.</p>
-</li>
-<li>
-<p>Conditional jump operation. The memory error is triggered by the file read, and the program maintains a file position indicator in the FILE structure. The attacker can change the file position indicator which serves as a virtual PC.</p>
-</li>
-</ul>
-<p>To chain a large number of gadgets together, we identify a gadget dispatcher from the parent function <code>gtk_tree_view_column_cell_set_cell_data</code>. In the first invocation of the memory error, the attacker uses the assignment operation to corrupt the loop condition cell_list, and points it to a fake linked-list in the malicious payload, making it an infinite loop.</p>
-<h3 id="why-are-expressive-payload-useful"><a class="markdownIt-Anchor" href="#why-are-expressive-payload-useful"></a> Why are expressive payload useful</h3>
-<p><strong>Bypassing Randomization Defenses.</strong> We show how to defeat ASLR with DOP without leaking any addresses to the network. As a real example, consider the vulnerable ProFTPD server, which internally uses OpenSSL for authentication. Our goal is to leak the server’s OpenSSL private key. We found that the private key has a chain of 8 pointers pointing the private key buffer.</p>
-<p>The key idea is to use a short MINDOP virtual program that starts from the base pointer (of known location) and dereference it 7 times within the server’s memory to correctly determine the randomized location of the private key. Once we have the private key buffer’s address, we simply replace an address used by a public output function, causing it to leak the private data to the network.</p>
 
           
         
