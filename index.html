@@ -303,6 +303,244 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/12/SGXBounds-Memory-Safety-for-Shielded-Execution/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/05/12/SGXBounds-Memory-Safety-for-Shielded-Execution/" class="post-title-link" itemprop="url">SGXBounds: Memory Safety for Shielded Execution</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-05-12 15:06:46 / Modified: 15:08:39" itemprop="dateCreated datePublished" datetime="2019-05-12T15:06:46+08:00">2019-05-12</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+<p>Intel SGX provides an abstraction of <em>secure enclave</em>, which can be used to achieve <em>shielded execution</em> for <strong>unmodified legacy applications</strong> on untrusted infrastructure.</p>
+<p>Shielded execution aims to protect confidentiality and integrity of applications when executed in an untrusted environment. The main idea is to isolate the application from the rest of the system, using only a narrow interface to communicate to the outside.</p>
+<p>However, shield execution does not protect the program against <em>memory safety</em> attacks. To validate our claim, we reproduced publicly available memory safety exploits inside the secure enclave. These examples highlight that a single exploit can completely compromise the integrity and confidentiality properties of shield execution.</p>
+<p>To prevent exploitation of these bugs, we experimented with two prominent software- and hardware based memory protection mechanisms in the context of shield execution: AddressSanitizer and Intel MPX, respectively.</p>
+<p>But, both of them incur high performance overhead, due to additional metadata used to track object bounds.</p>
+<p>In this paper, we present SGXBOUNDS. The SGXBOUNDS approach is based on a simple combination of tagged pointers and efficient memory layout to reduce overheads inside enclaves. In particular, we note that SGX enclave routine use only 32 lower bits to represent program address space and leave 32 higher bits of pointers unused. We utilize these high bits to represent the upper bound of the referent object (or more broadly the beginning of the object’s metadata area); the lower bound value is stored right after the object. Such metadata layout requires only 4 additional bytes per object and does not break cache locality — unlike Intel MPX and AddressSanitizer.</p>
+<p>Futhermore, we show that our design naturally extends for: (1) “synchronization-free” support for multi-threaded application, (2) increased availability instead of usual fail-stop semantics by tolerating out-of-bounds accesses, (3) generic APIs for object’s metadata management to support new use-cases.</p>
+<h2 id="background"><a class="markdownIt-Anchor" href="#background"></a> Background</h2>
+<p><strong>SCONE</strong> is a shielded execution framework that enables unmodified legacy application to take advantage of the isolation offered by SGX. With SCONE, the program is recompiled against a modified standard C library (SCONE libc), which facilitates the execution of of system calls.</p>
+<p>Clearly, the combination of SCONE and SGX is not a silver bullet: bugs in the enclave code itself can render these mechanisms useless.</p>
+<p><strong>Address Sanitizer</strong> is an extension to GCC and Clang/LLVM that detects the majority of object bounds violations. It keeps track of all objects, and checks whether the address is within one of the used objects on each memory access.</p>
+<p><strong>Intel MPX</strong> detects all possible spatial memory vulnerabilities including intra-object ones (When one member in a structure corrupts other members). The approach to achieving this goal is different from AddressSanitizer. Instead of separating objects by unaddressable redzones, MPX keeps <em>bounds metadata</em> of all pointers and check against these bounds on each memory access.</p>
+<p>One major limitation of the current Intel MPX implementation is a small number of bounded registers. If an application contains many distinct pointers, it will cause frequent loads and stores of bounds in memory.</p>
+<h2 id="sgxbounds"><a class="markdownIt-Anchor" href="#sgxbounds"></a> SGXBOUNDS</h2>
+<p>We built SGXBOUNDS based on the following three insights. First, shielded application memory (specifically, its working set) must be kept minimal due to the very limited EPC size in current SGX implementation. Second, applications spend a considerable amount of time iterating through the elements of an array, and a smartly chosen layout of metadata can significantly reduce the overhead of bounds checking. Third, we rely on the SCONE infrastructure with its monolithic build process: all application code is statically linked without external dependencies. The first and second insights dictate the use of per-object metadata combined with <em>tagged pointers</em> to keep memory overhead minimal.</p>
+<h3 id="design-overview"><a class="markdownIt-Anchor" href="#design-overview"></a> Design overview</h3>
+<p>All modern SGX CPU operates in a 64-bit mode, meaning that all pointer are 64 bits in size. In SGX enclaves, however, only 36 bit of virtual address space are currently addressable. Thus, SGXBOUNDS relies on the idea of <em>tagged pointers</em>: a 64-bit pointer contains the pointer itself in its lower 32 bits and the referent object’s upper bound in the upper 32 bits.</p>
+<p>The value stored in the higher 32 bits (UB) serves not only for the upper-bound check, but also as a pointer to the object’s other metadata (LB). The metadata is stored right after the referent object.</p>
+<p>This metadata layout has important benefits: (1) it minimizes amount of memory for metadata, (2) it requires <em>no</em> additional memory accesses, (3) it alleviates problems of fat pointers concerning multi-threading and memory layout changes.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">int *s[N], *d[N]</span><br><span class="line">s = specify_bounds(s, s + N)</span><br><span class="line">d = specify_bounds(d, d + N)</span><br><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; M; i++)</span><br><span class="line">    si = s + i</span><br><span class="line">    di = d + i</span><br><span class="line">    sp, sLB, sUB = extract(si)</span><br><span class="line">    <span class="keyword">if</span> bounds_violated(sp, sLB, sUB)</span><br><span class="line">        crash(si)</span><br><span class="line">    val = load si</span><br><span class="line">    dp, dLB, dUB = extract(di)</span><br><span class="line">    <span class="keyword">if</span> bounds_violated(dp, dLB, dUB)</span><br><span class="line">        crash(di)</span><br><span class="line">    store val, di</span><br></pre></td></tr></table></figure>
+<h3 id="design-details"><a class="markdownIt-Anchor" href="#design-details"></a> Design details</h3>
+<p><strong>Pointer creation.</strong> Whenever an object is created, SGX-BOUNDS associates a pointer with the bound of this object.</p>
+<p>For global and stack-allocated variables, we change their memory layout so they are padded with 4 bytes and initialize them at runtime. More specifically, we wrap such variables in two-member structures, e.g., <code>int x</code> is transformed into <code>struct xwarp {int x; void* LB}</code>:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">specify_bounds</span><span class="params">(<span class="keyword">void</span> *p, <span class="keyword">void</span> *UB)</span> </span>&#123;</span><br><span class="line">    LBaddr  = UB;</span><br><span class="line">    *LBaddr = p;</span><br><span class="line">    tagged  = (UB &lt;&lt; <span class="number">32</span>) | p;</span><br><span class="line">    <span class="keyword">return</span> tagged;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>For dynamically allocated variables, SGXBOUNDS wraps memory management functions to append 4 bytes to each newly created object, initialize these with the lower-bound value, and make the pointer tagged with the upper bound:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">malloc</span><span class="params">(<span class="keyword">int</span> size)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">void</span> *p = malloc_real(size + <span class="number">4</span>);</span><br><span class="line">    <span class="keyword">return</span> specify_bounds(p, p + size);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Note that there is no need to instrument <code>free</code> as the 4 bytes of metadata are removed together with the object itself.</p>
+<p><strong>Run-time bounds checks.</strong> SGXBOUNDS inserts run-time bounds check before each memory access: loads, stores, and atomic operations. For this, first the original pointer and the upper and lower bounds are extracted. To extract the original pointer:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">extract_p</span><span class="params">(<span class="keyword">void</span> *tagged)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> tagged &amp; <span class="number">0xFFFF'FFFF</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>To extract the upper bound&quot;</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">extract_UB</span><span class="params">(<span class="keyword">void</span> *tagged)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> tagged &gt;&gt; <span class="number">32</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>To extract the lower bound which stored in the padded region:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">extract_LB</span><span class="params">(<span class="keyword">void</span> *UB)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> *UB;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Finally, the bound check:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">bounds_violated</span><span class="params">(<span class="keyword">void</span> *p, <span class="keyword">void</span> *LB, <span class="keyword">void</span> * UB)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (p &lt; LB || p &gt; UB) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Pointer arithmetic.</strong> SGXBOUNDS instruments pointer arithmetic so that only 32 low bits are affected:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">UB = extract_UB(si)</span><br><span class="line">si = s + i</span><br><span class="line">si = (UB &lt;&lt; <span class="number">32</span>) | extract_p(si)</span><br></pre></td></tr></table></figure>
+<p><strong>Type casts.</strong> Pointer-to-integer and integer-to-pointer casts are a curse for fat/tagged pointer approaches.</p>
+<p><strong>Function calls.</strong> SGXBOUNDS does not need to instrument function calls or altering calling conventions. The only uninstrumented code is the libc, for which we provide wrappers. This implies that any tagged pointer passed as a function argument will be treated as a tagged pointer in the callee.</p>
+<h2 id="advanced-features-of-sgxbounds"><a class="markdownIt-Anchor" href="#advanced-features-of-sgxbounds"></a> Advanced Features of SGXBOUNDS</h2>
+<h3 id="multi-threading-support"><a class="markdownIt-Anchor" href="#multi-threading-support"></a> Multi-threading support</h3>
+<p>AddressSanitizer does not require any specific treatment of multi-threading, but it can negatively affect cache locality if a multi-threaded application was specifically designed as cache-friendly.</p>
+<p>All fat-pointer or disjoint-metadata techniques similar to Intel MPX suffer from multi-threading issues. An update of a pointer and its associated metadata must be implemented as one atomic operation.</p>
+<p>SGXBOUNDS does not experience this problem. Indeed, the pointer and the upper bound are always updated atomically since they are stored in the same 64-bit tagged pointer.</p>
+<h3 id="tolerating-bugs-with-boundless-memory"><a class="markdownIt-Anchor" href="#tolerating-bugs-with-boundless-memory"></a> Tolerating bugs with boundless memory</h3>
+<p>To allow applications to survive most bugs and attacks and continue correct execution, SGXBOUNDS reverts to failure-oblivious computing by using the concepts of boundless memory blocks. In this case, whenever an out-of-bounds memory access is detected, SGXBOUNDS redirects this access to a separate “overlay” memory area to prevent corruption of adjacent objects, creating the illusion of &quot;boundless memory allocated for the object.</p>
+<p>Consider an example of a classic off-by-one error, SGXBOUNDS will redirect to load and store to an overlay address, instead of a violation of accessing metadata.</p>
+<h3 id="metadata-management-support"><a class="markdownIt-Anchor" href="#metadata-management-support"></a> Metadata management support</h3>
+<p>So far, we discussed only one metadata type kept per object — the lower bound. However, our memory layout allows us to add arbitrary number of metadata items for each object to implement additional functionality.</p>
+<p>All instrumentation in SGXBOUNDS is implemented as calls to auxiliary functions, which we refer to as instrumentation hooks. One can think of these hooks as a metadata management API : (1) <code>on_create()</code> is called at run-tim whenever a new object is created. In the context of SGXBOUNDS, it corresponds to the <code>specify_bounds()</code> function which initializes our only metadata (lowerbound). (2) <code>on_access()</code> is called at each memory access, be it a write, read, or both (for atomic instruction such as compare-and-swap). In SGXBOUNDS, the hook roughly corresponds to the <code>bounds_violated()</code> function. (3) <code>on_delete()</code> is called whenever the object is deallocated, we support this hook only for the head objects.</p>
+<table>
+<thead>
+<tr>
+<th>function</th>
+<th style="text-align:left">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>on_create(base, size, type)</code></td>
+<td style="text-align:left">called after object creation (global, heap, or stack)</td>
+</tr>
+<tr>
+<td><code>on_access(addr, size, metadata, access_type)</code></td>
+<td style="text-align:left">called before memory access</td>
+</tr>
+<tr>
+<td><code>on_delete(metadata)</code></td>
+<td style="text-align:left">called before object destruction(only for heap)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="implementation"><a class="markdownIt-Anchor" href="#implementation"></a> Implementation</h2>
+<h3 id="sgxbounds-implementation"><a class="markdownIt-Anchor" href="#sgxbounds-implementation"></a> SGXBOUNDS implementation</h3>
+<p>SGXBOUNDS is a compile-time transformation pass implemented in LLVM 3.8.</p>
+<p><strong>Compiler Support.</strong> We treat inline assembly as an opaque memory instruction: all pointer arguments to inline assembly are bounds checked. SGXBOUNDS does not yet completely support c++ exception handling.</p>
+<p><strong>Run-time Support.</strong> We implement boundless memory feature completely in the run-time support library. To prevent data races, all read/update operations on the cache are synchronized via a global lock. For the tagged pointer scheme, SGXBOUNDS relies on SGX enclaves (thus the virtual address space) to start from 0x0. To allow this, we set Linux security flag <code>vm.mmap_min_addr</code> to zero for our applications. We also modified the original Intel SGX driver to always start the enclave at address 0x0.</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/09/Kaleidoscope-Code-generation-to-LLVM-IR/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2213,220 +2451,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/05/Securing-software-by-enforcing-data-flow-integrity/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/04/05/Securing-software-by-enforcing-data-flow-integrity/" class="post-title-link" itemprop="url">Securing software by enforcing data-flow integrity</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-04-05 16:49:18 / Modified: 17:13:26" itemprop="dateCreated datePublished" datetime="2019-04-05T16:49:18+08:00">2019-04-05</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
-<p>Most software is written in unsafe languages like C and C++, which is vulnerable to attacks. Almost all these attacks subvert the intended data-flow in the program. <em>Control-data attacks</em> exploit buffer overflows or other vulnerabilities to overwrite a return address, a functional pointer. <em>Non-control-data attacks</em> exploit similar vulnerabilities to overwrite security critical data without subverting the intended control-flow in the program.</p>
-<p>This paper present a technique that prevent both attack by enforcing data-flow integrity. This technique computes a data-flow graph for a vulnerable program using static analysis, and instruments the program to ensure that flow of data at runtime is allowed by the data-flow graph.</p>
-<p>We implemented data-flow integrity enforcement which using reaching definition analysis to compute a static data-flow graph. For each value read by an instruction, it computes the sets of instructions that may write the value.</p>
-<p>To enforce data-flow integrity at runtime, our implementation instruments the program to compute the definition that actually reaches each use at runtime. It maintains a table with the identifier of the last instruction to write to each memory location. The program is instrumented to update this table before every write and prevent attacker from tampering this table. We also instrument reads to check if the identifier of the instruction that wrote the value being read is an element of the set computed by the static analysis.</p>
-<h2 id="data-flow-integrity-enforcement"><a class="markdownIt-Anchor" href="#data-flow-integrity-enforcement"></a> Data flow integrity enforcement</h2>
-<h3 id="overview"><a class="markdownIt-Anchor" href="#overview"></a> Overview</h3>
-<p>The first phase uses static analysis to compute a data-flow graph for the vulnerable program. The second instruments the program to ensure that the data-flow at runtime is allowed by the graph. The last one runs the instruments program and raises an exception if data-flow integrity is violated.</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> authenticated = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">char</span> packet[<span class="number">1000</span>];</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (!authenticated) &#123;</span><br><span class="line">    PacketRead(read);</span><br><span class="line">    <span class="keyword">if</span> (Authenticate(packet)) &#123;</span><br><span class="line">        authenticated = <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (authenticated)</span><br><span class="line">    ProcessPacket(packet);</span><br></pre></td></tr></table></figure>
-<p>We use reaching definitions analysis to compute the static data-flow graph. An instruction that writes to a memory position <em>defines</em> the value in the memory position, and an instruction that reads the value is said to <em>use</em> the value. The analysis computes the set of reaching definitions for each use and assigns an identifier to each definition. It returns a map from instructions to definition identifiers and a set of reaching definition identifiers for each use, which we call the static data-flow graph.</p>
-<p>The analysis can be imprecise but it is important that it be conservative. It must include in the set all definitions that may reach a use at runtime but it may include additional definitions.</p>
-<p>The second phase instruments the program to enforce a simple safety property that we call data flow integrity, i.e., whenever a value is read, the definition identifier of the instruction that wrote the value is in the set of reaching definitions for the read.</p>
-<p>The program is instrumented to compute the definition that reaches each read at runtime and to check if this definition is in the set of reaching definition identifiers that was computed statically. We maintain the <em>runtime definitions table</em> (RDT) that records the identifier of the last instruction to write to each memory position. Every write is instrumented to update the RDT. The instrumentation before reads uses the address of the value being read to retrieve the identifier from the RDT. Then, it checks if the identifier is in the statically-computed set.</p>
-<p>The attacker must be prevented from tampering with the RDT (Any attempt to write to the RDT generates an exception), tampering with the code (Read-only protection for code pages) or bypassing the instrument (Instrumentation of control-data, e.g., CFI).</p>
-<h3 id="static-analysis"><a class="markdownIt-Anchor" href="#static-analysis"></a> Static analysis</h3>
-<p>We compute reaching definitions using a combination of two analyses: a flow-sensitive intra-procedural analysis and a flow-insensitive and context-insensitive inter-procedural analysis.</p>
-<p>The intra-procedural analysis takes flow control into account. We use this analysis to compute reaching definitions for uses of local variables that have no definitions external to the function in which they are declared. The inter-procedural analysis is used to compute reaching definitions for all other uses.</p>
-<p>The inter-procedural analysis is less precise to allow it to scale to large programs. It ignore control-flow and it does not take the calling context into account when analyzing functions. We implemented points-to analysis to compute the set of objects that each pointer can point to, and we use these point-to sets to compute reaching definitions.</p>
-<p>The points-to analysis makes a global pass over all source files to collect <em>subset constraints</em>. Each assignment x = y results in a subset constraints x ⊇ y, which means that the set of possible values of x contains the set of possible values of y. The analysis compiles each source file to IR, and it writes all subset constraints in the IR to a file. After this global pass, it computes the points-to sets by iterating over all the constraints until it reaches a fix point.</p>
-<p>During the global pass, we also collect the target locations and identifiers of instruction that write to locations that may be read in other functions.</p>
-<p>We compute inter-procedural reaching definitions using the points-to sets and information about write instructions collected during global pass.<br>
-For uses of variables, the set of reaching definitions is the union of the set containing the identifiers of all writes to the variables with the sets containing the identifiers of all writes to dereferences of pointers that may point to the variable. For pointer dereferences, the set of reaching definitions is the union of set containing the identifier of all writes to the dereferences pointer with the sets of reaching definitions of all the variable the pointer can point to.</p>
-<p><strong>Both the intra-procedural and the inter-procedural analyses assume that correct programs do not use pointer arithmetic to navigate between independent objects in memory.</strong> However, it is precisely this assumption that is violated by most attacks.</p>
-<p>Since we control code generation, we can ensure that these temporaries are placed in registers beyond the reach of an attack. The attacker cannot voilate data-flow integrity by overwriting these registers because our instrumentation prevents it from subverting thr control flow. We only compute reaching definitions and instrument accesses of temporaries that are spilled to memory.</p>
-<h3 id="instrumentation"><a class="markdownIt-Anchor" href="#instrumentation"></a> Instrumentation</h3>
-<p>We add instrumentation by inserting new instruction into the IR of the program.</p>
-<ul>
-<li>SETDEF   opnd id</li>
-<li>CHECKDEF opnd setName</li>
-</ul>
-<p>The first instruction sets the RDT entry for opnd to id. The second retrieves the runtime definition identifier for opnd from the RDT and checks if the identifier is in the reaching definitions set with name setName. The compiler maintains a map from the setName to set values that is used when lowering CHECKDEF instructions to the assembly of the target machine.</p>
-<p>We do not instrument temporaries that we can ensure are allocated to registers, and we also do not instrument the use of local variables of which address are computed by adding a constant to the frame pointer.</p>
-<p>To enable efficient accesses, the RDT is implemented as an array with a definition identifier for each 32-bit memory word in the instrumented program. Each definition identifier is two bytes long, which seems sufficient even for large programs (2 ^ 16 identifiers).</p>
-<p>Since programs can access memory at byte granularity, it would seem necessary to record a 2-byte definition identifier for every byte of memory. This would result in a space overhead of approximately 200%, which is not practical. We are able to record a single identifier for each 32-bit word because we can generate code in which no two variables with distinct reaching definition sets share the same aligned 32-bit memory word. We only changed the compiler to use a minimum alignment of 32 bits when laying out local variables in a stack frame and globals in the data segment.</p>
-<p>In current implementation, we allocate the lowest 1 GB of virtual address space to the program being instrumented and 512 MB to the RDT with a guard page between them, that is, the guard page is at address 4000 0000h and the base address of RDT is at 4000 1000h. This layout also enables efficient bounds checking of the target addresses: we raise an exception if the bitwise and of the target address with c000 0000h is non-zero.</p>
-<p>The high-level instrumentation is lowered to x86 assembly as illustrated by the following examples:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"># SETDEF authenticated 1</span><br><span class="line"></span><br><span class="line">    lea ecx, [_authenticated]</span><br><span class="line">    test ecx, C0000000h</span><br><span class="line">    je L</span><br><span class="line">    int 3</span><br><span class="line">L:  shr ecx, 2</span><br><span class="line">    mov word ptr [ecx*2 + 40001000h], 1</span><br><span class="line"></span><br><span class="line"># CHECKDEF authenticated 100</span><br><span class="line"></span><br><span class="line">    lea ecx, [_authenticated]</span><br><span class="line">    shr ecx, 2</span><br><span class="line">    mov cx, word ptr [ecx*2 + 40001000h]</span><br><span class="line">    cmp cx, 1</span><br><span class="line">    je L</span><br><span class="line">    cmp cx, 8</span><br><span class="line">    je L</span><br><span class="line">    int 3</span><br><span class="line">L:</span><br></pre></td></tr></table></figure>
-<h2 id="optimizations"><a class="markdownIt-Anchor" href="#optimizations"></a> Optimizations</h2>
-<p>A naive implementation of a data-flow integrity enforcement can perform poorly: each definition introduces a write to the RDT and each use check introduces a read from the RDT followed by comparisons against each identifier in the set of reaching definitions for the use.</p>
-<h3 id="renaming-equivalent-definitions"><a class="markdownIt-Anchor" href="#renaming-equivalent-definitions"></a> Renaming equivalent definitions</h3>
-<p>The first Optimization partitions definitions into equivalence classes in a way that allows us to safely assign the same identifier to all definitions in the same class. Two definitions are equivalent if they have a exactly the same set of use.</p>
-<h3 id="removing-bounds-check-on-writes"><a class="markdownIt-Anchor" href="#removing-bounds-check-on-writes"></a> Removing bounds check on writes</h3>
-<p>We can optimize SETDEFs by removing these checks from all safe writes. In the current implementation, a write is safe if the target address is obtained by adding a small constant offset (possibly) zero to the stack pointer, frame pointer, or to the address of a global or static variable.</p>
-<h3 id="removing-setdefs-and-checkdefs"><a class="markdownIt-Anchor" href="#removing-setdefs-and-checkdefs"></a> Removing SETDEFs and CHECKDEFs</h3>
-<p>To identify redundant instrumentation, we use symbolic execution of the native code augmented with SETDEF and CHECKDEF operations. Two addresses are equal if they are syntactically equal. They are different if they are computed by adding different offsets to the same symbolic register state. Otherwise, they may refer to aliased memory locations. A write to memory invalidates the symbolic state of a register if the state refers to the content of a memory position that may be aliased with the write’s target. Additionally, it removes mappings for any memory that may be aliased with the write’s target from the symbolic RDT state. We apply the rules to eliminate redundant instrumentation after each SETDEF and CHECKDEF by examining the symbolic RDT state.</p>
-<h3 id="optimizing-membership-checks"><a class="markdownIt-Anchor" href="#optimizing-membership-checks"></a> Optimizing membership checks</h3>
-<p>Another optimization renames definitions to reduce the cost of membership checks in the CHECKDEFs. Membership checks can be implemented more efficiently when sets contain ranges of consecutive identifier: a check against {0 … n} can be implemented by a single unsigned integer camparison against n.</p>
-<h3 id="removing-setdefs-for-safe-difinitions"><a class="markdownIt-Anchor" href="#removing-setdefs-for-safe-difinitions"></a> Removing SETDEFs for safe difinitions</h3>
-<p>The last optimization identifies local variables that have no definitions outside the function and that are written only by safe writes. It replaces all SETDEFs for such a variable by a single SETDEF with identifier 0 that is placed on function entry.</p>
-<h2 id="evaluation"><a class="markdownIt-Anchor" href="#evaluation"></a> Evaluation</h2>
-<h3 id="overhead"><a class="markdownIt-Anchor" href="#overhead"></a> Overhead</h3>
-<p>We used serveral programs from the SPEC CPU 2000 benchmark suite to measure overhead added by our instrumentation. These benchmarks are CPU-intensive and they spend most time executing instrumented code at user level.</p>
-<p>The first set of experiments measured two variants of the overhead of data-flow integrity enforcement: <em>intraproc</em> DFI only instruments uses of control-data and use of local variables without definitions outside their function, and <em>interproc</em> DFI is the variant described earlier in the paper.</p>
-<p>The average overhead of execution time is 43% for <em>intraproc</em> DFI and 104% for <em>interproc</em> DFI.</p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2475,7 +2499,7 @@ For uses of variables, the set of reaching definitions is the union of the set c
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">15</span>
+                    <span class="site-state-item-count">16</span>
                     <span class="site-state-item-name">posts</span>
                   </a>
                 </div>
@@ -2539,7 +2563,9 @@ For uses of variables, the set of reaching definitions is the union of the set c
                     
                       
                     
-                    <span class="site-state-item-count">11</span>
+                      
+                    
+                    <span class="site-state-item-count">12</span>
                     <span class="site-state-item-name">tags</span>
                   </a>
                 </div>
