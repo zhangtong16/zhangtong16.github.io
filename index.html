@@ -303,6 +303,223 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/15/Kaleidoscope-Adding-JIT-and-Optimizer-Support/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/05/15/Kaleidoscope-Adding-JIT-and-Optimizer-Support/" class="post-title-link" itemprop="url">Kaleidoscope: Adding JIT and Optimizer Support</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-05-15 21:52:27 / Modified: 21:54:27" itemprop="dateCreated datePublished" datetime="2019-05-15T21:52:27+08:00">2019-05-15</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="chapter-4-introduction"><a class="markdownIt-Anchor" href="#chapter-4-introduction"></a> Chapter 4 Introduction</h2>
+<p>这一章主要是两个部分: (1) 给语言添加一个 Optimizer, (2) 添加 JIT 支持.</p>
+<h2 id="trivial-constant-folding"><a class="markdownIt-Anchor" href="#trivial-constant-folding"></a> Trivial Constant Folding</h2>
+<p>第二章中我们并没有添加任何的优化操作, 然而, <code>IRBuilder</code> 自动帮我们完成了下列的优化:</p>
+<figure class="highlight llvm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ready&gt; def test(<span class="keyword">x</span>) <span class="number">1</span>+<span class="number">2</span>+<span class="keyword">x</span><span class="comment">;</span></span><br><span class="line"><span class="comment">Read function definition:</span></span><br><span class="line"><span class="comment">define double @test(double %x) &#123;</span></span><br><span class="line"><span class="comment">    entry:</span></span><br><span class="line"><span class="comment">        %addtmp = fadd double 3.000000e+00, %x</span></span><br><span class="line"><span class="comment">        ret double %addtmp</span></span><br><span class="line"><span class="comment">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>如果没有这个优化 (Constant folding), 我们得到的代码里就会把 <code>1</code> <code>2</code> 相加, 再把结果加上 <code>x</code>. 这个类型的优化叫做 Constant folding, 很多语言在实现它的时候都是在 AST 表达中进行的. 但是使用 LLVM 实现语言, 使用 <code>IRBuilder</code> 来生成代码时, 这个优化会自动完成.</p>
+<p>然而, <code>IRBuilder</code> 自身的优化也受到一定程度的限制:</p>
+<figure class="highlight llvm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ready&gt; def test(<span class="keyword">x</span>) (<span class="number">1</span>+<span class="number">2</span>+<span class="keyword">x</span>)*(<span class="keyword">x</span>+(<span class="number">1</span>+<span class="number">2</span>))<span class="comment">;</span></span><br><span class="line"><span class="comment">Read the function definition:</span></span><br><span class="line"><span class="comment">define double @test(double %x) &#123;</span></span><br><span class="line"><span class="comment">    entry:</span></span><br><span class="line"><span class="comment">        %addtmp = fadd double 3.000000e+00, %x</span></span><br><span class="line"><span class="comment">        %addtmp1 = fadd double %x, 3.000000e+00</span></span><br><span class="line"><span class="comment">        %multmp = fmul double %addtmp, %addtmp1</span></span><br></pre></td></tr></table></figure>
+<p>在这个例子中, LHS 和 RHS 显然是相同的值, 但 <code>IRBuilder</code> 的 local analysis 不可能能检测到并且优化这些代码. 这需要两个 transformation: (1) reassociation of expressions (重新关联表达式, 使得 <code>+</code> 的表示变得唯一), (2) Common SubExpression Elimination (CSE, 公共子表达式消除, 删除重复的 <code>+</code> 指令).</p>
+<p>所以我们要使用 “<strong>pass</strong>” 来完成这些优化.</p>
+<h2 id="llvm-optimization-passes"><a class="markdownIt-Anchor" href="#llvm-optimization-passes"></a> LLVM Optimization Passes</h2>
+<blockquote>
+<p><code>PassManger</code> 改版了, 这篇教程是基于 <code>llvm::legacy::FunctionPassManager</code> 的, 这个类可以在 <code>LegacyPassManager.h</code> 找到. <s>但我还是尝试用新版的来实现</s></p>
+<p>参考Luke的回答, 使用继承了 PassInfoMixin class 的新版 Pass; 使用 FunctionAnalysisManager 类来注册 Pass; 使用 PassBuilder 工具类辅助.</p>
+<p><a href="https://stackoverflow.com/a/48726129/4684264" target="_blank" rel="noopener">答案链接</a></p>
+</blockquote>
+<p>LLVM 提供了很多优化 pass, 而且同时允许编译器开发者定义, 并在合适的时候调用自己的 pass.</p>
+<p>举个具体的例子, LLVM 提供了对整个 Module 进行处理的 pass, 同时也包括对单个函数的 pass. 在 Kaleidoscope 中, 我们使用的是针对单个函数的优化 pass, 也就是说用户定义一个我们就优化一个.</p>
+<p>首先添加我们需要的全局变量:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;llvm::FunctionPassManager&gt; TheFPM;</span><br><span class="line"><span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;llvm::FunctionAnalysisManager&gt; TheFAM;</span><br><span class="line"><span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;llvm::PassBuilder&gt; ThePB;</span><br></pre></td></tr></table></figure>
+<p>然后我们需要设置好 <code>FunctionPassManager</code>, 用它来添加我们所想运行的 pass, 由于每个 Module 都需要 new 一个 <code>FunctionPassManager</code>， 我们就添加一个初始化它们的函数. 我们在该函数的最后才初始化 <code>TheFAM</code>, <code>ThePB</code>:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">InitializeModuleAndPassManager</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// open a new Module</span></span><br><span class="line">    TheModule = <span class="built_in">std</span>::make_unique&lt;llvm::Module&gt;(<span class="string">"my cool jit"</span>, TheContext);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create a new pass manager attached to it</span></span><br><span class="line">    TheFPM = <span class="built_in">std</span>::make_unique&lt;llvm::FunctionPassManager&gt;(TheModule.get());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Combine instructions to form fewer, simple</span></span><br><span class="line">    <span class="comment">// instructions. This pass does not modify the CFG. This</span></span><br><span class="line">    <span class="comment">// pass is where algebraic simplification happens.</span></span><br><span class="line">    <span class="comment">// (https://llvm.org/docs/Passes.html#instcombine-combine-redundant-instructions)</span></span><br><span class="line">    TheFPM-&gt;addPass(llvm::InstCombinePass());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// This pass reassociates commutative expressions in an order</span></span><br><span class="line">    <span class="comment">// that is designed to promote better constant propagation, GCSE, LICM, PRE, etc.</span></span><br><span class="line">    <span class="comment">// (https://llvm.org/docs/Passes.html#reassociate-reassociate-expressions)</span></span><br><span class="line">    TheFPM-&gt;addPass(llvm::ReassociatePass());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// This pass performs global value numbering to eliminate fully and partially redundant instructions.</span></span><br><span class="line">    <span class="comment">// It also performs redundant load elimination.</span></span><br><span class="line">    <span class="comment">// (https://llvm.org/docs/Passes.html#gvn-global-value-numbering)</span></span><br><span class="line">    TheFPM-&gt;addPass(llvm::GVN());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Performs dead code elimination and basic block merging.</span></span><br><span class="line">    <span class="comment">// (https://llvm.org/docs/Passes.html#simplifycfg-simplify-the-cfg)</span></span><br><span class="line">    TheFPM-&gt;addPass(llvm::SimplifyCFGPass());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Using PassBuilder and FunctionAnalysis Manager Register analysis passes</span></span><br><span class="line">    ThePB = <span class="built_in">std</span>::make_unique&lt;llvm::PassBuilder&gt;();</span><br><span class="line">    TheFAM = <span class="built_in">std</span>::make_unique&lt;llvm::FunctionAnalysisManager&gt;();</span><br><span class="line">    ThePB-&gt;registerFunctionAnalyses(*TheFAM.get());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这部分代码首先初始化全局的 <code>TheModule</code>, 和 <code>TheFPM</code>. 然后使用一系列的 <code>addPass()</code> 方法来给 <code>TheFPM</code> 添加 Pass. 添加完之后, 使用 <code>ThePB</code> 和 <code>TheFAM</code> 来注册这些 Pass.</p>
+<p>然后我们得使用它, 所以在 <code>FunctionAST::codegen()</code> 中生成代码之后加上:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Finish off the function</span></span><br><span class="line">Builder.CreateRet(RetVal);</span><br><span class="line"><span class="comment">// Validate the generated code, checking for consistency</span></span><br><span class="line">llvm::verifyFunction(*TheFunction);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Optimization of the function code</span></span><br><span class="line">    TheFPM-&gt;run(*TheFunction, *TheFAM.get());</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> TheFunction;</span><br></pre></td></tr></table></figure>
+<p>记得在 <code>main()</code> 里面调用 <code>InitializeModuleAndPassManager()</code></p>
+<h2 id="adding-a-jit-compiler"><a class="markdownIt-Anchor" href="#adding-a-jit-compiler"></a> Adding a JIT compiler</h2>
+<p>将代码生成为 IR 后, 我们可以使用多种不同的工具来对它进行处理. 比如我们可以优化它 (上一节), 或者将它 dump 下来之后, 将 IR 编译为汇编文件 (.s), 或者使用 JIT 来编译它. LLVM IR 就相同于编译器个部分之间的通货 (common currency).</p>
+<p>在这节我们将要给解释器添加 JIT 支持, 最基本的要求是: 一旦我们将函数体输入进去之后, 它能够立刻算出 top-level 表达式的值. 比如在输入 <code>1+2;</code> 之后立即输出一个 <code>3</code>. 同时定义好的函数也能直接在命令行被调用.</p>
+<p>首先我们先准备 native target 的环境, 并声明和初始化 JIT. 注意这里的 <code>class KaleidoscopeJIT</code> 教程里面引用的是 LLVM 源码中的类, 但我不是源码安装, 所以还是把它复制过来再使用.</p>
+<p>首先定义全局变量 <code>static std::unique_ptr&lt;KaleidoscopeJIT&gt; TheJIT;</code>, <code>class Kaleidoscope</code> 定义在 <a href="./KaleidoscopeJIT.h">KaleidoscopeJIT</a>.</p>
+<p>然后在 <code>main()</code> 函数中, 添加这几段:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> JIT</span></span><br><span class="line">    <span class="comment">// Initialize native target</span></span><br><span class="line">    llvm::InitializeNativeTarget();</span><br><span class="line">    llvm::InitializeNativeTargetAsmPrinter();</span><br><span class="line">    llvm::InitializeNativeTargetAsmParser();</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    InitTokPrecedence();</span><br><span class="line">    <span class="comment">// prime the first token</span></span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"ready&gt; "</span>);</span><br><span class="line">    getNextToken();</span><br><span class="line">    TheJIT = <span class="built_in">std</span>::make_unique&lt;llvm::orc::KaleidoscopeJIT&gt;();</span><br><span class="line">    InitializeModuleAndPassManager();</span><br><span class="line">    MainLoop();</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> JIT</span></span><br><span class="line">    <span class="comment">// Print out all of the generated code</span></span><br><span class="line">    TheModule-&gt;print(llvm::errs(), <span class="literal">nullptr</span>);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同时要在 <code>InitializeModuleAndPassManager()</code> 函数中设置 data layout:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// open a new Module</span></span><br><span class="line">TheModule = <span class="built_in">std</span>::make_unique&lt;llvm::Module&gt;(<span class="string">"my cool jit"</span>, TheContext);</span><br><span class="line">TheModule-&gt;setDataLayout(TheJIT-&gt;getTargetMachine().createDataLayout());</span><br><span class="line"></span><br><span class="line"><span class="comment">// Create a new pass manager attached to it</span></span><br><span class="line">TheFPM = <span class="built_in">std</span>::make_unique&lt;llvm::FunctionPassManager&gt;(TheModule.get());</span><br></pre></td></tr></table></figure>
+<p><code>class Kaleidoscope</code> 是一个简单的 JIT 构造类, 我们会在之后的章节中对它进行扩展. 目前的它提供的 API 非常简单: <code>addModule()</code> 给 JIT 添加了一个 Module, 使得函数能够执行; <code>removeModule()</code> 移除一个 Module, 释放相应的内存空间; <code>findSymbol()</code> 使我们能够通过 <code>string name</code> 来查找编译好代码的指针.</p>
+<p>我们能使用这些 API 在 top-level 的 handle 函数中添加表达式值的计算:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="keyword">auto</span> FnAST = ParseTopLevelExpr())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (FnAST-&gt;codegen())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// JIT the module containing the anonymous expression, keeping a handle so we free it later</span></span><br><span class="line">            <span class="keyword">auto</span> H = TheJIT-&gt;addModule(<span class="built_in">std</span>::move(TheModule));</span><br><span class="line">            <span class="comment">// Optimization of passes</span></span><br><span class="line">            InitializeModuleAndPassManager();</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Search the JIT for the __anon_expr symbol</span></span><br><span class="line">            <span class="keyword">auto</span> ExprSymbol = TheJIT-&gt;findSymbol(<span class="string">"__anon_expr"</span>);</span><br><span class="line">            assert(ExprSymbol &amp;&amp; <span class="string">"Function not found"</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Get the symbol's address and cast it to the right type (takes no arguments, returns a double) so we can call it as a native function.</span></span><br><span class="line">            <span class="keyword">double</span> (*FP)() = (<span class="keyword">double</span> (*)())<span class="keyword">static_cast</span>&lt;<span class="keyword">intptr_t</span>&gt; (ExprSymbol.getAddress().get());</span><br><span class="line">            <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Evaluated to %f\n "</span>, FP());</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Delete the anonymous expression module from the JIT</span></span><br><span class="line">            TheJIT-&gt;removeModule(H);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>如果 Parsing 和 codegen 都成功执行, 下一步就是将包含 top-level 表达式的 Module 添加到 JIT, 我们使用 <code>addModule()</code> 这个方法, 触发这个 Module 中 所有函数的代码生成, 并返回一个 <code>VModuleKey</code> 的对象, 使得我们在之后可以移除 Module. 一旦这个 Module 被加入到 JIT, 它就不能被修改, 所以我们需要调用 <code>InitializeModuleAndPassManager()</code> 来打开一个新的 Module, 去持有接下来生成的代码.</p>
+<p>一旦我们将 Module 添加到 JIT, 我们需要找到生成代码的指针, 所以我们使用 JIT 的<code>findSymbol()</code> 方法, 将 top-level 表达式的函数名 “__anon_expr” 当作参数传入, 就可以得到指令地址.</p>
+<p>注意 “__anon_expr” 是要在 Parse top-level 表达式时传入的:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;FunctionAST&gt; ParseTopLevelExpr()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">auto</span> E = ParseExpression())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// anonymous nullary function</span></span><br><span class="line">        <span class="keyword">auto</span> Proto = <span class="built_in">std</span>::make_unique&lt;PrototypeAST&gt;(<span class="string">"__anon_expr"</span>, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt;());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">std</span>::make_unique&lt;FunctionAST&gt;(<span class="built_in">std</span>::move(Proto), <span class="built_in">std</span>::move(E));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后我们使用 <code>getAddress().get()</code> 来获取这个函数在内存中的地址. 我们定义的匿名函数没有参数, 返回值为 <code>double</code>. 因为 LLVM JIT 编译器匹配了 native 平台的 ABI, 所以我们可以直接将函数地址转化成一个函数指针, 然后直接调用它. 这意味着, JIT 编译出的代码和静态链接到应用的 native 机器码没有区别.</p>
+<p>最后, 由于我们不支持 top-level 的重复计算, 我们在代码生成的最后移除 Module, 释放调关联的内存. 但是我们在之前使用 <code>InitializeModuleAndPassManager()</code> 创建的 Module 仍然开启, 新的代码可以继续添加到其中.</p>
+<p>再调用一次之前定义的函数会找不到符号, 因为一个 Module 是 JIT 分配的一个单元, 定义的函数位于前面 Module 中, 当我们把一个 Module 移除之后, 我们就相当于删除了那个 Module 中所有函数的定义, 所以再次调用就找不到符号.</p>
+<p>最简单的方式就是将匿名表达式放在一个单独的 Module, 和其他函数定义分开.</p>
+<p>实际上, 我们想更进一步, 将每个函数都放到一个单独的 Module, 这样就更加像一个 REPL, 函数能被定义多次, 引用它时, 都是返回最近的定义.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="built_in">std</span>::<span class="built_in">map</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>, <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;PrototypeAST&gt;&gt; FunctionProtos;</span><br><span class="line"></span><br><span class="line">llvm::Function *FunctionAST::codegen()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// Transfer ownership of the prototype to the FunctionProtos  </span></span><br><span class="line">    <span class="comment">// map, but keep a reference to it use below</span></span><br><span class="line">    <span class="keyword">auto</span> &amp;P = *Proto;</span><br><span class="line">    FunctionProtos[Proto-&gt;getName()] = <span class="built_in">std</span>::move(Proto);</span><br><span class="line">    <span class="comment">// Check for an existing function from a previous `extern` declaration</span></span><br><span class="line">    llvm::Function *TheFunction = getFunction(P.getName());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!TheFunction)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ....</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">llvm::Value *CallExprAST::codegen()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// Lookup the name in the global module table</span></span><br><span class="line">    llvm::Function *CalleeF = getFunction(Callee);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">llvm::<span class="function">Function *<span class="title">getFunction</span><span class="params">(<span class="built_in">std</span>::<span class="built_in">string</span> Name)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// First, check if the function has already been added to the </span></span><br><span class="line">    <span class="comment">// current mode</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">auto</span> *F = TheModule-&gt;getFunction(Name)) &#123;</span><br><span class="line">        <span class="keyword">return</span> F;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// If not exist, check wether we can codegen the declaration // from some existing prototype</span></span><br><span class="line">    <span class="keyword">auto</span> FI = FunctionProtos.find(Name);</span><br><span class="line">    <span class="keyword">if</span> (FI != FunctionProtos.end()) &#123;</span><br><span class="line">        <span class="keyword">return</span> FI-&gt;second-&gt;codegen();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// if no existing prototype exists, return null</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先添加一个全局的 <code>map&lt;string, unique_ptr&lt;PrototypeAST&gt;&gt; FunctionProtos</code>, 用它来保存每个函数最近的一次函数原型. 并且我们添加了一个 <code>getFunction()</code> , 代替 <code>TheModule-&gt;getFunction()</code>. 自定义的 <code>getFunction()</code>, 首先它搜寻 Module, 看有没有存在的函数声明, 如果没有就生成函数原型的代码. <strong>所以我们可以把之前 <code>Function *FunctionAST::codegen()</code> 之中的那个生成函数原型的代码片段删除</strong>. 同时在 <code>Function *FunctionAST::codegen()</code> 中, 我们首先更新 <code>FunctionProtos</code>, 再调用 <code>getFunction()</code>. 通过使用这个全局的 <code>FunctionProtos</code>, 我们能获取之前声明过的所有函数.</p>
+<p>我们还需要更新 <code>HandleDefinition()</code> 和 <code>HandleExtern()</code>:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleDefinition</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">auto</span> FnAST = ParseDefinition())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">auto</span> *FnIR = FnAST-&gt;codegen())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Read the function definition: "</span>);</span><br><span class="line">            FnIR-&gt;print(llvm::errs());</span><br><span class="line">            <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"\n"</span>);</span><br><span class="line">            TheJIT-&gt;addModule(<span class="built_in">std</span>::move(TheModule));</span><br><span class="line">            InitializeModuleAndPassManager();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        getNextToken();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleExtern</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">auto</span> ProtoAST = ParseExtern())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">auto</span> *FnIR = ProtoAST-&gt;codegen())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Read extern: "</span>);</span><br><span class="line">            FnIR-&gt;print(llvm::errs());</span><br><span class="line">            <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"\n"</span>);</span><br><span class="line">            FunctionProtos[ProtoAST-&gt;getName()] = <span class="built_in">std</span>::move(ProtoAST);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        getNextToken();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在 <code>HandleDefinition()</code> 中, 我们需要将刚刚定义好的函数所在的 Module 添加到 JIT, 然后打开一个新的 Module, 这样就使得每个函数都在不同的 Module 中. 在 <code>HandleExtern()</code> 中, 只需要将这个外部声明添加到 <code>FunctionProtos</code> 中即可.</p>
+<p>并且, 对于外部声明 <code>e.g., extern sin(x)</code>, JIT 有一套直接的符号解析机制: JIT 按照时间逆序, 搜寻所有添加的 Module, 来查找符号的定义. 如果没找到, 它就 fall back 去调用 <code>dlsym(&quot;sin&quot;)</code>, 去 JIT 的地址空间里面去找这个符号的定义, 然后去调用它 (<code>libm</code>).</p>
+<p>后面我们会进一步讨论 JIT 的符号解析机制, 并调整它来实现一些 feature, 比如安全性, 动态代码生成, 甚至是 lazy evaluation.</p>
+<p>调整符号解析规则一个最直接的好处就是, 我们能使用任意的 C++ 代码来扩展语言:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="string">"C"</span> <span class="function">DLLEXPORT <span class="keyword">double</span> <span class="title">putchard</span><span class="params">(<span class="keyword">double</span> X)</span> </span>&#123;</span><br><span class="line">    fputc((<span class="keyword">char</span>)X, <span class="built_in">stderr</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>链接时添加 <code>-rdynamic</code>, 使得 <code>dlopen()</code> 打开的 shared object 能解析到自己程序中的符号.</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/13/Fast-and-generic-metadata-management-with-mid-fat-pointers/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2164,255 +2381,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/21/Enforcing-kernel-security-invariants-with-data-flow-integrity/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/04/21/Enforcing-kernel-security-invariants-with-data-flow-integrity/" class="post-title-link" itemprop="url">Enforcing kernel security invariants with data-flow integrity</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-04-21 20:54:22 / Modified: 20:57:25" itemprop="dateCreated datePublished" datetime="2019-04-21T20:54:22+08:00">2019-04-21</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
-<p>More recently, researchers have demonstrated the feasibility of enforcing Control-Flow Integrity (CFI) in kernel space. However, in addition to problems discovered in CFI, a more fundamental problem is that because OS kernel are mainly data-driven, CFI can be easily by passed by non-control-data attacks.</p>
-<p>The objective of this work is to provide a defense system that is both <em>principled</em> and <em>practical</em>. We achieve the first goal by utilizing Data-Flow Integrity. Similar to CFI, DFI guarantees that runtime data-flow cannot deviate from the data-flow graph generated from static analysis. For example, data from a string buffer should never flow to the return address on the stack (control-data) or the <code>uid</code> (non-control-data). In this work, we focus on enforcing invariants that are related to kernel access control mechanisms (a.k.a., reference monitors) so as to defeat privilege escalation attacks.</p>
-<p>While this approach sounds intuitive at high level, enforcing it with practical runtime performance overhead is very challenging. First, access control checks are scattered through out the kernel, and related data are mixed with other data. Therefore, the protection must be deployed kernel-wide. Moreover, without hardware support, software-based DFI implementation can be every expensive.</p>
-<p>We propose a system called KENALI, which consists of two key techniques. Our first technique, INFERDISTS, is based on the observation that although the protection has to be kernel-wide, only a small portion of data is essential for enforcing the two security invariants. For ease of discussion, we refer to this set of data as <em>distinguishing regions</em>. Our technique, INFERDISTS, overcomes these challenges with a new program-analysis-based approach. Specifically, by leveraging implicit program semantics, INFERDISTS is able to infer security checks with out any manual annotation. After this, by considering both data and control-dependencies of data that can affect each security check, as well as sensitive pointers, INFERDISTS generates a <em>complete</em> set of distinguishing regions.</p>
-<p>Our second technique, PROTECTDISTS, is a new technique to enforce DFI over the distinguishing regions. PROTECTDISTS uses a two-layer protection scheme. The first layer provides a coarse-grained but low overhead data-flow isolation that prevents illegal data-flow from non-distinguishing regions to distinguishing regions. After this separation, the second layer the enforce fine-grained DFI over the distinguishing regions. <strong>Because the access pattern to most data in the distinguishing regions is very asymmetric, read accesses are usually magnitudes more frequent than write accesses</strong>, PROTECTDISTS employs the Write Integrity Test (WIT).</p>
-<h2 id="problem-scope"><a class="markdownIt-Anchor" href="#problem-scope"></a> Problem scope</h2>
-<h3 id="threat-model-and-assumptions"><a class="markdownIt-Anchor" href="#threat-model-and-assumptions"></a> Threat model and assumptions</h3>
-<p>We only consider attacks that originate from unprivileged code. The attacker can read and write word-size value at an arbitrary memory address.</p>
-<h3 id="motivation"><a class="markdownIt-Anchor" href="#motivation"></a> Motivation</h3>
-<ol>
-<li>
-<p><strong>Simple rooting attacks.</strong> CVE-2013-6282 allows attacker to read and write arbitrary kernel memory, which matches our adversary model. (i) Retrieving the address of <code>prepare_kernel_cred()</code> and <code>commit_creds()</code>. Depending on the target system, they can be at fixed address, or obtainable from the kernel symbol table (<code>kallsyms_addresses</code>); (ii) Invoking <code>prepare_kernel_cred()</code> and pass the results to <code>commit_creds()</code>, then the kernel will replace the credential of the current thread with one of root privilege.</p>
-</li>
-<li>
-<p><strong>Bypassing CFI with non-control-data attacks.</strong> The above attack can be prevented by kernel wide CFI. But CFI can be easily bypassed by locating the <code>cred</code> structure and overwriting the <code>euid</code> field. The <code>cred</code> structure can be located in many ways. (i) if <code>kallsyms</code> is available and contains the address of <code>init_task</code>, we can traverse the process list to locate the <code>task_struct</code> of the current process, then <code>task_struct-&gt;cred</code> (ii) if there is a vulnerability that leaks the stack address, attackers can directly obtain the address of the <code>thread_info</code>, then follows the links to locate the <code>task_struct</code>.</p>
-</li>
-<li>
-<p><strong>Diversity of non-control-data attacks.</strong> From the target kernel we evaluated, we found that 2419 data structures contain critical data.</p>
-</li>
-</ol>
-<h2 id="technical-approach"><a class="markdownIt-Anchor" href="#technical-approach"></a> Technical approach</h2>
-<h3 id="inferring-distinguishing-regions"><a class="markdownIt-Anchor" href="#inferring-distinguishing-regions"></a> Inferring distinguishing regions</h3>
-<p>The challenge is that for security, our solution must be sound (i.e., no false positives), but for performance, we want the size of the inference result to be as small as possible.</p>
-<ol>
-<li>
-<p><em>Control-Data</em></p>
-</li>
-<li>
-<p><em>Non-Control-Data:</em> Access controls are implemented as security checks, and while a kernel may have many security checks scattered throughout different components, they all follow one consistent semantic: <strong>if a security check fails, it should return a security related error codes.</strong> Leveraging this observation, we can collect security check without manual annotation. Then, distinguishing regions can be constructed via standard dependency analysis over the conditional variables of security check.</p>
-</li>
-</ol>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">acl_permission_check</span> <span class="params">(struct inode * inode, <span class="keyword">int</span> mask)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> mode = inode -&gt; i_mode;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (current_cred -&gt; fsuid == inode -&gt; i_uid)</span><br><span class="line">        mode &gt;&gt;= <span class="number">6</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (in_group_p (inode -&gt; i_gid))</span><br><span class="line">        mode &gt;&gt;= <span class="number">3</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((mask &amp; ~mode &amp; (MAY_READ | MAY_WRITE | MAY_EXEC)) == <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> -EACCES;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>We must consider branches that dominate a security check. However, naively including all dominators will introduce many false positives. To reduce false positives, INFERDISTS conservatively excludes two cases: (i) a branch can lead to non-related error return and (ii) a branch instruction is post-dominated by either a security check or checks in (a).</p>
-<ol start="3">
-<li><em>Sensitive pointers:</em> pointers to sensitive regions must be protected as well; otherwise, attackers can indirectly control the data in distinguishing regions by manipulating the pointers.</li>
-</ol>
-<h3 id="protecting-distinguishing-regions"><a class="markdownIt-Anchor" href="#protecting-distinguishing-regions"></a> Protecting distinguishing regions</h3>
-<p>The challenge for this step is how to minimize the performance overhead on commodity processors that lack support for fine-grained data-flow tracking. To address this challenge, our key observation is that, <strong>after separating the memory into distinguishing region and non-distinguishing region, there could be three types of data-flow: (i) within non-distinguishing region, (ii) between two regions, and (iii) within distinguishing regions.</strong></p>
-<p>We design a two-layer scheme: lightweight data-flow isolation on second type, and more expensive DFI enforcement to prevent illegal data-flow of the third type.</p>
-<ol>
-<li>
-<p><em>Data-flow isolation:</em> We explored the feasibility of hardware-based data-flow isolation for AArch64. We developed a novel, virtual address space-based isolation mechanism by tagging the TLB with an identifier (i.e., Process Context ID)</p>
-</li>
-<li>
-<p><em>Write Integrity Test:</em> In addition to preventing illegal data-flow from non-distinguishing regions to distinguishing regions, we use DFI to prevent illegal data-flow within distinguishing regions. We leveraged the write integrity test.</p>
-</li>
-<li>
-<p><em>Shadow Objects:</em> As a hardware protection unit (e.g., page) may contain both distinguishing and non-distinguishing regions, once we write-protect that page, we also have to pay additional overhead for accessing non-distinguishing regions. Our solution to this problem is <em>shadow objects</em>: a normal copy for non-distinguishing regions and a shadow copy for distinguishing regions.</p>
-</li>
-<li>
-<p><em>Safe Stack:</em> Using <em>shadow stack</em>.</p>
-</li>
-</ol>
-<h2 id="a-prototype-for-android"><a class="markdownIt-Anchor" href="#a-prototype-for-android"></a> A prototype for Android</h2>
-<h3 id="data-flow-isolation"><a class="markdownIt-Anchor" href="#data-flow-isolation"></a> Data-flow isolation</h3>
-<ol>
-<li>
-<p><em>AArch64 VMSA (Virtual Memory System Architecture):</em> The AArch64 supports a maximum of 48-bit virtual address (VA), which is split into two parts: the bottom part is for user space, and the top part is for kernel space.</p>
-</li>
-<li>
-<p><em>Shadow Address Space:</em> Our data-flow isolation implementation leverages the ASID (Address Space IDentifier) tagging feature and is based on shadow address space. Under this isolation scheme, the same physical page is mapped into two different address spaces with different permissions.</p>
-</li>
-<li>
-<p><em>Atomic Primitive Operations:</em> Considering the security of the shadow address space, we make every operation under the shadow address space atomic, such as write a single data, <code>memcpy</code> and <code>memset</code>.</p>
-</li>
-</ol>
-<h3 id="mmu-integrity"><a class="markdownIt-Anchor" href="#mmu-integrity"></a> MMU integrity</h3>
-<p>Three additional security invariants: (i) <strong>MMU isolation:</strong> Only MMU management code can modify MMU-related data. (ii) <strong>Code integrity:</strong> Kernel code integrity. (iii) <strong>Dedicated entry and exit:</strong> MMU management code is always invoked through dedicated entries and exits.</p>
-<h3 id="shadow-objects"><a class="markdownIt-Anchor" href="#shadow-objects"></a> Shadow objects</h3>
-<ol>
-<li>
-<p><em>SLUB Allocator:</em> In our target kernel, most distinguishing regions are allocated from the SLUB allocator. When SLUB allocates pages for a new slab, we allocate a shadow slab of the same size and map it read-ony at a fixed offset (4GB) from the original slab.</p>
-</li>
-<li>
-<p><em>Global Objects:</em> While most distinguishing regions are dynamically allocated, some of them are statically allocated in the form of global objects. We allocate shadow memory for entire <code>.data</code> section, copy all the contents to populate the shadow memory and then map it.</p>
-</li>
-<li>
-<p><em>Analysis and instrumentation:</em> We first identify all allocation sites for objects in distinguishing regions and modify the allocation flag. Next, we identify all pointer arithmetic operations for accessing distinguishing regions and modify them to access the shadow objects. Finally, we identify all write to distinguishing regions, and modify them to invoke our atomic operations instead. <strong>inline assembly needs to be handled manually.</strong></p>
-</li>
-</ol>
-<h3 id="kernel-stack-randomization"><a class="markdownIt-Anchor" href="#kernel-stack-randomization"></a> Kernel stack randomization</h3>
-<p>We map kernel stack to a unused AV above the logical map (top 256GB), because kernel stacks are small (16KB), we have around 24-bit of entropy available.</p>
-<p>We contain the risk of information leak as follows. First, we mark functions like <code>copy_to_user</code> as unsafe. Then, we store the real stack pointer in a redirection table and replace the original pointer with an index into the table, which mapped as inaccessible under normal context. So does the page tables of shadow stack.</p>
-<h2 id="evaluation"><a class="markdownIt-Anchor" href="#evaluation"></a> Evaluation</h2>
-<h3 id="distinguishing-regions-discovery"><a class="markdownIt-Anchor" href="#distinguishing-regions-discovery"></a> Distinguishing regions discovery</h3>
-<p>For control data, our analysis identified 6192 code pointers, 991 are function args, 11 are return addresses, both of them are protected by safe stack. 1490 are global variables, and 3699 are fields over 783 data structures.</p>
-<p>For non-control data, the error codes we used were <code>EPERM</code>, <code>EACCES</code>, and <code>EROFS</code>. 526 functions as capable of returning permission-related errors; 1077 function args, 279 global variable, and 1731 data fields over 855 data structures as security-critical.</p>
-<p>For sensitive pointers, we combined both control and non-control data to result a total of 4096 data fields over 1316 data structures as the sensitive pointer inference. Futher, there are 4002 fields over 1103 structures as distinguishing regions. <strong>For the target kernel, we should protect about 27.30% of all data structures.</strong></p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2461,7 +2429,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">17</span>
+                    <span class="site-state-item-count">18</span>
                     <span class="site-state-item-name">posts</span>
                   </a>
                 </div>
