@@ -303,6 +303,226 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/22/Kaleidoscope-Extending-the-Language-Control-Flow/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/05/22/Kaleidoscope-Extending-the-Language-Control-Flow/" class="post-title-link" itemprop="url">Kaleidoscope: Extending the Language: Control Flow</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-05-22 11:12:33 / Modified: 11:13:12" itemprop="dateCreated datePublished" datetime="2019-05-22T11:12:33+08:00">2019-05-22</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="chapter-5-introduction"><a class="markdownIt-Anchor" href="#chapter-5-introduction"></a> Chapter 5 Introduction</h2>
+<p>这是该教程的第五章, 前四章讲了 Kaleidoscope 的实现, 并且包括对 JIT 的支持. 在这章我们要给它添加简单的条件分支和循环指令.</p>
+<h2 id="ifthenelse"><a class="markdownIt-Anchor" href="#ifthenelse"></a> If/Then/Else</h2>
+<p>给 Kaleidoscope 添加 if/then/else 支持非常直接: 将条件分支的处理分别加入 lexer, AST, parser, 和 LLVM IR 代码生成.</p>
+<p>首先我们看一下, 要给它加入什么样的扩展功能 (what):</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">def fib(x) if x &lt; 3 then 1 else fib(x - 1) + fib(x - 2);</span><br></pre></td></tr></table></figure>
+<p>在 Kaleidoscope 中, 只有表达式 (expression), 没有语句(statement). 所以 if/then/else 表达式需要被计算出一个值, 根据条件表达式的值不同, 最终的结果可能为 then 表达式值, 也可能为 else 表达式值.</p>
+<p>条件表达式中, 如果值为 0.0, 则表示 false, 其它都为 true</p>
+<h3 id="lexer-extension-for-ifthenelse"><a class="markdownIt-Anchor" href="#lexer-extension-for-ifthenelse"></a> Lexer Extension for If/Then/Else</h3>
+<p>我们先添加关键字:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">    <span class="comment">// control flow</span></span><br><span class="line">    tok_if = <span class="number">-6</span>,</span><br><span class="line">    tok_then = <span class="number">-7</span>,</span><br><span class="line">    tok_else = <span class="number">-8</span>,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>然后在 <code>gettok()</code> 中进行识别:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (IdentifierStr == <span class="string">"if"</span>)</span><br><span class="line">    <span class="keyword">return</span> tok_if;</span><br><span class="line"><span class="keyword">if</span> (IdentifierStr == <span class="string">"then"</span>)</span><br><span class="line">    <span class="keyword">return</span> tok_then;</span><br><span class="line"><span class="keyword">if</span> (IdentifierStr == <span class="string">"else"</span>)</span><br><span class="line">    <span class="keyword">return</span> tok_else;</span><br></pre></td></tr></table></figure>
+<h3 id="ast-extensions-for-ifthenelse"><a class="markdownIt-Anchor" href="#ast-extensions-for-ifthenelse"></a> AST Extensions for If/Then/Else</h3>
+<p>然后再添加新的 AST 节点:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// IfExprAST - This class represents for if/then/else expression</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">IfExprAST</span> :</span> <span class="keyword">public</span> ExprAST &#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; Cond, Then, Else;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    IfExprAST(<span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; Cond, <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; Then, <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; Else) : Cond (<span class="built_in">std</span>::move(Cond)), Then (<span class="built_in">std</span>::move(Then)), Else (<span class="built_in">std</span>::move(Else)) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    llvm::<span class="function">Value *<span class="title">codegen</span><span class="params">()</span> override</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="parser-extension-for-ifthenelse"><a class="markdownIt-Anchor" href="#parser-extension-for-ifthenelse"></a> Parser Extension for If/Then/Else</h3>
+<p>新的 Parser 函数:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ifexpr ::= 'if' expr 'then' expr 'else' expr;</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ExprAST&gt; ParseIfExpr() &#123;</span><br><span class="line">    <span class="comment">// eat 'if'</span></span><br><span class="line">    getNextToken();</span><br><span class="line">    <span class="comment">// condition</span></span><br><span class="line">    <span class="keyword">auto</span> Cond = ParseExpression();</span><br><span class="line">    <span class="keyword">if</span> (!Cond) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (CurTok != tok_then) &#123;</span><br><span class="line">        <span class="keyword">return</span> LogError(<span class="string">"Excepted then"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// eat 'then'</span></span><br><span class="line">    getNextToken();</span><br><span class="line">    <span class="keyword">auto</span> Then = ParseExpression();</span><br><span class="line">    <span class="keyword">if</span> (!Then) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (CurTok != tok_else) &#123;</span><br><span class="line">        <span class="keyword">return</span> LogError(<span class="string">"Expected else"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// eat 'else'</span></span><br><span class="line">    getNextToken();</span><br><span class="line">    <span class="keyword">auto</span> Else = ParseExpression();</span><br><span class="line">    <span class="keyword">if</span> (!Else) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">std</span>::make_unique&lt;IfExprAST&gt;(<span class="built_in">std</span>::move(Cond), <span class="built_in">std</span>::move(Then), <span class="built_in">std</span>::move(Else));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>将这个 <code>ParseIfExpr()</code> 添加到 <code>ParsePrimary()</code> 中:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">switch</span> (CurTok)</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">case</span> tok_identifier:</span><br><span class="line">    <span class="keyword">return</span> ParseIdentifierExpr();</span><br><span class="line"><span class="keyword">case</span> tok_number:</span><br><span class="line">    <span class="keyword">return</span> ParseNumberExpr();</span><br><span class="line"><span class="keyword">case</span> <span class="string">'('</span>:</span><br><span class="line">    <span class="keyword">return</span> ParseParenExpr();</span><br><span class="line"><span class="keyword">case</span> tok_if:</span><br><span class="line">    <span class="keyword">return</span> ParseIfExpr();</span><br><span class="line"><span class="keyword">default</span>:</span><br><span class="line">    <span class="keyword">return</span> LogError(<span class="string">"unknown token when expecting an expression"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="llvm-ir-for-ifthenelse"><a class="markdownIt-Anchor" href="#llvm-ir-for-ifthenelse"></a> LLVM IR for If/Then/Else</h3>
+<p>在有了 AST 和 Parser 之后, 我们就应该实现 <code>codegen()</code> 方法了, 我们要在这部分介绍新的内容.</p>
+<p>我们首先来看一段 LLVM IR:</p>
+<figure class="highlight llvm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">declare</span> <span class="keyword">double</span> <span class="title">@foo</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">declare</span> <span class="keyword">double</span> <span class="title">@bar</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">define</span> <span class="keyword">double</span> <span class="title">@baz</span>(<span class="keyword">double</span> <span class="symbol">%x</span>) &#123;</span><br><span class="line">entry:</span><br><span class="line">  <span class="symbol">%ifcond</span> = <span class="keyword">fcmp</span> <span class="keyword">one</span> <span class="keyword">double</span> <span class="symbol">%x</span>, <span class="number">0.000000e+00</span></span><br><span class="line">  <span class="keyword">br</span> <span class="keyword">i1</span> <span class="symbol">%ifcond</span>, label <span class="symbol">%then</span>, label <span class="symbol">%else</span></span><br><span class="line"></span><br><span class="line">then:       <span class="comment">; preds = %entry</span></span><br><span class="line"><span class="comment">  %calltmp = call double @foo()</span></span><br><span class="line"><span class="comment">  br label %ifcont</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">else:       ; preds = %entry</span></span><br><span class="line"><span class="comment">  %calltmp1 = call double @bar()</span></span><br><span class="line"><span class="comment">  br label %ifcont</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">ifcont:     ; preds = %else, %then</span></span><br><span class="line"><span class="comment">  %iftmp = phi double [ %calltmp, %then ], [ %calltmp1, %else ]</span></span><br><span class="line"><span class="comment">  ret double %iftmp</span></span><br><span class="line"><span class="comment">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>通过使用 <code>llvm-as</code> 和 <code>opt</code> 工具, 我们可以画出这段代码 (t.ll) 的 CFG 图, 运行 <code>llvm-as-7 &lt; t.ll| opt-7 -analyze -view-cfg</code> 之后:</p>
+<p><img src="figure/5.1.png" alt="CFG"></p>
+<p>其它生成 CFG 图的方法还有在代码中调用或者在调试器中调用 <code>F-&gt;viewCFG()</code> 或者 <code>F-&gt;viewCFGOnly()</code>, 其中 <code>F</code>, 是一个 <code>Function*</code>.</p>
+<p>不管是 LLVM IR, 还是 CFG 图, 我们都可以发现这些信息: entry block 中将 <code>x</code> 的值和 <code>0</code> 进行 <code>one</code> 类型的 <code>fcmp</code> 比较. <code>one</code> 的意思是 Ordered and not equal, Ordered 的<a href="https://stackoverflow.com/a/8627368/4684264" target="_blank" rel="noopener">解释</a>. <code>fcmp</code> 表示是浮点数的比较. <code>br</code> 表示的是根据 <code>%ifcond</code> 的值跳转到 <code>label %then</code> 或者 <code>%label %else</code>.</p>
+<p><code>%then</code> 和 <code>%else</code> 两个 basic block 的指令都差不多, 调用其它函数, 然后跳转到 <code>%ifcont</code>. 所以, 在最后一个 basic block 中, 我们需要确定控制流是从哪个 block 来的, 从而确定整个 if/then/else 表达式的值.</p>
+<p>所以这就是 <code>phi</code> 指令的作用, 如果控制流是从 <code>%then</code> 过来, 那么它的值为 <code>%calltmp</code>; 如果控制流是从 <code>%else</code> 过来, 那么它的值为 <code>%calltmp1</code>.</p>
+<h3 id="code-generation-for-ifthenelse"><a class="markdownIt-Anchor" href="#code-generation-for-ifthenelse"></a> Code Generation for If/Then/Else</h3>
+<p>为了给 If/Then/Else 生成代码, 我们就要实现 <code>Value *IfExprAST::codegen()</code>.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">llvm::Value *IfExprAST::codegen() &#123;</span><br><span class="line">    llvm::Value * CondV = Cond-&gt;codegen();</span><br><span class="line">    <span class="keyword">if</span> (!CondV) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// convert condition to a bool by comparing non-equal to 0.0</span></span><br><span class="line">    CondV = Builder.CreateFCmpONE(CondV, llvm::ConstantFP::get(TheContext, llvm::APFloat(<span class="number">0.0</span>)), <span class="string">"ifcond"</span>);</span><br><span class="line"></span><br><span class="line">    llvm::Function *TheFunction = Builder.GetInsertBlock()-&gt;getParent();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create blocks for the then and else </span></span><br><span class="line">    <span class="comment">// cases. Insert the 'then' block at the </span></span><br><span class="line">    <span class="comment">// end of the function</span></span><br><span class="line">    llvm::BasicBlock *ThenBB = llvm::BasicBlock::Create(TheContext, <span class="string">"then"</span>, TheFunction);</span><br><span class="line">    llvm::BasicBlock *ElseBB = llvm::BasicBlock::Create(TheContext, <span class="string">"else"</span>);</span><br><span class="line">    llvm::BasicBlock *MergeBB = llvm::BasicBlock::Create(TheContext, <span class="string">"ifcont"</span>);</span><br><span class="line">    Builder.CreateCondBr(CondV, ThenBB, ElseBB);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Emit then Value</span></span><br><span class="line">    Builder.SetInsertPoint(ThenBB);</span><br><span class="line">    llvm::Value *ThenV = Then-&gt;codegen();</span><br><span class="line">    <span class="keyword">if</span> (!ThenV) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Builder.CreateBr(MergeBB);</span><br><span class="line">    ThenBB = Builder.GetInsertBlock();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Emit the 'else' block</span></span><br><span class="line">    TheFunction-&gt;getBasicBlockList().push_back(ElseBB);</span><br><span class="line">    Builder.SetInsertPoint(ElseBB);</span><br><span class="line"></span><br><span class="line">    llvm::Value *ElseV = Else-&gt;codegen();</span><br><span class="line">    <span class="keyword">if</span>(!ElseV) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Builder.CreateBr(MergeBB);</span><br><span class="line">    ElseBB = Builder.GetInsertBlock();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Emit the 'merge' block</span></span><br><span class="line">    TheFunction-&gt;getBasicBlockList().push_back(MergeBB);</span><br><span class="line">    Builder.SetInsertPoint(MergeBB);</span><br><span class="line">    llvm::PHINode *PN = Builder.CreatePHI(llvm::Type::getDoubleTy(TheContext), <span class="number">2</span>, <span class="string">"iftmp"</span>);</span><br><span class="line"></span><br><span class="line">    PN-&gt;addIncoming(ThenV, ThenBB);</span><br><span class="line">    PN-&gt;addIncoming(ElseV, ElseBB);</span><br><span class="line">    <span class="keyword">return</span> PN;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先将 <code>CondV</code> 生成代码, 然后使用 <code>Builder-&gt;CreateFCmpONE()</code> 生成条件判断代码.</p>
+<p>然后通过 <code>Builder-&gt;GetInsertBlock()-&gt;getParent()</code> 获取整个函数的指针, 用来创建这个函数中其它的 BasicBlock, 也就是 then block, else block 和最后的 merge block. 注意这里的 else block 是直接插入到函数后端的. then block 和 merge block 还没有插入到函数中. 然后使用 <code>Builder.CreateCondBr()</code> 来创建跳转指令, 根据条件判断的值跳转到不同的 Basic Block.</p>
+<p>然后使用 <code>Builder.SetInsertPoint(ThenBB)</code> 将当前代码的插入点设置为 then block 的最后, 在后面进行类似于 append 的操作. 然后递归调用 Then 的 <code>codegen()</code> 生成代码, 生成完毕之后创建一个无条件跳转 <code>CreateBr</code>, 将控制流转移到 merge block. (LLVM 中, 所有的 basic block 必须使用控制流指令来终结, 即使是 fall-through 也需要一个无条件的跳转)</p>
+<p>最重要的是, 这里我们又需要一个 <code>ThenBB = Builder.getInsetBlock()</code>. 在我们设置 Phi node 时, 我们要创建 basic block 和 value 的 key/value 对, 所以Phi node 需要获取和它直接相邻的前面两个 block 的信息. 然而, 在对 Else block 和 Then block 进行代码生成时, 如果它们中嵌套了 if/then/else, 那么之前的 Then block 和 Else block 就不是和 Phi node 直接相连了. 所以我们要在代码生成完毕之后再获取一次当前的 basic block, 来获取直接与 Phi node 相连的前驱 block.</p>
+<p>然后是将 Else block 添加到函数中, 再调用 <code>Builder.SetInsetPoint()</code> 设置需要生成代码的位置, 递归生成代码, 创建跳转, 更新 Phi node 前驱 block.</p>
+<p>然后是 merge block, 前面也是一样的操作, 将 basic block 加入函数, 并设置代码插入点. 然后使用 <code>Builder.CreatePHI()</code> 创建一个 Phi node, 来处理分支的合并. 然后再加上进入分支的信息就可以.</p>
+<p>最后, 整个 If/Then/Else 表达式的值就是 Phi node 的值.</p>
+<h2 id="for-loop-expression"><a class="markdownIt-Anchor" href="#for-loop-expression"></a> <code>for</code> loop expression</h2>
+<p>我们想添加一个如下的 for loop:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="title">putchard</span><span class="params">(<span class="keyword">char</span>)</span></span>;</span><br><span class="line"><span class="function">def <span class="title">printstar</span><span class="params">(n)</span></span></span><br><span class="line"><span class="function">    <span class="keyword">for</span> i </span>= <span class="number">1</span>, i &lt; n, <span class="number">1.0</span> in</span><br><span class="line">        putchard(<span class="number">42</span>);       <span class="meta"># ascii 42 = <span class="meta-string">'*'</span></span></span><br><span class="line">printstar(<span class="number">100</span>);</span><br></pre></td></tr></table></figure>
+<p>这个表达式定义了一个新的变量 <code>i</code>, 从 <code>1</code> 开始迭代, 当条件 <code>i &lt; n</code> 成立时, 执行循环体中的 <code>putchard(42)</code>, 并将自身加 <code>1</code>. 目前我们将循环表达式的值设置为 0.</p>
+<h3 id="lexer-extension-for-the-for-loop"><a class="markdownIt-Anchor" href="#lexer-extension-for-the-for-loop"></a> Lexer Extension for the <code>for</code> Loop</h3>
+<p>看代码</p>
+<h3 id="ast-extension-for-the-for-loop"><a class="markdownIt-Anchor" href="#ast-extension-for-the-for-loop"></a> AST Extension for the <code>for</code> Loop</h3>
+<p>看代码</p>
+<h3 id="parser-extension-for-the-for-loop"><a class="markdownIt-Anchor" href="#parser-extension-for-the-for-loop"></a> Parser Extension for the <code>for</code> loop</h3>
+<p>看代码</p>
+<h3 id="llvm-ir-for-the-for-loop"><a class="markdownIt-Anchor" href="#llvm-ir-for-the-for-loop"></a> LLVM IR for the <code>for</code> loop</h3>
+<p>当我们生成代码时, 应该是如下所示的结构:</p>
+<figure class="highlight llvm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">declare</span> <span class="keyword">double</span> <span class="title">@putchard</span>(<span class="keyword">double</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">define</span> <span class="keyword">double</span> <span class="title">@printstar</span>(<span class="keyword">double</span> <span class="symbol">%n</span>) &#123;</span><br><span class="line">entry:</span><br><span class="line">    <span class="comment">; initial value = 1.0 (inlined into phi)</span></span><br><span class="line"><span class="comment">    br label %loop</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">; preds = %loop, %entry</span></span><br><span class="line"><span class="comment">loop:</span></span><br><span class="line"><span class="comment">    %i = phi double [1.000000e+00, %entry], [%nextvar, %loop]</span></span><br><span class="line"><span class="comment">    ; body</span></span><br><span class="line"><span class="comment">    %calltmp = call double @putchard(double 4.200000e+01)</span></span><br><span class="line"><span class="comment">    ; increment</span></span><br><span class="line"><span class="comment">    %nextvar = fadd double %i, 1.000000e+00</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">    ; termination test</span></span><br><span class="line"><span class="comment">    %cmptmp = fcmp ult double %i, %n</span></span><br><span class="line"><span class="comment">    %booltmp = uitofp i1 %cmptmp to double</span></span><br><span class="line"><span class="comment">    %loopcond = fcmp one double %booltmp, 0.000000e+00</span></span><br><span class="line"><span class="comment">    br i1 %loopcond, label %loop, label %afterloop</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">; preds = %loop</span></span><br><span class="line"><span class="comment">afterloop:</span></span><br><span class="line"><span class="comment">    ; loop always returns 0</span></span><br><span class="line"><span class="comment">    ret double 0.000000e+00</span></span><br><span class="line"><span class="comment">&#125;</span></span><br></pre></td></tr></table></figure>
+<h3 id="code-generation-for-the-for-loop"><a class="markdownIt-Anchor" href="#code-generation-for-the-for-loop"></a> Code Generation for the <code>for</code> Loop</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line">llvm::Value *ForExprAST::codegen () &#123;</span><br><span class="line">    <span class="comment">// Emit the start code first, without 'variable' in scope</span></span><br><span class="line">    llvm::Value *StartVal = Start-&gt;codegen();</span><br><span class="line">    <span class="keyword">if</span> (!StartVal) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Make the new basic block for the loop header, </span></span><br><span class="line">    <span class="comment">// inserting after current block</span></span><br><span class="line">    llvm::Function *TheFunction = Builder.GetInsertBlock()-&gt;getParent();</span><br><span class="line">    llvm::BasicBlock *PreheaderBB = Builder.GetInsertBlock();</span><br><span class="line">    llvm::BasicBlock *LoopBB = llvm::BasicBlock::Create(TheContext, <span class="string">"loop"</span>, TheFunction);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Inserting an explict fall-through from current (PreheaderBB) to LoopBB.</span></span><br><span class="line">    Builder.CreateBr(LoopBB);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Start insertion to LoopBB</span></span><br><span class="line">    Builder.SetInsertPoint(LoopBB);</span><br><span class="line">    <span class="comment">// Start the PHI node with one Incoming basic block</span></span><br><span class="line">    llvm::PHINode *Variable = Builder.CreatePHI(llvm::Type::getDoubleTy(TheContext), <span class="number">2</span>, VarName.c_str());</span><br><span class="line">    Variable-&gt;addIncoming(StartVal, PreheaderBB);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Within the loop, the variable is defined equal to </span></span><br><span class="line">    <span class="comment">// the PHI node, If it shadows an existing variable, </span></span><br><span class="line">    <span class="comment">// we have to restore it, so save it now.</span></span><br><span class="line">    llvm::Value *OldVal = NamedValues[VarName];</span><br><span class="line">    NamedValues[VarName] = Variable;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Emit the body of the loop. This, like any other </span></span><br><span class="line">    <span class="comment">// expr, can change the current BB. Note that we </span></span><br><span class="line">    <span class="comment">// ignore the value computed by the body, but don't </span></span><br><span class="line">    <span class="comment">// allow an error.</span></span><br><span class="line">    <span class="keyword">if</span> (!Body-&gt;codegen()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Emit the step value</span></span><br><span class="line">    llvm::Value *StepVal = <span class="literal">nullptr</span>;</span><br><span class="line">    <span class="keyword">if</span> (Step) &#123;</span><br><span class="line">        StepVal = Step-&gt;codegen();</span><br><span class="line">        <span class="keyword">if</span> (!StepVal) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// if not specified, use 1.0</span></span><br><span class="line">        StepVal = llvm::ConstantFP::get(TheContext, llvm::APFloat(<span class="number">1.0</span>));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// add the step value</span></span><br><span class="line">    llvm::Value *NextVal = Builder.CreateFAdd(Variable, StepVal, <span class="string">"nextvar"</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Compute the end condition</span></span><br><span class="line">    llvm::Value *EndCond = End-&gt;codegen();</span><br><span class="line">    <span class="keyword">if</span> (!EndCond) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Convert condition to a bool by comparing non-equal to 0.0</span></span><br><span class="line">    EndCond = Builder.CreateFCmpONE(EndCond, llvm::ConstantFP::get(TheContext, llvm::APFloat(<span class="number">0.0</span>)), <span class="string">"loopcond"</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create the "after loop" block and insert it</span></span><br><span class="line">    llvm::BasicBlock *LoopEndBB = Builder.GetInsertBlock();</span><br><span class="line">    llvm::BasicBlock *AfterBB = llvm::BasicBlock::Create(TheContext, <span class="string">"afterloop"</span>, TheFunction);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Insert the conditional branch into the end of LoopEndBB</span></span><br><span class="line">    Builder.CreateCondBr(EndCond, LoopBB, AfterBB);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Any new code will be inserted in AfterBB</span></span><br><span class="line">    Builder.SetInsertPoint(AfterBB);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Add a new entry to the PHI node for the backage</span></span><br><span class="line">    Variable-&gt;addIncoming(NextVal, LoopEndBB);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Restore the unshadowed variable</span></span><br><span class="line">    <span class="keyword">if</span> (OldVal) &#123;</span><br><span class="line">        NamedValues[VarName] = OldVal;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        NamedValues.erase(VarName);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Always returns 0.0</span></span><br><span class="line">    <span class="keyword">return</span> llvm::Constant::getNullValue(llvm::Type::getDoubleTy(TheContext));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先是生成 start 部分, 对应 parser 来看就是循环变量 <code>i</code> 被赋予的初始值, 所以先计算这部分. 下一步就是生成循环体的代码, 首先获取当前 basic block 所在的函数 <code>Function *TheFunction = Builder-&gt;GetInsertBlock()-&gt;getParent()</code>, 然后把当前的 basic block 标记为 <code>BasicBlock *PreheaderBB</code>. 创建循环体 basic block (<code>BasicBlock *LoopBB</code>), 并把它添加到函数末尾. 然后在 <code>PreheaderBB</code> 最后添加一条 fall-through 到 <code>LoopBB</code> 的<code>Br</code> 指令.</p>
+<p>这部分代码和之前看到的 <code>if/then/else</code> 代码生成的方式很相似. 由于循环体所在的 basic block 有两个 incoming 的控制流边 (fall-through 和循环尾), 我们要使用 Phi node 来标记控制流是从哪来的. 目前我们创建的只有 <code>PreheaderBB</code>, 所以现在只添加一个 incoming 即可. 所以, 先把函数插入点移到 <code>LoopBB</code>, 然后用 <code>Builder</code> 生成 Phi node 即可.</p>
+<p>在对循环变量作处理时, 循环变量可能和函数参数重名, 导致冲突. 所以我们使用一个 shadow 变量先把变量符号表 (NamedValues) 中的同名值存起来, 这样就实现了作用域的概念. 然后我们给循环体生成代码, 递归的调用 <code>Body-&gt;codegen()</code> 即可. 如果我们设置了 <code>StepVal</code>, 那么就生成 Step 的代码, 没有的话默认就是 <code>1</code>. 然后再创建一个 <code>NextVar</code> 用作下一次循环时的循环变量.</p>
+<p>最后计算结束条件 <code>EndCond</code>, 首先生成代码. 再使用生成的代码去创建一个 <code>FCmpOne</code>, 用作后续 <code>CondBr</code> 指令的条件判断. 然后使用 <code>BasicBlock *LoopEndBB = Builder.GetInsertBlock()</code> 去更新最新的 basic block, 作为循环体的最后一个 block, 并创建一个 <code>BasicBlock *AfterBB</code> 使得之后的代码生成都是在循环结束之后. 最后就是给 Phi node 添加一个来自于 <code>BasicBlock *LoopEndBB</code> 的边, 并从 shadow object 中恢复原来变量的值, 最后直接返回 0.</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/15/Kaleidoscope-Adding-JIT-and-Optimizer-Support/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2166,221 +2386,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/29/Shuffler-Fast-and-Deployable-Continuous-Code-Re-Randomization/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/04/29/Shuffler-Fast-and-Deployable-Continuous-Code-Re-Randomization/" class="post-title-link" itemprop="url">Shuffler: Fast and Deployable Continuous Code Re-Randomization</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-04-29 19:51:07 / Modified: 19:52:46" itemprop="dateCreated datePublished" datetime="2019-04-29T19:51:07+08:00">2019-04-29</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
-<p>We propose a system, called <em>Shuffler</em>, which provides a deployable defense against JIT-ROP and other code reuse attacks. Other defenses have had significant barriers to deployment: some utilize a custom hypervisor; others involve a modified compiler, runtime, or operating system kernel. In comparison, Shuffler runs in userspace along side the target program, and requires no system modification beyond a minimal patch to the loader.</p>
-<p>Shuffler operates by performing continuous code re-randomization at runtime, within the same address space as the program it defends. Additional, we bootstrap into a self-hosted and self modifying <em>egalitarian</em> environment — Shuffler always shuffles itself.</p>
-<p>We achieve a <em>shuffle period</em> on the order of tens of milliseconds, so fast that is nearly impossible to form a complete exploit. Shuffler creates new function permutations asynchronously in a separate thread, and then atomically migrates program execution from one copy of code to the next. This migration requires a vanishingly small global pause time, as program threads continue to execute unhindered 99.7% of the time. Thus, if the host machine has a spare CPU core, shuffling at faster rates does not significant impact the target’s performance.</p>
-<p>Our system operates on program binaries, analyzing them and performing binary rewriting.</p>
-<h2 id="threat-model"><a class="markdownIt-Anchor" href="#threat-model"></a> Threat model</h2>
-<p>We assume that the protection against code injection (W^X) is in place, and that an x86_64 architecture is in use. Our system does not require (and, in fact, is orthogonal to) other defensive techniques.</p>
-<h2 id="design"><a class="markdownIt-Anchor" href="#design"></a> Design</h2>
-<h3 id="architecture"><a class="markdownIt-Anchor" href="#architecture"></a> Architecture</h3>
-<p>Shuffer is design to require minimal system modifications. To aviod kernel changes, it runs entirely in userspace; to avoid requiring source or a modified compiler, it operates on program binaries. Performing re-randomization soundly requires complete and precise pointer analysis, we leverage symbol and relocation information from the (unmodified) compiler and linker.</p>
-<p>At load-time, Shuffler transforms the program’s code using binary rewriting. The goal of rewriting is to be able to track and update all code pointers at runtime. We leverage our complete and accurate disassembly to transform all code pointers into unique identifiers —indices into a <em>code pointer table</em>. These indices cannot be altered after load time. We handle return addresses (dynamically generated code pointers) differently, encrypting them on stack rather than using indices.</p>
-<p>Our system performs re-randomization at the level of functions within a specific <em>shuffle period</em>, a randomization deadline specific in milliseconds. Shuffler runs in a separate thread and prepares a new shuffled copy of code within this deadline. The vast majority of the re-randomization process is performed as asynchronously: creating new copies of code, fixing up instruction displacements, updating pointers in the code table. The threads are globally paused only to atomically update return addresses. Since any existing return addresses reference the old copy of code, we must revisit saved stack frames and update them.</p>
-<p>To prevent our own code from being used in a code reuse attack, Shuffer randomizes it the same way it does all other code. In fact, our scheme uses binary rewriting to transform all code in a userspace application (the program, Shuffler, and all shared libraries) into a single code sandbox, essentially turning it into a staticlly linked application at runtime.</p>
-<h3 id="challenges"><a class="markdownIt-Anchor" href="#challenges"></a> Challenges</h3>
-<p><strong>Changing function pointer behavior.</strong> Normal program’s memory layout remains consistent and function pointers have indefinite lifetime. Re-randomization introduces an arbitrary lifetime for each block of code, and it becomes an exercise in avoiding dangling code pointers.</p>
-<p>Hence, we need to accurately track and update every code pointer during the re-randomization process. We opt to statically transform all code pointers into unique identifiers—namely, indices into a hidden <em>code pointer table</em>. Then wherever the code pointer is copied throughout memory, it will continue to refer to the same entry in the table.</p>
-<p>Some code pointers are dynamically generated, in particular, return addresses on the stack. We could dynamically allocated table indices, but <code>call</code>/<code>ret</code> pairs are highly optimized, and replacing them with table mechanism would involve a large performance degradation. Instead, we allow ordinary calls to proceed as usual, and at re-randomization time we unwind the stack and update return addresses to new values. Rather than leave return addresses exposed on the stack, we encrypt each address with an XOR cipher.</p>
-<p><strong>Augmented binary analysis.</strong> We propose a <em>augment binary analysis</em>, which involves analyzing program binaries that have additional information included by the compiler.</p>
-<p>The common problems with binary analysis are distinguishing code from data, and distinguishing pointers from integers. To tackle these problems, we require that (i) the compiler preserve the symbol table, and (ii) that the linker preserve relocations. The symbol table indicates all valid <code>call</code> targets and makes disassembly straightforward—we iterate through symbols and disassemble each one independently. Reloactions are used to indicate portions of an object file (or executable) that needs to be patched up once its base address is known. Since each base address is initially zero, every absolute code pointer must have a relocation—but as object files are linked together, most code pointers get resolved and their relocations are discarded. We simply ask the linker to preserve these relocations.</p>
-<p><strong>bootstrapping into shuffled code.</strong> Shuffler defends its own code the same way it defends all other code. Shuffled code cannot start running until the code pointer table is initialized, requiring some unshuffled startup code. Shuffled and original code are incompatible if they use code pointers; the process of transforming code pointers to indices overwrites data that the original code accesses, and then the original code will no longer execute correctly. Hence, we would have to call new function as they became available, and carefully order the function-pointer rewrite process to avoid invalidating any functions currently on the call stack.</p>
-<p>Instead, we opted for a simpler and more general solution. Shuffler is split into two stages, a minimal and a runtime stage. The minimal stage is completely self-contained, and it can safely transform all other code, including <code>libc</code> and the second-stage Shuffle. The it jumps to the shuffled second stage, which erases the previous stage (and all other original code). The second stage inherits all the data structures created in the first so that is can easily create new shuffled code copies.</p>
-<h2 id="implementation"><a class="markdownIt-Anchor" href="#implementation"></a> Implementation</h2>
-<p>Code pointers are directed through the code pointer table and return address are stored on the stack, encrypted with an XOR cipher. In each shuffle period, Shuffler makes a new copy of code, updates the code pointer table and sends a signal to tell all threads (including its self); each thread unwinds and fixes up its stack. Shuffler waits on a barrier until all threads have finished unwinding, then erases the previous code copy.</p>
-<p>Our Shuffler Implementation supports many system-level features, including shared libraries, multiple threads, forking, <code>{set/long}jmp</code>, system call re-entry, and signals.</p>
-<h3 id="transformation-to-support-shuffling"><a class="markdownIt-Anchor" href="#transformation-to-support-shuffling"></a> Transformation to support shuffling</h3>
-<p><strong>Code pointer abstraction.</strong> We allocate the code pointer table at load-time and set the base address of the <code>GS</code> segment at it. Then, we transform every function pointer at its initialization point from an address value to an index into this table. Jump tables are handled similarily, with indices assigned to each offset within a function that is used as a target.</p>
-<p>Every instruction which originally used a function pointer value is rewritten to instead indirect through the <code>%gs</code> table. This adds an extra memory dereference. Since x86 instruction can contain at most one memory reference, if there is already a memory reference, we use the caller-saved register <code>%r11</code> as scratch space. For (position-dependent) jump tables, there is no register we can safely overwrite, so we use a thread-local variable allocated by Shuffler as a scratch space (denoted as <code>%fs: 0x88</code>).</p>
-<p><strong>Return address encryption.</strong> We encrypt return address on the stack with a per-thread XOR key. We reuse the stack canary storage location for our key; our scheme operates similarly to stack canaries, but does not affect the layout of the stack frame. We add two instruction <code>mov %fs:0x28, %r11; xor r11, (%rsp)</code> at the beginning of every function and before every exit jump; after each <code>call</code>, we insert a <code>mov</code> instruction to erase the now-visible return address on the stack. We again use <code>%r11</code> as a scratch register, since it is a caller-saved register according to the x86-64 ABI.</p>
-<p><strong>Displacement reach.</strong> A normal call instruction has a 32-bit displacement and must be within ± 2GB of its target to “reach” it. Shared libraries use Procedure Linkage Table trampolines to jump anywhere in the 64-bit address space.</p>
-<h3 id="completeness-of-disassembly"><a class="markdownIt-Anchor" href="#completeness-of-disassembly"></a> Completeness of disassembly</h3>
-<p>While shuffling some libraries and programs, we encountered myriad special cases. The issues boil down to: (a) dealing with inaccurate/missing metadata, especially in the symbol table; (b) handling special types of symbols and relocations; and © discovering jump table entries and invocations.</p>
-<p>Our major challenge is identifying whether relocations are part of jump tables, and distinguishing between indirect tail-recursive jumps and jump-table jumps. If we fail to realize a relocation in a jump table, we will calculate its target incorrectly and the jump will branch to the wrong location; if we decide that a jump table’s jump is actually tail recursive, we will insert return-address decryption instruction before it, corrupting <code>%11</code> and scrambling the top of the stack.</p>
-<p>GCC generates jump tables differently in position-dependent and position-independent code (PIC). Position-dependent jump tables use 8-byte direct pointers, and are nearly always invoked by an instruction of the form <code>jmpq *(%rax, %rbx, 8)</code> in any optimization level. PIC jump tables use 4-byte relative offsets added to the address of the beginning of the table—and the <code>lea</code> that loads the table address may be quite distant from the final indirect jump. To find PIC jump tables, we use outgoing <code>%rip</code>-relative references from functions as bounds and check if they point at sequences of relocation in the data section.</p>
-<p>It is difficult to tell whether a <code>jmpq *%rax</code> instruction is used for indirect tail recursion, or a PIC jump table. We use a liner sweep to record <code>push</code> instructions in the function’s first basic block, and keep a log of the <code>pop</code> instruction seen since the last jump. If an indirect jump is preceded by <code>pop</code> instructions that are in the reverse order of the <code>push</code> instructions, we assume we have found a function epilogue and that the jump is indirect tail recursive.</p>
-<h3 id="bootstrapping-and-requirements"><a class="markdownIt-Anchor" href="#bootstrapping-and-requirements"></a> bootstrapping and requirements</h3>
-<p>We carefully bootstrap into shuffled code using two libraries (stage 1 and stage 2), so that the system never overwrites code pointers for the module that is currently executing. The constructor of stage 1 is called before any other via the linker mechanism <code>-z initfirst</code>. Then, stage 1 make sure all other constructors run in shuffled code. The last constructor to be called is stage 2’s own constructor; stage 2 creates a dedicated Shuffler thread.</p>
-<ol>
-<li>
-<p><strong>Compiler flags.</strong> We require the program binary and all dependent libraries to be compiled with <code>-Wl, -q</code>, a link flag that preserves relocations, and <code>-gdwarf-2</code>, when compiling with c++. Since we require symbols and DWARF unwind information, the user must avoid <code>-s</code> and <code>-fno-asynchronous-unwind-tables</code>.</p>
-</li>
-<li>
-<p><strong>System modifications.</strong> The <code>-z initfirst</code> loader feature currently only supports one shared library, and <code>libpthread</code> already use it. Since shuffled functions must be within ± 2GB of each other, we simplify Shuffler’s task and map all ELF <code>PT_LOAD</code> sections into the lower 32 bits of the address space. Finally, we disabled a manually-constructed jump table in the <code>vfprintf</code> of <code>glibc</code>.</p>
-</li>
-</ol>
-<h3 id="implementation-optimizations"><a class="markdownIt-Anchor" href="#implementation-optimizations"></a> Implementation Optimizations</h3>
-<p><strong>Generating new code.</strong> The Shuffer thread maintains a large code <em>sandbox</em> that stores shuffled functions. In each shuffle period, every function within the sandbox is duplicated and the old copies are erased. The sandbox is split in half, so that one half may be erased with a single <code>mprotect</code> system call. We maintain servral <em>buckets</em> and each function is placed in a random bucket; when a bucket fills up, it is committed with an <code>mprotect</code> call and a fresh bucket is allocated.</p>
-<p>We use a Binary Indexed Tree for function allocations. Our tree keeps track of all valid addresses for new buckets, storing disjoint intervals; it also tracks the sum of interval lengths.</p>
-<p><strong>Stack unwinding.</strong> We wrote a custom unwind library with a straightforward DWARF state machine.</p>
-<p><strong>Binary rewritting.</strong> Suffler’s load-time transformations are all implemented through binary rewriting. We disassemble each function with diStorm and produce intermediate data structures which we call <em>rewrite blocks</em>. Rewrite blocks are similar to basic blocks but may be split at arbitrary points to accommodate newly inserted instructions.</p>
-<h2 id="security-analysis"><a class="markdownIt-Anchor" href="#security-analysis"></a> Security analysis</h2>
-<h3 id="analysis-of-traditional-attacks"><a class="markdownIt-Anchor" href="#analysis-of-traditional-attacks"></a> Analysis of traditional attacks</h3>
-<p><strong>Normal ROP.</strong> Absolutely.</p>
-<p><strong>Indirect JIT-ROP.</strong> Indirect JIT-ROP relies on leaked code pointers and computes gadgets accordingly. Because code pointers are replaced with table indices, the attack cannot gather code pointers from data structures; nor can the attacker infer code pointers from data pointers, since the relative offset between code and data sections changes continuously.</p>
-<p><strong>Direct JIT-ROP.</strong> In direct JIT-ROP, the attacker is assumed to know one valid code address, and employs a memory disclosure recursively, harvesting code pages and finding enough gadgets for a ROP attack. The entire attack must be completed within the shuffle period of <em>r</em> milliseconds.</p>
-<p><strong>Blind ROP.</strong> BlindROP tries to infer the layout of a server process by probing it workers, which are <code>fork</code>ed from the parent and have the same layout. The attack uses a timing channel to inter information about the parent based on whether the child crashed or not. Shuffler easily thwarts this attack because it randomizes child and parent processes independently.</p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2429,7 +2434,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-count">19</span>
                     <span class="site-state-item-name">posts</span>
                   </a>
                 </div>
