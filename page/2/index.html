@@ -303,6 +303,206 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/03/IMIX-In-Process-Memory-Isolation-EXtension/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/05/03/IMIX-In-Process-Memory-Isolation-EXtension/" class="post-title-link" itemprop="url">IMIX: In-Process Memory Isolation EXtension</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-05-03 20:18:09 / Modified: 20:19:42" itemprop="dateCreated datePublished" datetime="2019-05-03T20:18:09+08:00">2019-05-03</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+<p>Defenses against memory-corruption typically reduce the attack surface by preventing the adversary from corrupting part of the application’s memory which is essential for a successful attack, such as W⨁X, CFI, CPI, and DFI.</p>
+<p>Some of these defenses can be implemented efficiently using mechanisms that reside entirely outside the underlying application process. For instance, the kernel configures W⨁X and the hardware enforces it. However, using an external mechanism is not always feasible in practice due to high performance overhead. For instance, CFI requires run-time checks and a <em>shadow stack</em>, which is updated every time a function is invoked or returns. CPI requires run-time checks and a <em>safe region</em>, which contains meta-data about the program’s variables. This data cannot be stored outside of the process, e.g., in kernel memory, because accessing it would impose an impratical performance overhead due to the time needed for a context switch. Hence, to prevent the adversary from accessing the data some form of <em>in-process memory isolation</em> is needed.</p>
+<p><strong>Goals and Contribution.</strong> In this paper, we present IMIX, which enables lightweight in-process memory isolation for memory-corruption defenses that target the x86 architecture. IMIX enables <em>isolated pages</em>, which marked with a special flag. Isolated pages can only be accessed using a single new instruction called <code>smov</code>.</p>
+<h2 id="adversary-model"><a class="markdownIt-Anchor" href="#adversary-model"></a> Adversary model</h2>
+<ul>
+<li>
+<p><strong>Memory corruption.</strong> We assume the presence of a memory-corruption vulnerability, which the adversary can repeatedly exploit to read and write data according to memory access permissions.</p>
+</li>
+<li>
+<p><strong>Sandboxed code execution.</strong> We assume memory-corruption mitigations cannot be bypassed unless the attacker can corrupt the mitigation’s metadata.</p>
+</li>
+<li>
+<p><strong>Immutable code.</strong> The adversary cannot inject new code or modify existing code.</p>
+</li>
+</ul>
+<h2 id="imix"><a class="markdownIt-Anchor" href="#imix"></a> IMIX</h2>
+<p>Like for applications, the correct functionality of defenses relies on the integrity of their code and data. Thus, the attacker may leverage a memory-corruption vulnerability in the application to bypass those defense. Traditionally, defense developers enforce the integrity of the code using W⨁X or execute-only memory, which forces defense developers to choose between high performance overheads and compromised security. IMIX allocates data belonging to run-time mitigations in <em>isolated pages</em>, which can only be accessed by <code>smov</code>.</p>
+<p>In addition to rhe <code>smov</code> instruction and the associated access permissions, IMIX includes a kernel extension and compiler support.</p>
+<p><strong>Hardware.</strong> For IMIX, we extend two of the CPU’s main responsibilities, instruction processing and memory management. We add <code>smov</code> instruction to the instruction set, reusing the logic of regular memory access instruction. The memory access logic is modified so that it will generate a fault if (1) an instruction other than <code>smov</code> is used to access a page protected by IMIX, or if (2) an <code>smov</code> instruction is used to access a normal page.</p>
+<p><strong>Kernel.</strong> We extend the kernel to support an additional access permission, which identifies all pages protected by IMIX. This enables protected memory allocation for code generated at runtime.</p>
+<p><strong>Compiler.</strong> IMIX provides two high-level primitives: one for allocating protected memory and one for accessing it. Mitigations like CPI are implemented as an LLVM optimization pass that works at the IR level. For applications developers, IMIX provides source code annotations.</p>
+<h2 id="implementation"><a class="markdownIt-Anchor" href="#implementation"></a> Implementation</h2>
+<p>Developers can build programs with IMIX, using our extented Clang compiler. We also modified its backend to support <code>smov</code> instructions. Programs protects by IMIX mark isolated pages using the system call <code>mprotect</code> with a special flag. Therefore, we extented the kernel’s existing page-level memory protection functionality to support this flag and mark isolated pages appropriately. To support IMIX, the CPU must be modified to support the <code>smov</code> instruction and must perform the appropriate checks when accessing memory.</p>
+<h3 id="cpu-extension"><a class="markdownIt-Anchor" href="#cpu-extension"></a> CPU extension</h3>
+<p>We mapped the IMIX protection flag to an ignored bit in the PTE; specifically, we chose bit 52, as it is the first bit not reserved, and is normally ignored by the MMU. We used a hardware simulator to show the feasibility of our design.</p>
+<p><strong>Simulated hardware.</strong> We use Wind River Simics, a full system simulator, in order to simulator a complete computer which supports IMIX. And we use the complementary Intel Simulation and Analysis Engine (SAE) add-on to boot the Linux kernel and test our Linux extension. SAE supports emulating an x86 system running in a full operating system within its processes, while allowing various architecture instrumentations. This is done using extensions, called <em>ztools</em>.</p>
+<p>To instrument a simulated system, ztools registers callback for specific hooks either at initialization time or dynamically. First, we make sure that our ztool is initialized by registering a callback for the initialization hook. Then, we register a callback that is executed when an instruction is added to the CPU’s instruction cache. If either a <code>mov</code> or <code>smov</code> instruction that accesses memory is found, we register an instruction replacement callback.</p>
+<p>First, we check the protection flag of the memory accessed by the instruction. To identify protected memory, we look up the related PTE by combining the virtual address and the base address of the page table hierarchy linked from the <code>cr3</code> register.</p>
+<p>If a regular instruction attempts to access regular memory, we execute the original instruction to avoid instruction cache changes. For <code>smov</code> instruction attempting to access an isolated page, we first remove the instruction from the instruction cache, and the execute our ztool implementation of this instruction.</p>
+<p><strong>Real hardware.</strong> Adding IMIX support to a real CPU would require extending the CPU’s instruction decoder to make it aware of our <code>smov</code> instruction. Moreover, we need to modify the MMU to perform necessary checks.</p>
+<h3 id="operating-system-extension"><a class="markdownIt-Anchor" href="#operating-system-extension"></a> Operating system extension</h3>
+<p>The isolated pages need to be marked as such in the PTEs, which are located in kernel memory. We add a dedicated <code>PROT_IMIX</code> flag into the <code>mprotect</code> system call. Note that once a pages is marked as <code>PORT_IMIX</code>, the only way to remove this flag from a page is by unmapping it first.</p>
+<h3 id="compiler-extension"><a class="markdownIt-Anchor" href="#compiler-extension"></a> Compiler extension</h3>
+<p>Our modification mainly concerns the IR to provide access to the <code>smov</code> instruction to mitigations like CPI, and the x86 backend to emit the instruction. Further, we introduced an attribute that can be used the protect a single variable by allocating it in an isolated page.</p>
+<p><strong>IR Extension.</strong> Runtime defenses are usually implemented as LLVM optimization passes that interact with and modify LLVM’s IR. In order to allow those defenses to generate <code>smov</code> instructions, we extended the IR instruction set. We created two IMIX instructions: <em>sload</em> and <em>sstore</em>.</p>
+<p>LLVM IR instructions are implemented as C++ classes and therefore supports inheritance. We implemented our IR instructions to as subclass of their regular counterparts in order to reuse the existing translation functionality from LLVM IR to machine code, called <em>lowering</em> in LLVM parlance.</p>
+<p>To allocate memory in isolated pages, we implemented an LLVM function that can be called from an optimization pass, which allocates memory at page granularity using <code>malloc</code> and sets the IMIX permission using <code>mprotect</code>.</p>
+<p><strong>Attribute support.</strong> We added a IMIX attribute which can be used to annotate C/C++ variables which should be allocated in isolated pages. All instructions accessing those annotated variables will use the IMIX IR instructions instead of regular ones. We implemented this as an LLVM optimization pass that replaces regular variable allocations with indexed slots in a IMIX protected safe region (one per compilation module).</p>
+<p><strong>Modification to x86 backend.</strong> In the backend, we added the code needed to process <em>sload</em> and <em>sstore</em> instructions. The process of lowering IR instructions to machine code is two-staged. First, the <em>FastEmit</em> mechanism is used. It consists of transformation rules explicitly coded in C++ that are too complex to be processed using regular expressions. The mechanism can be used either generate machine code directly, or to assign a rule that should be applied in the next stage. In the second stage, LLVM applies rule-based lowering using pattern matching. The IR instructions and its operands are matched against string pattern in LLVM’s <em>TableGen</em> definitions. We modified both stage of the lowering process, similarly to how <em>load</em> and <em>store</em> are handled.</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/02/SGX-Shield-Enabling-Address-Space-Layout-Randomization-for-SGX-programs/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -2541,196 +2741,11 @@ When the vulnerability satisfies the CONT preconditions (e.g., exploitation of a
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/01/03/Resolution-for-2019/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/01/03/Resolution-for-2019/" class="post-title-link" itemprop="url">Resolution for 2019</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-01-03 15:11:14" itemprop="dateCreated datePublished" datetime="2019-01-03T15:11:14+08:00">2019-01-03</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">Edited on</span>
-                
-                <time title="Modified: 2019-02-25 17:35:37" itemprop="dateModified" datetime="2019-02-25T17:35:37+08:00">2019-02-25</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="ctf"><a class="markdownIt-Anchor" href="#ctf"></a> CTF</h2>
-<h3 id="wargame"><a class="markdownIt-Anchor" href="#wargame"></a> Wargame</h3>
-<p>Wargames are similar to CTF but always ongonging. Typically, they are always organized into levels.</p>
-<ol>
-<li>
-<p><a href="https://microcorruption.com/" title="microcorruption" target="_blank" rel="noopener">Microcorruption</a></p>
-</li>
-<li>
-<p><a href="http://smashthestack.org" title="smashthestack" target="_blank" rel="noopener">Smashthestack</a></p>
-</li>
-</ol>
-<h3 id="ctf-2"><a class="markdownIt-Anchor" href="#ctf-2"></a> CTF</h3>
-<p>Following the steps in <a href="https://github.com/ctfs/resources" target="_blank" rel="noopener">Resources</a>.</p>
-<p>And reading the <a href="https://github.com/Naetw/CTF-pwn-tips" target="_blank" rel="noopener">Tips</a>.</p>
-<h2 id="llvm"><a class="markdownIt-Anchor" href="#llvm"></a> LLVM</h2>
-<h3 id="cpp"><a class="markdownIt-Anchor" href="#cpp"></a> CPP</h3>
-<ol>
-<li>
-<p>Finishing the tutorial in <a href="https://www.cplusplus.com/doc/tutorial/" target="_blank" rel="noopener">cplusplus.com</a>.</p>
-</li>
-<li>
-<p>Practices in <a href="https://www.codewars.com/" target="_blank" rel="noopener">Codewars</a>.</p>
-</li>
-</ol>
-<h3 id="compiler"><a class="markdownIt-Anchor" href="#compiler"></a> Compiler</h3>
-<p>Compilers, Principles, Techniques and Tools.pdf</p>
-<h2 id="paper-notes"><a class="markdownIt-Anchor" href="#paper-notes"></a> Paper Notes</h2>
-<ol>
-<li>Code reuse attack</li>
-<li>side-channel related</li>
-</ol>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -2774,7 +2789,7 @@ When the vulnerability satisfies the CONT preconditions (e.g., exploitation of a
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-count">21</span>
                     <span class="site-state-item-name">posts</span>
                   </a>
                 </div>
@@ -2842,7 +2857,9 @@ When the vulnerability satisfies the CONT preconditions (e.g., exploitation of a
                     
                       
                     
-                    <span class="site-state-item-count">13</span>
+                      
+                    
+                    <span class="site-state-item-count">14</span>
                     <span class="site-state-item-name">tags</span>
                   </a>
                 </div>
