@@ -1,100 +1,50 @@
 <!DOCTYPE html>
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-<html class="theme-next gemini use-motion" lang="">
-<head><meta name="generator" content="Hexo 3.8.0">
+<html lang="">
+<head>
   <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
 <meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.8.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
 
 
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
-
-<link rel="stylesheet" href="/css/main.css?v=7.1.1">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.1">
-
-
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.1">
-
-
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.1">
-
-
-  <link rel="mask-icon" href="/images/logo.svg?v=7.1.1" color="#222">
-
-
-
-
-
-
-
-<script id="hexo.configurations">
+<script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
+    hostname: new URL('http://yoursite.com').hostname,
     root: '/',
     scheme: 'Gemini',
-    version: '7.1.1',
-    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
-    back2top: true,
-    back2top_sidebar: false,
+    version: '7.6.0',
+    exturl: false,
+    sidebar: "",
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
     fancybox: false,
-    fastclick: false,
+    mediumzoom: false,
     lazyload: false,
-    tabs: true,
-    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
     algolia: {
-      applicationID: '',
+      appID: '',
       apiKey: '',
       indexName: '',
       hits: {"per_page":10},
       labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
-    }
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
   };
 </script>
-
-
-  
-
-
-
 
   <meta property="og:type" content="website">
 <meta property="og:title" content="Zhangtong&#39;s Notebook">
@@ -104,19 +54,15 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Zhangtong&#39;s Notebook">
 
+<link rel="canonical" href="http://yoursite.com/page/2/">
 
 
-
-
-  
-  
-  <link rel="canonical" href="http://yoursite.com/page/2/">
-
-
-
-<script id="page.configurations">
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
+    isHome: true,
+    isPost: false
   };
 </script>
 
@@ -128,15 +74,8 @@
 
 
 
-
-
-
-
-
-
   <noscript>
   <style>
-  .use-motion .motion-element,
   .use-motion .brand,
   .use-motion .menu-item,
   .sidebar-inner,
@@ -145,9 +84,8 @@
   .use-motion .comments,
   .use-motion .post-header,
   .use-motion .post-body,
-  .use-motion .collection-title { opacity: initial; }
+  .use-motion .collection-header { opacity: initial; }
 
-  .use-motion .logo,
   .use-motion .site-title,
   .use-motion .site-subtitle {
     opacity: initial;
@@ -161,240 +99,120 @@
 
 </head>
 
-<body itemscope="" itemtype="http://schema.org/WebPage" lang="default">
-
-  
-  
-    
-  
-
-  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left 
-  page-home">
+<body itemscope itemtype="http://schema.org/WebPage">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container use-motion">
     <div class="headband"></div>
 
-    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-wrapper">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
   <div class="site-meta">
-    
 
-    <div class="custom-logo-site-title">
+    <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">Zhangtong's Notebook</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-    
-    
   </div>
 
   <div class="site-nav-toggle">
-    <button aria-label="Toggle navigation bar">
-      <span class="btn-bar"></span>
-      <span class="btn-bar"></span>
-      <span class="btn-bar"></span>
-    </button>
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
   </div>
 </div>
-
 
 
 <nav class="site-nav">
   
-    <ul id="menu" class="menu">
-      
-        
-        
-        
-          
-          <li class="menu-item menu-item-home">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
 
-    
-    
-    
-      
-    
-
-    
-
-    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>Home</a>
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
 
   </li>
-        
-        
-        
-          
-          <li class="menu-item menu-item-tags">
+        <li class="menu-item menu-item-tags">
 
-    
-    
-    
-      
-    
-
-    
-
-    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>Tags</a>
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
 
   </li>
-        
-        
-        
-          
-          <li class="menu-item menu-item-archives">
+        <li class="menu-item menu-item-archives">
 
-    
-    
-    
-      
-    
-
-    
-
-    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>Archives</a>
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
 
   </li>
+  </ul>
 
-      
-      
-    </ul>
-  
-
-  
-
-  
 </nav>
-
-
-
-  
-
-
-
 </div>
     </header>
 
     
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
 
 
-    <main id="main" class="main">
+    <main class="main">
       <div class="main-inner">
         <div class="content-wrap">
           
+
+          <div class="content">
             
 
-          
-          <div id="content" class="content">
-            
-  <section id="posts" class="posts-expand">
-    
-      
-
-  
-
+  <div class="posts-expand">
+        
   
   
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/03/IMIX-In-Process-Memory-Isolation-EXtension/">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/05/ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/05/03/IMIX-In-Process-Memory-Isolation-EXtension/" class="post-title-link" itemprop="url">IMIX: In-Process Memory Isolation EXtension</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/05/05/ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations/" class="post-title-link" itemprop="url">ProbeGuard: Mitigating Probing Attacks Through Reactive Program Transformations</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2019-05-03 20:18:09 / Modified: 20:19:42" itemprop="dateCreated datePublished" datetime="2019-05-03T20:18:09+08:00">2019-05-03</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+              <time title="Created: 2019-05-05 19:29:31 / Modified: 19:31:48" itemprop="dateCreated datePublished" datetime="2019-05-05T19:29:31+08:00">2019-05-05</time>
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/paper/" itemprop="url" rel="index">
+                    <span itemprop="name">paper</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -402,12 +220,127 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+<p>As a defense, <em>information hiding</em> is more efficient than <em>integrity-based defenses</em>. In particular, randomization is almost ‘free’, as even a sophisticated defense against code reuse attacks such as Code Pointer Integrity adds a modest 2.9% performance overhead.</p>
+<p>Unfortunately, recent research demonstrates that attackers bypass even the most advanced information-hiding defenses. They show that, by repeatedly <code>probing</code> the address space (either directly or by means of side channels), it is possible to break the underlying randomization and reveal the sensitive data.</p>
+<p>In this paper, we show that we can transforming from fast information hiding to strong software integrity if (and only when) attacks start probing to break the randomization.</p>
+<p><strong>Derandomization primitives.</strong> To break randomization, attackers make use a number of derandomization primitives. Since one-shot leaks are rare in modern defenses—as the defenses move all sensitive information (e.g., code pointers) out of reach of the attacker, state-of-art derandomization primitives invariably must <em>probe</em> by repeatedly executing an operation to exhaust the entropy.</p>
+<p><strong>Selective hardening.</strong> The key idea we present is that, in a software protected by a fast baseline defense (information hiding), we keep monitoring the running program for any occurrence of probing attempts. When we encounter any such attempt, we automatically locate it origin, and patch <em>only</em> the offending piece of code at runtime with stronger and more expensive integrity-based defenses.</p>
+<p>The first stage of ProbeGuard is form of anomaly detection. We detect probing attempts that characterize derandomization primitives. For most varieties of probing attacks, the anomaly detection itself is simple and non-intrusive (e.g., detecting of repeated exceptions).</p>
+<p>The second stage, namely probe analysis, uncovers the particular code site the attacker abused for probing. Doing so is complicated in the general case. However, by leveraging fast control-flow tracing feature (e.g., Intel Processor Trace), ProbeGuard conservatively pinpoints the offending code fragment in a secure way.</p>
+<p>Finally, ProbeGuard hotpatch the program by selectively replacing the offending code fragment with a harden variant. In principle, ProbeGuard is agnostic to the hotpatching technique it itself. A simple and elegent way is to create a binary that already contains multiple versions of all code fragments, where each version offers different levels of protection.</p>
+<h2 id="threat-model"><a class="markdownIt-Anchor" href="#threat-model"></a> Threat model</h2>
+<p>We consider a determined remote attacker who aims to mount a code reuse attack over the network on a <em>server application</em> hardened by any <em>ideal</em> state-of-art information hiding-base defenses. ProbeGuard’s goal is to address the fundamental weakness of practical (information-hiding based) code reuse defenses, making them resistant to attacks that bypass the defense by derandomizing hidden memory regions.</p>
+<p>We trust the underlying operating system, and we assume a modern processor that provides efficient control flow tracing, such as Intel Processor Trace.</p>
+<p>We assume a determined attacker who has access to derandomization primitives to probe the victim’s address space. Further, we assume that the attacker has unlimited probing attempts as the application recovers automatically upon any crash.</p>
+<h2 id="design"><a class="markdownIt-Anchor" href="#design"></a> Design</h2>
+<p>An application employs information-hiding based on state-of-art defenses. ProbeGuard must ensure what is hidden remain hidden. We embed <em>anomaly detectors</em> within the application that sense probing attacks and a <em>secure code cache</em> consisting of a collection of code fragments hardened by applying LLVM-based integrity checking instrumentations. A separate <em>reactive defense</em> server decodes execution traces obtained by Intel PT and performs fast <em>probe analyses</em>. ProbeGuard then reactively activates hardened code fragments by <em>hotpatching</em> when under attack.</p>
+<h3 id="anomaly-detection"><a class="markdownIt-Anchor" href="#anomaly-detection"></a> Anomaly detection</h3>
+<p><strong>Arbitrary reads and writes.</strong> An attacker may exploit an arbitrary memory read or write vulnerability in the application with the goal of derandomization the hidden region. Typically, only a very small fraction of the application’s virtual address is actually mapped. When the attacker uses such a vulnerability to access random address, it is highly likely to hit an unmapped virtual memory address leading to a segmentation fault (or a crash). We detect such probing attacks by simply handling and proxying the signal using a custom <code>SIGSEGV</code> handler.</p>
+<p><strong>Kernel reads and writes.</strong> Attackers prefer probing silently and avoid detection. Hence, to avoid the crashes, they could also attempt to derandomize the victim application’s address space by probing memory via the kernel. Certain system calls (e.g., <code>read</code>) accepts memory addresses in their argument list and return specific error codes (e.g., <code>EFAULT</code>) if the argument is a pointer to an inaccessible or unallocated memory location. Using arbitrary-read/write primitives on such arguments, they could attempt CROP attacks to enable probes eliminating application crashes (thereby not generating <code>SIGSEGV</code> signals). We can detect such probing attacks by intercepting system calls, either in <code>glibc</code> or directly in the kernel, and inspecting their results.</p>
+<p><strong>Arbitrary jumps.</strong> Attacker can use this primitive to scanning the address space, and looking for valid code pointers, and then locating gadgets. An attempt to execute unmapped or non-executable memory results in either a segmentation fault (raising a <code>SIGSEGV</code> signal) or an illegal instruction exception (raising a <code>SIGILL</code> signal). Thus, we extend our custom signal handler to handle both the signals.</p>
+<p><strong>Allocation oracles.</strong> Such probes exploit memory allocation functions in the target application by attempting to allocate large memory areas. Success or failure of the allocation leaks information about the sizeof holes in the address space, which in turn, helps locate the hidden region. We hook into <code>glibc</code> to intercept the system calls used to allocate memory (e.g., <code>mmap()</code> and <code>brk</code>). We choose a configurable threshold on allocation size, above which our detector triggers reactive hardening (half of the address space by default).</p>
+<h3 id="probe-analysis"><a class="markdownIt-Anchor" href="#probe-analysis"></a> Probe analysis</h3>
+<p>Upon an anomaly detector flagging a potential attack, ProbeGuard must locate the offending code fragment. To locate the probing primitive, we employ hardware-assisted branch tracing to fetch to control flow prior to when we detectd the anomaly. We build a reverse mapping to fetch source-level information from the trace.</p>
+<p>We obtain past executed control-flow using Intel PT, which offers low-overhead and secure branch tracing. Control bits in the CPU’s model-specific registers (MSRs) allow an operating system kernel to turn this hardware feature to on or off. The buffer size is configurable, typical values range from 2 MB to 4 MB or more. The backward trace analysis can limit itself to the relevant recent control-flow history and avoid decoding all of the trace in its entirely.</p>
+<p>We use <code>perf record</code> command interface’s snapshot mode and dump the trace when required. Although the decoded trace provided, it’s hard to mapping them back to the source file and determining the offending code fragment.</p>
+<p>The <em>probe analyzer</em> must locate the affected spot in the source code. We repurpose a field in LLVM’s debug metadata that normally carries <code>column number</code> of the source code location to instead place respective basic block identifiers. This only simplifies out prototype implementation to let LLVM’s default code generator pass on the metadata through DWARF 4.0 symbols onto the resulting application binarym instead of having to use a new metadata stream and write the supporting code.</p>
+<p>We choose to mark the entire parent function that includes the probing primitive and use this for hardening.</p>
+<h3 id="hotpatching"><a class="markdownIt-Anchor" href="#hotpatching"></a> Hotpatching</h3>
+<p>To facilitate hotpatching, we first transform the program using our LLVM compiler passes. The goal is to be able to quickly and efficiently replace each vanilla variant of a function with a different (hardened) variant of the same function at runtime. We clone all functions found in the target application’s LLVM IR and selectively invoke security-hardening instrumentation passes on specific functions clones at <em>compiler time</em>.</p>
+<p>A global <code>switchboard</code> (which we insert in the application) allows switching between each function variant at runtime. It contains an entry for each function in the program, controlling which of the variants to use during execution.</p>
+<p>To deter attacks against ProbeGuard, we mark the switchboard <strong>as read-only during normal execution</strong>.</p>
+<h3 id="selective-security-hardening"><a class="markdownIt-Anchor" href="#selective-security-hardening"></a> Selective security hardening</h3>
+<p><strong>Arbitrary memory reads and writes.</strong> Software Fault Isolation mitigates probing attempts that use arbitrary reads and writes. It simply instruments every load or store operation in the application binary by masking the target memory location with a bit mask (47th bit of the memory pointer).</p>
+<p><strong>Kernel reads and writes.</strong> We mask all pointer arguments to library calls.</p>
+<p><strong>Arbitrary jumps.</strong> We implemented a type-based CFI policy for forward-edge protection, and a per-thread shadow stack for backward-edge protection.</p>
+<p><strong>Allocation oracles.</strong> A white-list based threshold on the size arguments of library functions.</p>
+<h2 id="implementation"><a class="markdownIt-Anchor" href="#implementation"></a> Implementation</h2>
+<p>ProbeGuard’s implementation consists of the following:</p>
+<ol>
+<li>
+<p>A static library linked with the application: it houses a signal handler registered at startup, and helps in hotpatching to support switching between function variants at runtime.</p>
+</li>
+<li>
+<p><code>glibc</code> modifications to intercept <code>mmap()</code>, and syscalls that results in <code>EFAULT</code>.</p>
+</li>
+<li>
+<p>LLVM compiler passes to generate and propagate function identifying markers onto the binary via DWARF 4.0 symbols, and function cloning to facilitate hotpatching.</p>
+</li>
+<li>
+<p>A seprate reactive defense server that does probe analysis by fetching Intel PT traces using <code>libipt</code> to map them onto the binary by reading the markers using <code>libdwarf</code></p>
+</li>
+</ol>
 
       
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
         
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/03/IMIX-In-Process-Memory-Isolation-EXtension/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
           
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+            <a href="/2019/05/03/IMIX-In-Process-Memory-Isolation-EXtension/" class="post-title-link" itemprop="url">IMIX: In-Process Memory Isolation EXtension</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2019-05-03 20:18:09 / Modified: 20:19:42" itemprop="dateCreated datePublished" datetime="2019-05-03T20:18:09+08:00">2019-05-03</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/paper/" itemprop="url" rel="index">
+                    <span itemprop="name">paper</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p>Defenses against memory-corruption typically reduce the attack surface by preventing the adversary from corrupting part of the application’s memory which is essential for a successful attack, such as W⨁X, CFI, CPI, and DFI.</p>
 <p>Some of these defenses can be implemented efficiently using mechanisms that reside entirely outside the underlying application process. For instance, the kernel configures W⨁X and the hardware enforces it. However, using an external mechanism is not always feasible in practice due to high performance overhead. For instance, CFI requires run-time checks and a <em>shadow stack</em>, which is updated every time a function is invoked or returns. CPI requires run-time checks and a <em>safe region</em>, which contains meta-data about the program’s variables. This data cannot be stored outside of the process, e.g., in kernel memory, because accessing it would impose an impratical performance overhead due to the time needed for a context switch. Hence, to prevent the adversary from accessing the data some form of <em>in-process memory isolation</em> is needed.</p>
 <p><strong>Goals and Contribution.</strong> In this paper, we present IMIX, which enables lightweight in-process memory isolation for memory-corruption defenses that target the x86 architecture. IMIX enables <em>isolated pages</em>, which marked with a special flag. Isolated pages can only be accessed using a single new instruction called <code>smov</code>.</p>
@@ -448,165 +381,73 @@
 <p><strong>Attribute support.</strong> We added a IMIX attribute which can be used to annotate C/C++ variables which should be allocated in isolated pages. All instructions accessing those annotated variables will use the IMIX IR instructions instead of regular ones. We implemented this as an LLVM optimization pass that replaces regular variable allocations with indexed slots in a IMIX protected safe region (one per compilation module).</p>
 <p><strong>Modification to x86 backend.</strong> In the backend, we added the code needed to process <em>sload</em> and <em>sstore</em> instructions. The process of lowering IR instructions to machine code is two-staged. First, the <em>FastEmit</em> mechanism is used. It consists of transformation rules explicitly coded in C++ that are too complex to be processed using regular expressions. The mechanism can be used either generate machine code directly, or to assign a rule that should be applied in the next stage. In the second stage, LLVM applies rule-based lowering using pattern matching. The IR instructions and its operands are matched against string pattern in LLVM’s <em>TableGen</em> definitions. We modified both stage of the lowering process, similarly to how <em>load</em> and <em>store</em> are handled.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/02/SGX-Shield-Enabling-Address-Space-Layout-Randomization-for-SGX-programs/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/05/02/SGX-Shield-Enabling-Address-Space-Layout-Randomization-for-SGX-programs/" class="post-title-link" itemprop="url">SGX-Shield: Enabling Address Space Layout Randomization for SGX programs</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/05/02/SGX-Shield-Enabling-Address-Space-Layout-Randomization-for-SGX-programs/" class="post-title-link" itemprop="url">SGX-Shield: Enabling Address Space Layout Randomization for SGX programs</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
+              <span class="post-meta-item-text">Posted on</span>
 
               <time title="Created: 2019-05-02 18:43:18" itemprop="dateCreated datePublished" datetime="2019-05-02T18:43:18+08:00">2019-05-02</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
+            </span>
+              <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
-                
-                  <span class="post-meta-item-text">Edited on</span>
-                
+                <span class="post-meta-item-text">Edited on</span>
                 <time title="Modified: 2019-05-09 19:46:10" itemprop="dateModified" datetime="2019-05-09T19:46:10+08:00">2019-05-09</time>
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+              </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/paper/" itemprop="url" rel="index">
+                    <span itemprop="name">paper</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -614,12 +455,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p>The traditional memory corruption vulnerabilities, such as buffer overflow, exist inside SGX programs, which not only nullifies the security guarantee that SGX claims to provide, but also, perhaps more critically, allows attacker to exploit isolation and confidentiality to lurk. For example, by exploiting a stack overflow vulnerability in a trusted web server or database running in a <em>enclave</em>, an adversarial client can launch traditional return-orient programming (ROP) attacks to disclose security-sensitive data in an enclave.</p>
 <p>To defeat such attack, Intel includes a simple ASLR scheme for SGX in Intel SDKs for Linux and Windows. However, we find that Intel’s ASLR’s design has several critical limitations that invalidate the security guarantees of ASLR.</p>
 <p><em>Challenges:</em></p>
@@ -670,153 +506,67 @@
 <p><strong>Bootstrapping.</strong> The bootstrapping simply creates an enclave and loads the secure in-enclave loader to the enclave.</p>
 <p><strong>Secure in-enclave loader.</strong> The secure in-enclave loader is a dynamic loader that conducts the randomization unit-level memory object loading and relocations. It resolves the relocation information for all the memory reference including the absolute address and the PC-relative address. We implements this (parsing the ELF file, randomly loading and relocation ) with a single C file.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/29/Shuffler-Fast-and-Deployable-Continuous-Code-Re-Randomization/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/04/29/Shuffler-Fast-and-Deployable-Continuous-Code-Re-Randomization/" class="post-title-link" itemprop="url">Shuffler: Fast and Deployable Continuous Code Re-Randomization</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/04/29/Shuffler-Fast-and-Deployable-Continuous-Code-Re-Randomization/" class="post-title-link" itemprop="url">Shuffler: Fast and Deployable Continuous Code Re-Randomization</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-04-29 19:51:07 / Modified: 19:52:46" itemprop="dateCreated datePublished" datetime="2019-04-29T19:51:07+08:00">2019-04-29</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/paper/" itemprop="url" rel="index">
+                    <span itemprop="name">paper</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -824,12 +574,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p>We propose a system, called <em>Shuffler</em>, which provides a deployable defense against JIT-ROP and other code reuse attacks. Other defenses have had significant barriers to deployment: some utilize a custom hypervisor; others involve a modified compiler, runtime, or operating system kernel. In comparison, Shuffler runs in userspace along side the target program, and requires no system modification beyond a minimal patch to the loader.</p>
 <p>Shuffler operates by performing continuous code re-randomization at runtime, within the same address space as the program it defends. Additional, we bootstrap into a self-hosted and self modifying <em>egalitarian</em> environment — Shuffler always shuffles itself.</p>
 <p>We achieve a <em>shuffle period</em> on the order of tens of milliseconds, so fast that is nearly impossible to form a complete exploit. Shuffler creates new function permutations asynchronously in a separate thread, and then atomically migrates program execution from one copy of code to the next. This migration requires a vanishingly small global pause time, as program threads continue to execute unhindered 99.7% of the time. Thus, if the host machine has a spare CPU core, shuffling at faster rates does not significant impact the target’s performance.</p>
@@ -885,153 +630,67 @@
 <p><strong>Direct JIT-ROP.</strong> In direct JIT-ROP, the attacker is assumed to know one valid code address, and employs a memory disclosure recursively, harvesting code pages and finding enough gadgets for a ROP attack. The entire attack must be completed within the shuffle period of <em>r</em> milliseconds.</p>
 <p><strong>Blind ROP.</strong> BlindROP tries to infer the layout of a server process by probing it workers, which are <code>fork</code>ed from the parent and have the same layout. The attack uses a timing channel to inter information about the parent based on whether the child crashed or not. Shuffler easily thwarts this attack because it randomizes child and parent processes independently.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/21/Enforcing-kernel-security-invariants-with-data-flow-integrity/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/04/21/Enforcing-kernel-security-invariants-with-data-flow-integrity/" class="post-title-link" itemprop="url">Enforcing kernel security invariants with data-flow integrity</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/04/21/Enforcing-kernel-security-invariants-with-data-flow-integrity/" class="post-title-link" itemprop="url">Enforcing kernel security invariants with data-flow integrity</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-04-21 20:54:22 / Modified: 20:57:25" itemprop="dateCreated datePublished" datetime="2019-04-21T20:54:22+08:00">2019-04-21</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/paper/" itemprop="url" rel="index">
+                    <span itemprop="name">paper</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -1039,12 +698,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p>More recently, researchers have demonstrated the feasibility of enforcing Control-Flow Integrity (CFI) in kernel space. However, in addition to problems discovered in CFI, a more fundamental problem is that because OS kernel are mainly data-driven, CFI can be easily by passed by non-control-data attacks.</p>
 <p>The objective of this work is to provide a defense system that is both <em>principled</em> and <em>practical</em>. We achieve the first goal by utilizing Data-Flow Integrity. Similar to CFI, DFI guarantees that runtime data-flow cannot deviate from the data-flow graph generated from static analysis. For example, data from a string buffer should never flow to the return address on the stack (control-data) or the <code>uid</code> (non-control-data). In this work, we focus on enforcing invariants that are related to kernel access control mechanisms (a.k.a., reference monitors) so as to defeat privilege escalation attacks.</p>
 <p>While this approach sounds intuitive at high level, enforcing it with practical runtime performance overhead is very challenging. First, access control checks are scattered through out the kernel, and related data are mixed with other data. Therefore, the protection must be deployed kernel-wide. Moreover, without hardware support, software-based DFI implementation can be every expensive.</p>
@@ -1134,153 +788,67 @@
 <p>For non-control data, the error codes we used were <code>EPERM</code>, <code>EACCES</code>, and <code>EROFS</code>. 526 functions as capable of returning permission-related errors; 1077 function args, 279 global variable, and 1731 data fields over 855 data structures as security-critical.</p>
 <p>For sensitive pointers, we combined both control and non-control data to result a total of 4096 data fields over 1316 data structures as the sensitive pointer inference. Futher, there are 4002 fields over 1103 structures as distinguishing regions. <strong>For the target kernel, we should protect about 27.30% of all data structures.</strong></p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/11/Shining-Light-on-Shadow-Stacks/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/04/11/Shining-Light-on-Shadow-Stacks/" class="post-title-link" itemprop="url">Shining Light on Shadow Stacks</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/04/11/Shining-Light-on-Shadow-Stacks/" class="post-title-link" itemprop="url">Shining Light on Shadow Stacks</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-04-11 21:57:40 / Modified: 21:58:55" itemprop="dateCreated datePublished" datetime="2019-04-11T21:57:40+08:00">2019-04-11</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/paper/" itemprop="url" rel="index">
+                    <span itemprop="name">paper</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -1288,12 +856,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p>Code pointers can be divided into two categories: <em>backward edge</em>, i.e., return address or <em>forward edge</em> pointers, such as function pointers or virtual table pointers. Control-Flow Integrity protects forward edges and assumes that the backward edges are protected. However, stack canaries and safe stacks are the strongest backward edge protection available in mainline compilers, and both are easily bypassed by information leaks.</p>
 <p>Shadow stacks enforce stack integrity, protecting against stack pivot attacks and overwriting return addresses. Shadow stacks store the return address in a separate, isolated region of memory that is not accessible by the attacker. Upon returning, the integrity of the program return address is checked against the protected copy on the shadow stack. Two shadow stack designs have been proposed: compact shadow stacks, which rely on a separate shadow stack pointer, and parallel shadow stacks, which place the shadow stack at a constant offset to the orignal stack. These existing shadow stack designs suffer from a combination of poor performance, i.g., greater than 5%, and difficulty supporting C and C++ programming paradigms, i.g., multi-threading and exception handling.</p>
 <h2 id="shadow-stack-design-space"><a class="markdownIt-Anchor" href="#shadow-stack-design-space"></a> Shadow stack design space</h2>
@@ -1346,153 +909,67 @@
 <h2 id="evaluation"><a class="markdownIt-Anchor" href="#evaluation"></a> Evaluation</h2>
 <p>We believe that Shadesmar, a compact, register based shadow stack that directly uses the shadow RA, and relies on information hiding to protect the shadow stack, is the best candidate for adoption by mainline compilers based on our initial experiments with SPEC CPU 2006.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/05/Securing-software-by-enforcing-data-flow-integrity/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/04/05/Securing-software-by-enforcing-data-flow-integrity/" class="post-title-link" itemprop="url">Securing software by enforcing data-flow integrity</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/04/05/Securing-software-by-enforcing-data-flow-integrity/" class="post-title-link" itemprop="url">Securing software by enforcing data-flow integrity</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-04-05 16:49:18 / Modified: 17:13:26" itemprop="dateCreated datePublished" datetime="2019-04-05T16:49:18+08:00">2019-04-05</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/paper/" itemprop="url" rel="index">
+                    <span itemprop="name">paper</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -1500,12 +977,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p>Most software is written in unsafe languages like C and C++, which is vulnerable to attacks. Almost all these attacks subvert the intended data-flow in the program. <em>Control-data attacks</em> exploit buffer overflows or other vulnerabilities to overwrite a return address, a functional pointer. <em>Non-control-data attacks</em> exploit similar vulnerabilities to overwrite security critical data without subverting the intended control-flow in the program.</p>
 <p>This paper present a technique that prevent both attack by enforcing data-flow integrity. This technique computes a data-flow graph for a vulnerable program using static analysis, and instruments the program to ensure that flow of data at runtime is allowed by the data-flow graph.</p>
 <p>We implemented data-flow integrity enforcement which using reaching definition analysis to compute a static data-flow graph. For each value read by an instruction, it computes the sets of instructions that may write the value.</p>
@@ -1560,153 +1032,67 @@ For uses of variables, the set of reaching definitions is the union of the set c
 <p>The first set of experiments measured two variants of the overhead of data-flow integrity enforcement: <em>intraproc</em> DFI only instruments uses of control-data and use of local variables without definitions outside their function, and <em>interproc</em> DFI is the variant described earlier in the paper.</p>
 <p>The average overhead of execution time is 43% for <em>intraproc</em> DFI and 104% for <em>interproc</em> DFI.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/01/Block-oriented-programming/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/04/01/Block-oriented-programming/" class="post-title-link" itemprop="url">Block-oriented programming</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/04/01/Block-oriented-programming/" class="post-title-link" itemprop="url">Block-oriented programming</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-04-01 10:47:46 / Modified: 10:50:14" itemprop="dateCreated datePublished" datetime="2019-04-01T10:47:46+08:00">2019-04-01</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/paper/" itemprop="url" rel="index">
+                    <span itemprop="name">paper</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -1714,12 +1100,7 @@ For uses of variables, the set of reaching definitions is the union of the set c
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p>Control-flow Integrity still allows the attacker control over the execution along two dimensions: the imprecision in the analysis and CFI’s statelessness; data-only attacks allow an attacker to influence conditional branches arbitrarily. With CFI, exploits become highly program dependent as the set of reachable gadgets is severely limited by CFI policy, so exploits must therefore follow valid paths in the CFG.</p>
 <p>We present BOPC (<em>Block Oriented Programming Compiler</em>), an automatic framework to evaluate a program’s remaining attack surface under strong control-flow hijacking mitigation. BOPC compiles an “exploit” into a program trace, which is executed on top of the orignal program’s CFG. To express the desired exploits flexibly, BOPC provides a Turing-complete, high-level language: SPloit language (SPL). BOPC takes as input an SPL payload and a starting point and returns a trace through the program that encodes the SPL payload.</p>
 <p>First, BOPC translates the SPL payload into constraints for individual statements and, for each statement, searches for basic blocks in the target binary that satisfy these constraints (called <em>candidate blocks</em>). At this point, SPL abstract register assignments from underlying architecture. Second, BOPC infers a resource (register and state) mapping for each SPL statement, iterating through the set of candidate blocks and turing them into <em>functional blocks</em> which can be used to execute a concrete instantiation of the given SPL statement. Third, BOPC constructs a trace that connect each functional block through <em>dispatcher  blocks</em>. Since the mapping process is NP-hard, to find a solution in reasonable time BOPC first prunes the set of functional blocks per statement to constrain the search space and then use a ranking based on the proximity of individual function blocks as a heuristic when searching for dispatcher gadgets.</p>
@@ -1810,165 +1191,73 @@ For uses of variables, the set of reaching definitions is the union of the set c
 <p>BOPC is limited by the granularity of basic blocks. That is, a combination of basic blocks could potentially lead to execution of a desired SPL statement, while individual blocks might not.</p>
 <p>BOPC sets several upper bounds defined by user inputs. These configurable bounds include the upper limit of (i) SPL payload permutations P, (2) length of continuous block L, (3) of minimum induced subgraphs extracted from the delta graph N, (4) dispatcher paths between a pair of functional blocks K. These upper bounds along with the timeout for symbolic execution, reduce the search space, but prune some potentially valid solutions.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/23/Data-Oriented-Programming/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/03/23/Data-Oriented-Programming/" class="post-title-link" itemprop="url">Data-Oriented Programming</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/03/23/Data-Oriented-Programming/" class="post-title-link" itemprop="url">Data-Oriented Programming</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
+              <span class="post-meta-item-text">Posted on</span>
 
               <time title="Created: 2019-03-23 16:38:19" itemprop="dateCreated datePublished" datetime="2019-03-23T16:38:19+08:00">2019-03-23</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
+            </span>
+              <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
-                
-                  <span class="post-meta-item-text">Edited on</span>
-                
+                <span class="post-meta-item-text">Edited on</span>
                 <time title="Modified: 2019-03-24 20:29:01" itemprop="dateModified" datetime="2019-03-24T20:29:01+08:00">2019-03-24</time>
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+              </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/paper/" itemprop="url" rel="index">
+                    <span itemprop="name">paper</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -1976,12 +1265,7 @@ For uses of variables, the set of reaching definitions is the union of the set c
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p>Control-flow hijacking attacks are the predominant category of memory exploits today. In response, numerous principled defenses which aim to ensure legal control flow has been proposed.</p>
 <p>A natural question is to analyze the limits of protection offered by control-flow defenses, and the remaining capabilities of the adversary. Control-flow defenses aim to ensure the execution of the program stay legitimate, by protecting the integrity of the <em>control plane</em> memory of by directly checking the targets of control transfers. However, the data plane of memory can offer an additional source of advantage for adversaries (e.g., <em>non-control data attacks</em>).</p>
 <p>In this paper, we show that non-control data attacks with rich expressiveness can be crafted using systematic construction techniques. The key idea in our contribution is to find <em>data-oriented gadgets</em>. then we find <em>gadget dispatchers</em> which are fragment of logic that chain together disjoint gadgets in an arbitrary sequence.</p>
@@ -2157,153 +1441,67 @@ For uses of variables, the set of reaching definitions is the union of the set c
 <p><strong>Bypassing Randomization Defenses.</strong> We show how to defeat ASLR with DOP without leaking any addresses to the network. As a real example, consider the vulnerable ProFTPD server, which internally uses OpenSSL for authentication. Our goal is to leak the server’s OpenSSL private key. We found that the private key has a chain of 8 pointers pointing the private key buffer.</p>
 <p>The key idea is to use a short MINDOP virtual program that starts from the base pointer (of known location) and dereference it 7 times within the server’s memory to correctly determine the randomized location of the private key. Once we have the private key buffer’s address, we simply replace an address used by a public output function, causing it to leak the private data to the network.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/25/The-Guard-s-Dilemma/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/02/25/The-Guard-s-Dilemma/" class="post-title-link" itemprop="url">The Guard's Dilemma</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/02/25/The-Guard-s-Dilemma/" class="post-title-link" itemprop="url">The Guard's Dilemma</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-02-25 17:28:09 / Modified: 17:34:33" itemprop="dateCreated datePublished" datetime="2019-02-25T17:28:09+08:00">2019-02-25</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/paper/" itemprop="url" rel="index">
+                    <span itemprop="name">paper</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -2311,12 +1509,7 @@ For uses of variables, the set of reaching definitions is the union of the set c
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p>SGX isolates sensitive code and data from the OS, hypervisor, BIOS and other applications. Besides, SGX code and data is always encrypted as soon as it leaves the CPU. sensitive data, e.g. cryptographic keys, of applications is protected by SGX containers called <em>enclaves</em>, which can be dynamiclly created while the applications, known as <em>hosts</em>, is running. enclaves provide predefined entry points to hosts performing sensitive computation.</p>
 <p>Ideally, the enclave code only includes minimal carefully-inspected code, which could be formally proven to be free of vulnerabilities. However, legacy applications can be adapted as well to run inside SGX enclaves with necessary modifications. Formally proving or manually inspecting legacy applications is not feasible, meaning that memory corruption vulnerabilities occurs in enclaves with high probability.</p>
 <p>Recently, Dark-ROP[1] was proposed to leverage memory-corruption against SGX. Dark-ROP is based on several oracles, which inform the attackers about the internal status of encalves, and return-oriented programming. However, Dark-ROP requires a non-randomized memory layout to locate secret code and data after crashing. Therefore, an implementation of SGX randomization called SGX-Shield[2] mitigates Dark-ROP attack.</p>
@@ -2421,327 +1614,21 @@ When the vulnerability satisfies the CONT preconditions (e.g., exploitation of a
 <h3 id="second-stage"><a class="markdownIt-Anchor" href="#second-stage"></a> Second stage</h3>
 <p>The Shell code has full control over the enclave. In this case, attacker extract cryptographic keys used during remote attestation process through the shellcode. Therefore, she can sent these keys to remote server.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/01/19/OpenVPN-Setup-Tutorial/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/01/19/OpenVPN-Setup-Tutorial/" class="post-title-link" itemprop="url">OpenVPN Setup Tutorial</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-01-19 16:08:34" itemprop="dateCreated datePublished" datetime="2019-01-19T16:08:34+08:00">2019-01-19</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">Edited on</span>
-                
-                <time title="Modified: 2019-02-25 17:40:42" itemprop="dateModified" datetime="2019-02-25T17:40:42+08:00">2019-02-25</time>
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/tutorial/" itemprop="url" rel="index"><span itemprop="name">tutorial</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="installation"><a class="markdownIt-Anchor" href="#installation"></a> Installation</h2>
-<h3 id="via-source-code"><a class="markdownIt-Anchor" href="#via-source-code"></a> Via source code</h3>
-<ol>
-<li>
-<p>Download tar ball from <a href="https://openvpn.net/index.php/download/community-downloads.html" target="_blank" rel="noopener">release link</a></p>
-</li>
-<li>
-<p>Dependencies</p>
-</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">apt install libssl-dev liblzo2-dev libpam0g-dev</span><br><span class="line">apt install easy-rsa</span><br></pre></td></tr></table></figure>
-<ol start="3">
-<li>Build source code</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">tar xfz ./openvpn&lt;version&gt;.tar.gz</span><br><span class="line">cd openvpn&lt;version&gt;</span><br><span class="line">./configure</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
-<h3 id="via-official-apt-repositories"><a class="markdownIt-Anchor" href="#via-official-apt-repositories"></a> Via official apt repositories</h3>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wget -O - https://swupdate.openvpn.net/repos/repo-public.gpg|apt-key add -</span><br><span class="line">echo "deb http://build.openvpn.net/debian/openvpn/stable xenial main" &gt; /etc/apt/sources.list.d/openvpn-aptrepo.list</span><br><span class="line">apt update &amp;&amp; apt install openvpn</span><br></pre></td></tr></table></figure>
-<h3 id="via-script"><a class="markdownIt-Anchor" href="#via-script"></a> Via script</h3>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -O https://raw.githubusercontent.com/Angristan/openvpn-install/master/openvpn-install.sh</span><br><span class="line">chmod +x openvpn-install.sh</span><br><span class="line">./openvpn-install.sh</span><br></pre></td></tr></table></figure>
-<h2 id="setup"><a class="markdownIt-Anchor" href="#setup"></a> Setup</h2>
-<h3 id="ca"><a class="markdownIt-Anchor" href="#ca"></a> CA</h3>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make-cadir CA &amp;&amp; cd CA</span><br></pre></td></tr></table></figure>
-<p>In <em>CA</em> directory, edit the <em>vars</em> file and set the KEY_COUNTRY, KEY_PROVINCE, KEY_CITY, KEY_ORG and KEY_EMAIL parameters.</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">source ./vars</span><br><span class="line">./clean-all</span><br><span class="line">./build-ca</span><br></pre></td></tr></table></figure>
-<h3 id="key-generation"><a class="markdownIt-Anchor" href="#key-generation"></a> Key generation</h3>
-<p>In <em>keys</em> directory, generate the private keys, certification and Diffie Hellman parameters.</p>
-<ol>
-<li>Server key generation</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./build-key-server server</span><br></pre></td></tr></table></figure>
-<ol start="2">
-<li>Client key generation</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">./build-key client1</span><br><span class="line">./build-key client2</span><br><span class="line">./build-key client3</span><br></pre></td></tr></table></figure>
-<ol start="3">
-<li>Diffie Hellman parameters generation</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./build-dh</span><br></pre></td></tr></table></figure>
-<p>Here is an explanation of the relevant files in <em>keys</em> subdir:</p>
-<table>
-<thead>
-<tr>
-<th>Filename</th>
-<th>Needed By</th>
-<th>Purpose</th>
-<th>Secret</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ca.crt</td>
-<td>server + all clients</td>
-<td>Root CA certificate</td>
-<td>NO</td>
-</tr>
-<tr>
-<td>ca.key</td>
-<td>key signing machine only</td>
-<td>Root CA key</td>
-<td>YES</td>
-</tr>
-<tr>
-<td>dh{n}.pem</td>
-<td>server only</td>
-<td>Diffie Hellman parameters</td>
-<td>NO</td>
-</tr>
-<tr>
-<td>server.crt</td>
-<td>server only</td>
-<td>Server Certificate</td>
-<td>NO</td>
-</tr>
-<tr>
-<td>server.key</td>
-<td>server only</td>
-<td>Server Key</td>
-<td>YES</td>
-</tr>
-<tr>
-<td>client1.crt</td>
-<td>client1 only</td>
-<td>Client1 Certificate</td>
-<td>NO</td>
-</tr>
-<tr>
-<td>client1.key</td>
-<td>client1 only</td>
-<td>Client1 Key</td>
-<td>YES</td>
-</tr>
-</tbody>
-</table>
-<h3 id="configuration"><a class="markdownIt-Anchor" href="#configuration"></a> Configuration</h3>
-<ul>
-<li>In VPNServer, put <em>server.conf</em>, <em>ca.crt</em>, <em>server.crt</em>, <em>server.key</em> and <em>dh{n}.pem</em> in the same directory(e.g. /etc/openvpn/).</li>
-<li>In Client, put <em>client.conf</em>, <em>client{n}.crt</em>, <em>client{n}.key</em> and <em>ca.crt</em> in the same directory.</li>
-<li>In <em>client.conf</em>, modify the <strong>remote</strong> value to VPNServer’s IPv4 address, modify <strong>cert</strong> and <strong>key</strong> to corresponding filename.</li>
-</ul>
-<h3 id="running"><a class="markdownIt-Anchor" href="#running"></a> Running</h3>
-<ol>
-<li>In VPNServer:</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openvpn --config /etc/openvpn/server.conf --daemon</span><br></pre></td></tr></table></figure>
-<ol start="2">
-<li>In Client:</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openvpn --config /etc/openvpn/client&#123;n&#125;.conf --daemon</span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
   </div>
-  
-  
-  
-  </article>
-
-
-    
-  </section>
 
   
   <nav class="pagination">
@@ -2753,214 +1640,115 @@ When the vulnerability satisfies the CONT preconditions (e.g., exploitation of a
           </div>
           
 
-        </div>
-        
-          
-  
-  <div class="sidebar-toggle">
-    <div class="sidebar-toggle-line-wrap">
-      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
-      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
-      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
-    </div>
-  </div>
-
-  <aside id="sidebar" class="sidebar">
-    <div class="sidebar-inner">
-
-      
-
-      
-
-      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
-        <div class="site-overview">
-          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-            
-              <img class="site-author-image" itemprop="image" src="/images/avatar.png" alt="Zhangtong">
-            
-              <p class="site-author-name" itemprop="name">Zhangtong</p>
-              <div class="site-description motion-element" itemprop="description"></div>
-          </div>
-
-          
-            <nav class="site-state motion-element">
-              
-                <div class="site-state-item site-state-posts">
-                
-                  <a href="/archives/">
-                
-                    <span class="site-state-item-count">21</span>
-                    <span class="site-state-item-name">posts</span>
-                  </a>
-                </div>
-              
-
-              
-                
-                
-                <div class="site-state-item site-state-categories">
-                  
-                    
-                      <a href="/categories/">
-                    
-                  
-                    
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                    <span class="site-state-item-count">4</span>
-                    <span class="site-state-item-name">categories</span>
-                  </a>
-                </div>
-              
-
-              
-                
-                
-                <div class="site-state-item site-state-tags">
-                  
-                    
-                      <a href="/tags/">
-                    
-                  
-                    
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                    <span class="site-state-item-count">14</span>
-                    <span class="site-state-item-name">tags</span>
-                  </a>
-                </div>
-              
-            </nav>
-          
-
-          
-
-          
-
-          
-
-          
-
-          
-          
-
-          
-            
-          
-          
-
-        </div>
-      </div>
-
-      
-
-      
-
-    </div>
-  </aside>
-  
-
-
-        
-      </div>
-    </main>
-
-    <footer id="footer" class="footer">
-      <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
-  <span class="with-love" id="animate">
-    <i class="fa fa-user"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
-
-  
-
-  
-</div>
-
-
-  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.8.0</div>
-
-
-
-  <span class="post-meta-divider">|</span>
-
-
-
-  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.1.1</div>
-
-
-
-
-        
-
-
-
-
-
-
-
-
-        
-      </div>
-    </footer>
-
-    
-      <div class="back-to-top">
-        <i class="fa fa-arrow-up"></i>
-        
-      </div>
-    
-
-    
-
-    
-
-    
-  </div>
-
-  
-
 <script>
-  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
-    window.Promise = null;
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
   }
 </script>
 
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong" src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.8.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.6.0
+  </div>
+
+        
 
 
 
@@ -2969,116 +1757,35 @@ When the vulnerability satisfies the CONT preconditions (e.g., exploitation of a
 
 
 
+      </div>
+    </footer>
+  </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
 
 
 
   
-  <script src="/lib/jquery/index.js?v=2.1.3"></script>
-
-  
-  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
-
-  
-  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-
-
-  
-
-
-  <script src="/js/utils.js?v=7.1.1"></script>
-
-  <script src="/js/motion.js?v=7.1.1"></script>
-
-
-
-  
-  
-
-
-  <script src="/js/affix.js?v=7.1.1"></script>
-
-  <script src="/js/schemes/pisces.js?v=7.1.1"></script>
 
 
 
 
-  
-
-  
-
-
-  <script src="/js/next-boot.js?v=7.1.1"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
-</script>
-
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Queue(function() {
-    var all = MathJax.Hub.getAllJax(), i;
-    for(i=0; i < all.length; i += 1) {
-      all[i].SourceElement().parentNode.className += ' has-jax';
-    }
-  });
-</script>
-
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js">
-</script>
-<!-- End: Injected MathJax -->
-<!-- hexo-inject:end -->
-
-
-  
-
-  
-
-  
-
-  
-
-
-
-  
 
 
 
 
-  
 
-  
 
-  
 
-  
 
-  
 
-  
 
-  
-
-  
-
-  
-
-  
-
-  
-
-  
 
   
 

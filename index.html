@@ -1,100 +1,50 @@
 <!DOCTYPE html>
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-<html class="theme-next gemini use-motion" lang="">
-<head><meta name="generator" content="Hexo 3.8.0">
+<html lang="">
+<head>
   <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
 <meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.8.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
 
 
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
-
-<link rel="stylesheet" href="/css/main.css?v=7.1.1">
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.1">
-
-
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.1">
-
-
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.1">
-
-
-  <link rel="mask-icon" href="/images/logo.svg?v=7.1.1" color="#222">
-
-
-
-
-
-
-
-<script id="hexo.configurations">
+<script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
+    hostname: new URL('http://yoursite.com').hostname,
     root: '/',
     scheme: 'Gemini',
-    version: '7.1.1',
-    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
-    back2top: true,
-    back2top_sidebar: false,
+    version: '7.6.0',
+    exturl: false,
+    sidebar: "",
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
     fancybox: false,
-    fastclick: false,
+    mediumzoom: false,
     lazyload: false,
-    tabs: true,
-    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
     algolia: {
-      applicationID: '',
+      appID: '',
       apiKey: '',
       indexName: '',
       hits: {"per_page":10},
       labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
-    }
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
   };
 </script>
-
-
-  
-
-
-
 
   <meta property="og:type" content="website">
 <meta property="og:title" content="Zhangtong&#39;s Notebook">
@@ -104,19 +54,15 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Zhangtong&#39;s Notebook">
 
+<link rel="canonical" href="http://yoursite.com/">
 
 
-
-
-  
-  
-  <link rel="canonical" href="http://yoursite.com/">
-
-
-
-<script id="page.configurations">
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
+    isHome: true,
+    isPost: false
   };
 </script>
 
@@ -128,15 +74,8 @@
 
 
 
-
-
-
-
-
-
   <noscript>
   <style>
-  .use-motion .motion-element,
   .use-motion .brand,
   .use-motion .menu-item,
   .sidebar-inner,
@@ -145,9 +84,8 @@
   .use-motion .comments,
   .use-motion .post-header,
   .use-motion .post-body,
-  .use-motion .collection-title { opacity: initial; }
+  .use-motion .collection-header { opacity: initial; }
 
-  .use-motion .logo,
   .use-motion .site-title,
   .use-motion .site-subtitle {
     opacity: initial;
@@ -161,240 +99,109 @@
 
 </head>
 
-<body itemscope="" itemtype="http://schema.org/WebPage" lang="default">
-
-  
-  
-    
-  
-
-  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left 
-  page-home">
+<body itemscope itemtype="http://schema.org/WebPage">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container use-motion">
     <div class="headband"></div>
 
-    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-wrapper">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
   <div class="site-meta">
-    
 
-    <div class="custom-logo-site-title">
+    <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
         <span class="site-title">Zhangtong's Notebook</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-    
-    
   </div>
 
   <div class="site-nav-toggle">
-    <button aria-label="Toggle navigation bar">
-      <span class="btn-bar"></span>
-      <span class="btn-bar"></span>
-      <span class="btn-bar"></span>
-    </button>
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
   </div>
 </div>
-
 
 
 <nav class="site-nav">
   
-    <ul id="menu" class="menu">
-      
-        
-        
-        
-          
-          <li class="menu-item menu-item-home menu-item-active">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
 
-    
-    
-    
-      
-    
-
-    
-
-    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>Home</a>
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
 
   </li>
-        
-        
-        
-          
-          <li class="menu-item menu-item-tags">
+        <li class="menu-item menu-item-tags">
 
-    
-    
-    
-      
-    
-
-    
-
-    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>Tags</a>
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
 
   </li>
-        
-        
-        
-          
-          <li class="menu-item menu-item-archives">
+        <li class="menu-item menu-item-archives">
 
-    
-    
-    
-      
-    
-
-    
-
-    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>Archives</a>
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
 
   </li>
+  </ul>
 
-      
-      
-    </ul>
-  
-
-  
-
-  
 </nav>
-
-
-
-  
-
-
-
 </div>
     </header>
 
     
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
 
 
-    <main id="main" class="main">
+    <main class="main">
       <div class="main-inner">
         <div class="content-wrap">
           
+
+          <div class="content">
             
 
-          
-          <div id="content" class="content">
-            
-  <section id="posts" class="posts-expand">
-    
-      
-
-  
-
+  <div class="posts-expand">
+        
   
   
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/01/Efficient-Context-Sensitive-Pointer-Analysis-for-C-Programs/">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/07/How-to-Read-a-Paper/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/08/01/Efficient-Context-Sensitive-Pointer-Analysis-for-C-Programs/" class="post-title-link" itemprop="url">Efficient Context-Sensitive Pointer Analysis for C Programs</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/12/07/How-to-Read-a-Paper/" class="post-title-link" itemprop="url">How to Read a Paper</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2019-08-01 15:27:44 / Modified: 15:28:55" itemprop="dateCreated datePublished" datetime="2019-08-01T15:27:44+08:00">2019-08-01</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
+              <time title="Created: 2019-12-07 17:00:59 / Modified: 17:01:53" itemprop="dateCreated datePublished" datetime="2019-12-07T17:00:59+08:00">2019-12-07</time>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -402,12 +209,133 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
+          <h2 id="如何阅读-paper"><a class="markdownIt-Anchor" href="#如何阅读-paper"></a> 如何阅读 paper?</h2>
+<p><a href="https://web.stanford.edu/class/ee384m/Handouts/HowtoReadPaper.pdf" target="_blank" rel="noopener">How to Read a Paper</a></p>
+<h3 id="the-three-pass-approach"><a class="markdownIt-Anchor" href="#the-three-pass-approach"></a> The three-pass approach</h3>
+<h4 id="the-first-pass"><a class="markdownIt-Anchor" href="#the-first-pass"></a> The first pass</h4>
+<ol>
+<li>
+<p>迅速看一遍 title, abstract, 和 introduction</p>
+</li>
+<li>
+<p>读 section 和 subsection 的<strong>标题</strong></p>
+</li>
+<li>
+<p>读 conclusion</p>
+</li>
+<li>
+<p>看 references, 已经看过的 paper 可以忽略</p>
+</li>
+</ol>
+<p>并回答如下几个问题</p>
+<ol>
+<li>
+<p>Category: 这篇 paper 的类型. 是度量, 是对存在系统的分析, 还是对某个 prototype 的描述?</p>
+</li>
+<li>
+<p>Context: 它和哪些 paper 相关, 它利用了哪些理论基础来分析这个问题?</p>
+</li>
+<li>
+<p>Correctness: 论文的假设可行吗?</p>
+</li>
+<li>
+<p>Contribution: 这篇 paper 的主要贡献点为?</p>
+</li>
+<li>
+<p>Clarity: 这篇 paper 写作水平如何?</p>
+</li>
+</ol>
+<p>通过回答这些问题, 我们就能知道这篇 paper 是否有看下去的必要. 同时我们在写 paper 的时候, 主要就面向于上述问题.</p>
+<h4 id="the-second-pass"><a class="markdownIt-Anchor" href="#the-second-pass"></a> The second pass</h4>
+<ol>
+<li>
+<p>仔细看 figures, diagrams 和其它类型的图表. 它们是否都标了坐标轴? 这些结果是否含有 error bar(置信区间)?</p>
+</li>
+<li>
+<p>记得标注出这篇 paper 的 reference 中, 你没有读过的部分. 这能有效地帮助你了解背景知识</p>
+</li>
+</ol>
+<p>这个部分大致需要 1 小时地时间. 在走完这步后, 你应该能抓住 paper 的重点, 并向其它人简述它的结构与原理. 如果这篇 paper 不属于你的研究领域, 那么对它理解到这个程度是比较合适的.</p>
+<p>有时候你在过完这部分之后还是不理解这篇 paper, 这可能是因为你之前没有接触过相关的内容, 不理解其中的一些术语和缩写. 或者作者可能使用了你不理解的证明或者实验方式. 还有可能是因为 paper 写得不够好. 你现在有 3 个选择: a) 不看它了, b) 重新读一些背景材料, c) 直接读 the third pass</p>
+<h4 id="the-third-pass"><a class="markdownIt-Anchor" href="#the-third-pass"></a> The third pass</h4>
+<p>为了完全理解这篇文章, 需要 the third pass. 这一步的关键在于, 尝试<strong>虚拟复现</strong> (virtually re-implement) 这篇文章, 即做出和作者相同的假设, 复现他的工作. 通过比较这篇文章实际的实现过程, 你不仅可以发现这篇 paper 的创新点, 还可以发现它隐藏的失误和假设.</p>
+<p>我们需要专注于细节上, 质疑每条语句中的假设. 并且, 你应该提出一个自己的实现方案. 然后把你的实现方案和 paper 中的方案作比较, 这样你就能够了解这篇文章所使用的证明和技术, 并将它们加入你自己的技能库. 同时这样也可以为 future work 提供想法.</p>
+<p>刚开始时, 这一步可能需要 4, 5 个小时, 到后面可能需要差不多 1 小时. 在最后, 你应该能够在脑海中重构这篇 paper 的整个结构, 并能识别出这篇 paper 的优点和缺点. 特别是能够精确识别隐藏的假设, 缺失的引用和实验中存在的问题.</p>
+<h3 id="doing-a-literature-survey"><a class="markdownIt-Anchor" href="#doing-a-literature-survey"></a> Doing a literature survey</h3>
+<p>做 survey 能够测试你的论文阅读能力. 但是 survey 需要几十篇论文的阅读量, 你需要读什么 paper? 这个也能通过 three-pass 的方式来帮助你.</p>
+<p>首先利用学术搜索引擎选择 keywords 去找 3 到 5 篇这个领域最近的工作. 在每篇 paper 中做 one pass, 初略了解这些工作, 然后阅读它们中的 <strong>related works</strong> 相关的章节. 如果它们中提到了存在的 survey, 那么直接看就好了.</p>
+<p>然后, 去看他们的 reference, 找到相同的引用论文以及重复的作者名字. 这些被引用的 paper 和作者就是这些领域的关键工作和研究者. 将这些文章下载下来, 并去这些作者的个人网站上去看他们的 publications. 通过这样你就能找到领域内的顶会.</p>
+<p>第三步就是去顶会网站上找最近的会议论文集, 然后找到一些高质量的相关文献. 将这些文献和前面的关键工作下载之后, 使用 two pass 的方式去阅读, 并组成你的 survey. 如果他们都引用了你之前没有找到的文章, 那么也将这些文章添加到 survey 里面中.</p>
 
       
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
         
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/01/Efficient-Context-Sensitive-Pointer-Analysis-for-C-Programs/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
           
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+            <a href="/2019/08/01/Efficient-Context-Sensitive-Pointer-Analysis-for-C-Programs/" class="post-title-link" itemprop="url">Efficient Context-Sensitive Pointer Analysis for C Programs</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2019-08-01 15:27:44 / Modified: 15:28:55" itemprop="dateCreated datePublished" datetime="2019-08-01T15:27:44+08:00">2019-08-01</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/paper/" itemprop="url" rel="index">
+                    <span itemprop="name">paper</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p>Point analysis promises significant benefits for optimizing and parallelizing compilers. However, the analysis must be efficient without sacrificing the accuracy of results. Moreover, the pointer analysis must handle real C programs.</p>
 <p>Our approach is based on the insight that procedures are typically called with the same aliases among their inputs. Our idea is to generate <em>incomplete</em> transfer functions that only cover the input conditions that exists in the program. These incomplete transfer functions are made up of simple <em>partial</em> transfer functions (PTFs) that are only applicable to calling contexts that exhibit certain alias relationships.</p>
 <h2 id="major-concepts"><a class="markdownIt-Anchor" href="#major-concepts"></a> Major Concepts</h2>
@@ -507,153 +435,67 @@
 <h3 id="applying-a-ptf"><a class="markdownIt-Anchor" href="#applying-a-ptf"></a> Applying a PTF</h3>
 <h3 id="recursive-calls"><a class="markdownIt-Anchor" href="#recursive-calls"></a> Recursive Calls</h3>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/06/05/Intel-Processor-Trace/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/06/05/Intel-Processor-Trace/" class="post-title-link" itemprop="url">Intel Processor Trace</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/06/05/Intel-Processor-Trace/" class="post-title-link" itemprop="url">Intel Processor Trace</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-06-05 14:34:00 / Modified: 14:35:09" itemprop="dateCreated datePublished" datetime="2019-06-05T14:34:00+08:00">2019-06-05</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/note/" itemprop="url" rel="index">
+                    <span itemprop="name">note</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -661,12 +503,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="overview"><a class="markdownIt-Anchor" href="#overview"></a> Overview</h2>
+          <h2 id="overview"><a class="markdownIt-Anchor" href="#overview"></a> Overview</h2>
 <p>Intel PT 是一个处理器架构扩展, 它利用硬件来记录程序执行的 trace, 并且产生很小的开销. 控制流的信息通过数据包收集, 然后使用软件解码器解码. 这些数据包内容包括: 时间, 程序流信息 (e.g., 分支目标, 分支是否执行), program-induced mode related information (e.g., Intel TSX 状态转换, CR3 改变). Intel PT 后期的版本增加了 trace sources, 包括使用 <code>PTWRITE</code> 的 software trace instrumentation, 和 Power Event tracing.</p>
 <h3 id="features-and-capabilities"><a class="markdownIt-Anchor" href="#features-and-capabilities"></a> Features and Capabilities</h3>
 <p>使用 PT 生成的数据包和程序的二进制文件, 可以重构出程序的执行 trace. 这些数据包记录的信息有: instruction pointers (IP), indirect branch targets, directions of conditional branches within contiguous code regions (basic blocks).</p>
@@ -1305,165 +1142,73 @@
 <h4 id="packet-blocks"><a class="markdownIt-Anchor" href="#packet-blocks"></a> Packet Blocks</h4>
 <p>Packet blocks 是用来 dump 一些状态值的. 具体看手册.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/22/Kaleidoscope-Extending-the-language-Control-Flow/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/05/22/Kaleidoscope-Extending-the-language-Control-Flow/" class="post-title-link" itemprop="url">Kaleidoscope: Extending the Language: Control Flow</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/05/22/Kaleidoscope-Extending-the-language-Control-Flow/" class="post-title-link" itemprop="url">Kaleidoscope: Extending the Language: Control Flow</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
+              <span class="post-meta-item-text">Posted on</span>
 
               <time title="Created: 2019-05-22 11:12:33" itemprop="dateCreated datePublished" datetime="2019-05-22T11:12:33+08:00">2019-05-22</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
+            </span>
+              <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
-                
-                  <span class="post-meta-item-text">Edited on</span>
-                
+                <span class="post-meta-item-text">Edited on</span>
                 <time title="Modified: 2019-05-30 18:11:56" itemprop="dateModified" datetime="2019-05-30T18:11:56+08:00">2019-05-30</time>
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+              </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/note/" itemprop="url" rel="index">
+                    <span itemprop="name">note</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -1471,12 +1216,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="chapter-5-introduction"><a class="markdownIt-Anchor" href="#chapter-5-introduction"></a> Chapter 5 Introduction</h2>
+          <h2 id="chapter-5-introduction"><a class="markdownIt-Anchor" href="#chapter-5-introduction"></a> Chapter 5 Introduction</h2>
 <p>这是该教程的第五章, 前四章讲了 Kaleidoscope 的实现, 并且包括对 JIT 的支持. 在这章我们要给它添加简单的条件分支和循环指令.</p>
 <h2 id="ifthenelse"><a class="markdownIt-Anchor" href="#ifthenelse"></a> If/Then/Else</h2>
 <p>给 Kaleidoscope 添加 if/then/else 支持非常直接: 将条件分支的处理分别加入 lexer, AST, parser, 和 LLVM IR 代码生成.</p>
@@ -1537,153 +1277,67 @@
 <p>在对循环变量作处理时, 循环变量可能和函数参数重名, 导致冲突. 所以我们使用一个 shadow 变量先把变量符号表 (NamedValues) 中的同名值存起来, 这样就实现了作用域的概念. 然后我们给循环体生成代码, 递归的调用 <code>Body-&gt;codegen()</code> 即可. 如果我们设置了 <code>StepVal</code>, 那么就生成 Step 的代码, 没有的话默认就是 <code>1</code>. 然后再创建一个 <code>NextVar</code> 用作下一次循环时的循环变量.</p>
 <p>最后计算结束条件 <code>EndCond</code>, 首先生成代码. 再使用生成的代码去创建一个 <code>FCmpOne</code>, 用作后续 <code>CondBr</code> 指令的条件判断. 然后使用 <code>BasicBlock *LoopEndBB = Builder.GetInsertBlock()</code> 去更新最新的 basic block, 作为循环体的最后一个 block, 并创建一个 <code>BasicBlock *AfterBB</code> 使得之后的代码生成都是在循环结束之后. 最后就是给 Phi node 添加一个来自于 <code>BasicBlock *LoopEndBB</code> 的边, 并从 shadow object 中恢复原来变量的值, 最后直接返回 0.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/15/Kaleidoscope-Adding-JIT-and-Optimizer-Support/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/05/15/Kaleidoscope-Adding-JIT-and-Optimizer-Support/" class="post-title-link" itemprop="url">Kaleidoscope: Adding JIT and Optimizer Support</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/05/15/Kaleidoscope-Adding-JIT-and-Optimizer-Support/" class="post-title-link" itemprop="url">Kaleidoscope: Adding JIT and Optimizer Support</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-05-15 21:52:27 / Modified: 21:54:27" itemprop="dateCreated datePublished" datetime="2019-05-15T21:52:27+08:00">2019-05-15</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/note/" itemprop="url" rel="index">
+                    <span itemprop="name">note</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -1691,12 +1345,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="chapter-4-introduction"><a class="markdownIt-Anchor" href="#chapter-4-introduction"></a> Chapter 4 Introduction</h2>
+          <h2 id="chapter-4-introduction"><a class="markdownIt-Anchor" href="#chapter-4-introduction"></a> Chapter 4 Introduction</h2>
 <p>这一章主要是两个部分: (1) 给语言添加一个 Optimizer, (2) 添加 JIT 支持.</p>
 <h2 id="trivial-constant-folding"><a class="markdownIt-Anchor" href="#trivial-constant-folding"></a> Trivial Constant Folding</h2>
 <p>第二章中我们并没有添加任何的优化操作, 然而, <code>IRBuilder</code> 自动帮我们完成了下列的优化:</p>
@@ -1754,153 +1403,67 @@
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="string">"C"</span> <span class="function">DLLEXPORT <span class="keyword">double</span> <span class="title">putchard</span><span class="params">(<span class="keyword">double</span> X)</span> </span>&#123;</span><br><span class="line">    fputc((<span class="keyword">char</span>)X, <span class="built_in">stderr</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>链接时添加 <code>-rdynamic</code>, 使得 <code>dlopen()</code> 打开的 shared object 能解析到自己程序中的符号.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/13/Fast-and-generic-metadata-management-with-mid-fat-pointers/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/05/13/Fast-and-generic-metadata-management-with-mid-fat-pointers/" class="post-title-link" itemprop="url">Fast and generic metadata management with mid-fat pointers</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/05/13/Fast-and-generic-metadata-management-with-mid-fat-pointers/" class="post-title-link" itemprop="url">Fast and generic metadata management with mid-fat pointers</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-05-13 16:14:59 / Modified: 16:16:04" itemprop="dateCreated datePublished" datetime="2019-05-13T16:14:59+08:00">2019-05-13</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/workshop-paper/" itemprop="url" rel="index"><span itemprop="name">workshop paper</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/workshop-paper/" itemprop="url" rel="index">
+                    <span itemprop="name">workshop paper</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -1908,12 +1471,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p>We present <em>mid-fat pointers</em>, an approach to support targeted but composable metadata-based software defenses. The key idea is to strike a balance between traditional fat pointers and low-fat pointers by preserving the pointer size but changing its representation with embed data. This is done by piggybacking on SFI to decode the pointers efficiently. In such a scenario, its use by mid-fat pointers incurs no additional overhead.</p>
 <p>With mid-fat pointers, each pointer can embed the location of the metadata for the pointed memory object. Compared to recent generic metadata management schemes, we improve performance because we need fewer lookups as the metadata location is cached in the pointer and security because an out-of-bounds pointer is still associated with the same metadata.</p>
 <h2 id="threat-model"><a class="markdownIt-Anchor" href="#threat-model"></a> Threat model</h2>
@@ -1928,153 +1486,67 @@
 <p><strong>Call instrumentation.</strong> While instrumented code can safely dereference encoded pointers due to automatic masking, protected applications may well use unprotected libraries and we must not pass encoded pointers to them to avoid segmentation faults. We therefore instrument calls to external functions by decoding any pointer-type parameters. Note that we can identify which are imported from libraries because our pass is part of LLVM’s link-time optimization. For indirect calls our instrumentation might not know if the current value of a function pointer is to an external call or not. Instead, when a function is address-taken we provide a replacement function that calls the original function with masked arguments.</p>
 <p><strong>Pointer comparison and cast instrumentation.</strong> Besides dereferencing operations, compatibility issues arise when comparing pointers, and in integer operations on pointers. <strong>We could use static analysis to determine which pointers could be used in integer arithmetic and exclude them from our tagging scheme and SFI.</strong></p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/12/SGXBounds-Memory-Safety-for-Shielded-Execution/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/05/12/SGXBounds-Memory-Safety-for-Shielded-Execution/" class="post-title-link" itemprop="url">SGXBounds: Memory Safety for Shielded Execution</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/05/12/SGXBounds-Memory-Safety-for-Shielded-Execution/" class="post-title-link" itemprop="url">SGXBounds: Memory Safety for Shielded Execution</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-05-12 15:06:46 / Modified: 15:08:39" itemprop="dateCreated datePublished" datetime="2019-05-12T15:06:46+08:00">2019-05-12</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/paper/" itemprop="url" rel="index">
+                    <span itemprop="name">paper</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -2082,12 +1554,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+          <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
 <p>Intel SGX provides an abstraction of <em>secure enclave</em>, which can be used to achieve <em>shielded execution</em> for <strong>unmodified legacy applications</strong> on untrusted infrastructure.</p>
 <p>Shielded execution aims to protect confidentiality and integrity of applications when executed in an untrusted environment. The main idea is to isolate the application from the rest of the system, using only a narrow interface to communicate to the outside.</p>
 <p>However, shield execution does not protect the program against <em>memory safety</em> attacks. To validate our claim, we reproduced publicly available memory safety exploits inside the secure enclave. These examples highlight that a single exploit can completely compromise the integrity and confidentiality properties of shield execution.</p>
@@ -2166,153 +1633,67 @@
 <p><strong>Compiler Support.</strong> We treat inline assembly as an opaque memory instruction: all pointer arguments to inline assembly are bounds checked. SGXBOUNDS does not yet completely support c++ exception handling.</p>
 <p><strong>Run-time Support.</strong> We implement boundless memory feature completely in the run-time support library. To prevent data races, all read/update operations on the cache are synchronized via a global lock. For the tagged pointer scheme, SGXBOUNDS relies on SGX enclaves (thus the virtual address space) to start from 0x0. To allow this, we set Linux security flag <code>vm.mmap_min_addr</code> to zero for our applications. We also modified the original Intel SGX driver to always start the enclave at address 0x0.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/09/Kaleidoscope-Code-generation-to-LLVM-IR/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/05/09/Kaleidoscope-Code-generation-to-LLVM-IR/" class="post-title-link" itemprop="url">Kaleidoscope: Code generation to LLVM IR</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/05/09/Kaleidoscope-Code-generation-to-LLVM-IR/" class="post-title-link" itemprop="url">Kaleidoscope: Code generation to LLVM IR</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-05-09 19:40:53 / Modified: 19:41:45" itemprop="dateCreated datePublished" datetime="2019-05-09T19:40:53+08:00">2019-05-09</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/note/" itemprop="url" rel="index">
+                    <span itemprop="name">note</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -2320,12 +1701,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="chapter-3-introduction"><a class="markdownIt-Anchor" href="#chapter-3-introduction"></a> Chapter 3 Introduction</h2>
+          <h2 id="chapter-3-introduction"><a class="markdownIt-Anchor" href="#chapter-3-introduction"></a> Chapter 3 Introduction</h2>
 <p>本章主要是将 <a href="./Chapter2.md">Chapter 2</a> 中构建的抽象语法树 (AST) 转化成 LLVM IR. 这章主要讲述 LLVM 能做哪些工作, 并且告诉你怎么使用.</p>
 <p><strong>Note:</strong> 这章的代码需要 LLVM 3.7 或更新版.</p>
 <h2 id="code-generation-setup"><a class="markdownIt-Anchor" href="#code-generation-setup"></a> Code Generation Setup</h2>
@@ -2371,153 +1747,67 @@
 <h2 id="driver-changes-and-closing-thoughts"><a class="markdownIt-Anchor" href="#driver-changes-and-closing-thoughts"></a> Driver changes and Closing Thoughts</h2>
 <p>主要就是在 <code>main()</code> 和相应的 <code>HandleDefinition()</code> 之类的函数中， 相应的更改用 preprocess macro 做了判断, 直接看代码即可.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/09/Kaleidoscope-Implementing-a-Parser-and-AST/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/05/09/Kaleidoscope-Implementing-a-Parser-and-AST/" class="post-title-link" itemprop="url">Kaleidoscope: Implementing a Parser and AST</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/05/09/Kaleidoscope-Implementing-a-Parser-and-AST/" class="post-title-link" itemprop="url">Kaleidoscope: Implementing a Parser and AST</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-05-09 19:39:37 / Modified: 19:42:23" itemprop="dateCreated datePublished" datetime="2019-05-09T19:39:37+08:00">2019-05-09</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/note/" itemprop="url" rel="index">
+                    <span itemprop="name">note</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -2525,12 +1815,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="chapter-2-introduction"><a class="markdownIt-Anchor" href="#chapter-2-introduction"></a> Chapter 2 Introduction</h2>
+          <h2 id="chapter-2-introduction"><a class="markdownIt-Anchor" href="#chapter-2-introduction"></a> Chapter 2 Introduction</h2>
 <p>这一章将会使用 <a href="./Chapter1.md">Chapter 1</a> 中实现的 lexer 来构造 Kaleidoscope 的 parser. 一旦我们完成 parser 的实现, 我们就能定义并且构造一个抽象语法树 (Abstract Syntax Tree, AST).</p>
 <h2 id="the-abstract-syntax-tree-ast"><a class="markdownIt-Anchor" href="#the-abstract-syntax-tree-ast"></a> The Abstract Syntax Tree (AST)</h2>
 <p>AST 是源代码语法结构的抽象表示, 它以树状的形式来表示源代码中的语法结构, 树上的每个节点都表示源代码中的一种结构, 从而能建模这个语言, 方便编译器后续的解释 (code generation). 在 Kaleidoscope 中, 我们有表达式 (expressions), 函数原型 (prototype), 函数对象 (function object). 我们先从表达式开始:</p>
@@ -2599,153 +1884,67 @@
 <p>Driver 就是使用循环来调用不同的 parser 函数 (dispatch loop):</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleDefinition</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (ParseDefinition()) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Parsed a function definition.\n"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        getNextToken();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleExtern</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (ParseExtern()) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Parsed an extern.\n"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        getNextToken();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleTopLevelExpression</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (ParseTopLevelExpr()) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Parsed a top-level expression.\n"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        getNextToken();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// top ::= definition | external | expression | ';'</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">MainLoop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"ready&gt; "</span>);</span><br><span class="line">        <span class="keyword">switch</span> (CurTok) &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">';'</span> : <span class="comment">// ignore top-level semicolons </span></span><br><span class="line">            getNextToken();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> tok_def :</span><br><span class="line">            HandleDefinition();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> tok_extern :</span><br><span class="line">            HandleExtern();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> tok_eof :</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            HandleTopLevelExpression();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+        
   
   
-  
-  <div class="post-block">
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block home" lang="default">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/09/Kaleidoscope-Tutorial-Introduction-and-the-Lexer/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="Zhangtong">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="Zhangtong's Notebook">
     </span>
-
-    
       <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/05/09/Kaleidoscope-Tutorial-Introduction-and-the-Lexer/" class="post-title-link" itemprop="url">Kaleidoscope: Tutorial Introduction and the Lexer</a>
-              
-            
-          </h1>
-        
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/05/09/Kaleidoscope-Tutorial-Introduction-and-the-Lexer/" class="post-title-link" itemprop="url">Kaleidoscope: Tutorial Introduction and the Lexer</a>
+        </h1>
 
         <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
+              <span class="post-meta-item-text">Posted on</span>
               
 
               <time title="Created: 2019-05-09 19:37:42 / Modified: 19:39:09" itemprop="dateCreated datePublished" datetime="2019-05-09T19:37:42+08:00">2019-05-09</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
+            </span>
+            <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a></span>
-
-                
-                
-              
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/note/" itemprop="url" rel="index">
+                    <span itemprop="name">note</span>
+                  </a>
+                </span>
             </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
 
           
 
         </div>
       </header>
-    
 
     
     
@@ -2753,12 +1952,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-      
-
-      
-        
-          
-            <h2 id="the-basic-language"><a class="markdownIt-Anchor" href="#the-basic-language"></a> The Basic Language</h2>
+          <h2 id="the-basic-language"><a class="markdownIt-Anchor" href="#the-basic-language"></a> The Basic Language</h2>
 <p>Kaleidoscope 是一个面向过程的语言, 允许你定义函数, 使用条件判断, 数学计算等. 在后面的教程中, 我们还会扩展    Kaleidoscope 使它支持 <code>if/then/else</code> 结构, 循环结构和用户定义的操作符.</p>
 <p>Kaleidoscope 中唯一的数据类型是 64 bit 的浮点类型 (<code>double</code> in C). 下面是使用 Kaleidoscope 实现的斐波拉契数列.</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Compute the x'th Fibonacci Number</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">fib</span><span class="params">(x)</span></span></span><br><span class="line"><span class="function">    <span class="title">if</span> <span class="title">x</span> &lt; 3</span></span><br><span class="line"><span class="function">    <span class="title">then</span> 1</span></span><br><span class="line"><span class="function">    <span class="title">else</span> <span class="title">fib</span><span class="params">(x<span class="number">-1</span>)</span> + <span class="title">fib</span><span class="params">(x<span class="number">-2</span>)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"># <span class="title">This</span> <span class="title">expression</span> <span class="title">will</span> <span class="title">compute</span> <span class="title">the</span> 40<span class="title">th</span> <span class="title">number</span></span></span><br><span class="line"><span class="function"><span class="title">fib</span><span class="params">(<span class="number">40</span>)</span></span></span><br></pre></td></tr></table></figure>
@@ -2782,258 +1976,21 @@
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Check for end of file. Don't eat EOF</span></span><br><span class="line">    <span class="keyword">if</span> (LastChar == EOF) &#123;</span><br><span class="line">        <span class="keyword">return</span> tok_eof;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Otherwise, just return the character as its ascii value</span></span><br><span class="line">    <span class="keyword">int</span> ThisChar = LastChar;</span><br><span class="line">    LastChar = getchar();</span><br><span class="line">    <span class="keyword">return</span> ThisChar;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>以上就是 Kaleidoscope 的 lexer.</p>
 
-          
-        
       
     </div>
 
     
-
     
     
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
+      <footer class="post-footer">
         <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
+      </footer>
   </article>
-
-
-    
-      
-
-  
-
   
   
   
 
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/05/ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Zhangtong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Zhangtong's Notebook">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/05/05/ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations/" class="post-title-link" itemprop="url">ProbeGuard: Mitigating Probing Attacks Through Reactive Program Transformations</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2019-05-05 19:29:31 / Modified: 19:31:48" itemprop="dateCreated datePublished" datetime="2019-05-05T19:29:31+08:00">2019-05-05</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
-<p>As a defense, <em>information hiding</em> is more efficient than <em>integrity-based defenses</em>. In particular, randomization is almost ‘free’, as even a sophisticated defense against code reuse attacks such as Code Pointer Integrity adds a modest 2.9% performance overhead.</p>
-<p>Unfortunately, recent research demonstrates that attackers bypass even the most advanced information-hiding defenses. They show that, by repeatedly <code>probing</code> the address space (either directly or by means of side channels), it is possible to break the underlying randomization and reveal the sensitive data.</p>
-<p>In this paper, we show that we can transforming from fast information hiding to strong software integrity if (and only when) attacks start probing to break the randomization.</p>
-<p><strong>Derandomization primitives.</strong> To break randomization, attackers make use a number of derandomization primitives. Since one-shot leaks are rare in modern defenses—as the defenses move all sensitive information (e.g., code pointers) out of reach of the attacker, state-of-art derandomization primitives invariably must <em>probe</em> by repeatedly executing an operation to exhaust the entropy.</p>
-<p><strong>Selective hardening.</strong> The key idea we present is that, in a software protected by a fast baseline defense (information hiding), we keep monitoring the running program for any occurrence of probing attempts. When we encounter any such attempt, we automatically locate it origin, and patch <em>only</em> the offending piece of code at runtime with stronger and more expensive integrity-based defenses.</p>
-<p>The first stage of ProbeGuard is form of anomaly detection. We detect probing attempts that characterize derandomization primitives. For most varieties of probing attacks, the anomaly detection itself is simple and non-intrusive (e.g., detecting of repeated exceptions).</p>
-<p>The second stage, namely probe analysis, uncovers the particular code site the attacker abused for probing. Doing so is complicated in the general case. However, by leveraging fast control-flow tracing feature (e.g., Intel Processor Trace), ProbeGuard conservatively pinpoints the offending code fragment in a secure way.</p>
-<p>Finally, ProbeGuard hotpatch the program by selectively replacing the offending code fragment with a harden variant. In principle, ProbeGuard is agnostic to the hotpatching technique it itself. A simple and elegent way is to create a binary that already contains multiple versions of all code fragments, where each version offers different levels of protection.</p>
-<h2 id="threat-model"><a class="markdownIt-Anchor" href="#threat-model"></a> Threat model</h2>
-<p>We consider a determined remote attacker who aims to mount a code reuse attack over the network on a <em>server application</em> hardened by any <em>ideal</em> state-of-art information hiding-base defenses. ProbeGuard’s goal is to address the fundamental weakness of practical (information-hiding based) code reuse defenses, making them resistant to attacks that bypass the defense by derandomizing hidden memory regions.</p>
-<p>We trust the underlying operating system, and we assume a modern processor that provides efficient control flow tracing, such as Intel Processor Trace.</p>
-<p>We assume a determined attacker who has access to derandomization primitives to probe the victim’s address space. Further, we assume that the attacker has unlimited probing attempts as the application recovers automatically upon any crash.</p>
-<h2 id="design"><a class="markdownIt-Anchor" href="#design"></a> Design</h2>
-<p>An application employs information-hiding based on state-of-art defenses. ProbeGuard must ensure what is hidden remain hidden. We embed <em>anomaly detectors</em> within the application that sense probing attacks and a <em>secure code cache</em> consisting of a collection of code fragments hardened by applying LLVM-based integrity checking instrumentations. A separate <em>reactive defense</em> server decodes execution traces obtained by Intel PT and performs fast <em>probe analyses</em>. ProbeGuard then reactively activates hardened code fragments by <em>hotpatching</em> when under attack.</p>
-<h3 id="anomaly-detection"><a class="markdownIt-Anchor" href="#anomaly-detection"></a> Anomaly detection</h3>
-<p><strong>Arbitrary reads and writes.</strong> An attacker may exploit an arbitrary memory read or write vulnerability in the application with the goal of derandomization the hidden region. Typically, only a very small fraction of the application’s virtual address is actually mapped. When the attacker uses such a vulnerability to access random address, it is highly likely to hit an unmapped virtual memory address leading to a segmentation fault (or a crash). We detect such probing attacks by simply handling and proxying the signal using a custom <code>SIGSEGV</code> handler.</p>
-<p><strong>Kernel reads and writes.</strong> Attackers prefer probing silently and avoid detection. Hence, to avoid the crashes, they could also attempt to derandomize the victim application’s address space by probing memory via the kernel. Certain system calls (e.g., <code>read</code>) accepts memory addresses in their argument list and return specific error codes (e.g., <code>EFAULT</code>) if the argument is a pointer to an inaccessible or unallocated memory location. Using arbitrary-read/write primitives on such arguments, they could attempt CROP attacks to enable probes eliminating application crashes (thereby not generating <code>SIGSEGV</code> signals). We can detect such probing attacks by intercepting system calls, either in <code>glibc</code> or directly in the kernel, and inspecting their results.</p>
-<p><strong>Arbitrary jumps.</strong> Attacker can use this primitive to scanning the address space, and looking for valid code pointers, and then locating gadgets. An attempt to execute unmapped or non-executable memory results in either a segmentation fault (raising a <code>SIGSEGV</code> signal) or an illegal instruction exception (raising a <code>SIGILL</code> signal). Thus, we extend our custom signal handler to handle both the signals.</p>
-<p><strong>Allocation oracles.</strong> Such probes exploit memory allocation functions in the target application by attempting to allocate large memory areas. Success or failure of the allocation leaks information about the sizeof holes in the address space, which in turn, helps locate the hidden region. We hook into <code>glibc</code> to intercept the system calls used to allocate memory (e.g., <code>mmap()</code> and <code>brk</code>). We choose a configurable threshold on allocation size, above which our detector triggers reactive hardening (half of the address space by default).</p>
-<h3 id="probe-analysis"><a class="markdownIt-Anchor" href="#probe-analysis"></a> Probe analysis</h3>
-<p>Upon an anomaly detector flagging a potential attack, ProbeGuard must locate the offending code fragment. To locate the probing primitive, we employ hardware-assisted branch tracing to fetch to control flow prior to when we detectd the anomaly. We build a reverse mapping to fetch source-level information from the trace.</p>
-<p>We obtain past executed control-flow using Intel PT, which offers low-overhead and secure branch tracing. Control bits in the CPU’s model-specific registers (MSRs) allow an operating system kernel to turn this hardware feature to on or off. The buffer size is configurable, typical values range from 2 MB to 4 MB or more. The backward trace analysis can limit itself to the relevant recent control-flow history and avoid decoding all of the trace in its entirely.</p>
-<p>We use <code>perf record</code> command interface’s snapshot mode and dump the trace when required. Although the decoded trace provided, it’s hard to mapping them back to the source file and determining the offending code fragment.</p>
-<p>The <em>probe analyzer</em> must locate the affected spot in the source code. We repurpose a field in LLVM’s debug metadata that normally carries <code>column number</code> of the source code location to instead place respective basic block identifiers. This only simplifies out prototype implementation to let LLVM’s default code generator pass on the metadata through DWARF 4.0 symbols onto the resulting application binarym instead of having to use a new metadata stream and write the supporting code.</p>
-<p>We choose to mark the entire parent function that includes the probing primitive and use this for hardening.</p>
-<h3 id="hotpatching"><a class="markdownIt-Anchor" href="#hotpatching"></a> Hotpatching</h3>
-<p>To facilitate hotpatching, we first transform the program using our LLVM compiler passes. The goal is to be able to quickly and efficiently replace each vanilla variant of a function with a different (hardened) variant of the same function at runtime. We clone all functions found in the target application’s LLVM IR and selectively invoke security-hardening instrumentation passes on specific functions clones at <em>compiler time</em>.</p>
-<p>A global <code>switchboard</code> (which we insert in the application) allows switching between each function variant at runtime. It contains an entry for each function in the program, controlling which of the variants to use during execution.</p>
-<p>To deter attacks against ProbeGuard, we mark the switchboard <strong>as read-only during normal execution</strong>.</p>
-<h3 id="selective-security-hardening"><a class="markdownIt-Anchor" href="#selective-security-hardening"></a> Selective security hardening</h3>
-<p><strong>Arbitrary memory reads and writes.</strong> Software Fault Isolation mitigates probing attempts that use arbitrary reads and writes. It simply instruments every load or store operation in the application binary by masking the target memory location with a bit mask (47th bit of the memory pointer).</p>
-<p><strong>Kernel reads and writes.</strong> We mask all pointer arguments to library calls.</p>
-<p><strong>Arbitrary jumps.</strong> We implemented a type-based CFI policy for forward-edge protection, and a per-thread shadow stack for backward-edge protection.</p>
-<p><strong>Allocation oracles.</strong> A white-list based threshold on the size arguments of library functions.</p>
-<h2 id="implementation"><a class="markdownIt-Anchor" href="#implementation"></a> Implementation</h2>
-<p>ProbeGuard’s implementation consists of the following:</p>
-<ol>
-<li>
-<p>A static library linked with the application: it houses a signal handler registered at startup, and helps in hotpatching to support switching between function variants at runtime.</p>
-</li>
-<li>
-<p><code>glibc</code> modifications to intercept <code>mmap()</code>, and syscalls that results in <code>EFAULT</code>.</p>
-</li>
-<li>
-<p>LLVM compiler passes to generate and propagate function identifying markers onto the binary via DWARF 4.0 symbols, and function cloning to facilitate hotpatching.</p>
-</li>
-<li>
-<p>A seprate reactive defense server that does probe analysis by fetching Intel PT traces using <code>libipt</code> to map them onto the binary by reading the markers using <code>libdwarf</code></p>
-</li>
-</ol>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
   </div>
-  
-  
-  
-  </article>
-
-
-    
-  </section>
 
   
   <nav class="pagination">
@@ -3045,214 +2002,115 @@
           </div>
           
 
-        </div>
-        
-          
-  
-  <div class="sidebar-toggle">
-    <div class="sidebar-toggle-line-wrap">
-      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
-      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
-      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
-    </div>
-  </div>
-
-  <aside id="sidebar" class="sidebar">
-    <div class="sidebar-inner">
-
-      
-
-      
-
-      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
-        <div class="site-overview">
-          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-            
-              <img class="site-author-image" itemprop="image" src="/images/avatar.png" alt="Zhangtong">
-            
-              <p class="site-author-name" itemprop="name">Zhangtong</p>
-              <div class="site-description motion-element" itemprop="description"></div>
-          </div>
-
-          
-            <nav class="site-state motion-element">
-              
-                <div class="site-state-item site-state-posts">
-                
-                  <a href="/archives/">
-                
-                    <span class="site-state-item-count">21</span>
-                    <span class="site-state-item-name">posts</span>
-                  </a>
-                </div>
-              
-
-              
-                
-                
-                <div class="site-state-item site-state-categories">
-                  
-                    
-                      <a href="/categories/">
-                    
-                  
-                    
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                    <span class="site-state-item-count">4</span>
-                    <span class="site-state-item-name">categories</span>
-                  </a>
-                </div>
-              
-
-              
-                
-                
-                <div class="site-state-item site-state-tags">
-                  
-                    
-                      <a href="/tags/">
-                    
-                  
-                    
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                    <span class="site-state-item-count">14</span>
-                    <span class="site-state-item-name">tags</span>
-                  </a>
-                </div>
-              
-            </nav>
-          
-
-          
-
-          
-
-          
-
-          
-
-          
-          
-
-          
-            
-          
-          
-
-        </div>
-      </div>
-
-      
-
-      
-
-    </div>
-  </aside>
-  
-
-
-        
-      </div>
-    </main>
-
-    <footer id="footer" class="footer">
-      <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
-  <span class="with-love" id="animate">
-    <i class="fa fa-user"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
-
-  
-
-  
-</div>
-
-
-  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.8.0</div>
-
-
-
-  <span class="post-meta-divider">|</span>
-
-
-
-  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.1.1</div>
-
-
-
-
-        
-
-
-
-
-
-
-
-
-        
-      </div>
-    </footer>
-
-    
-      <div class="back-to-top">
-        <i class="fa fa-arrow-up"></i>
-        
-      </div>
-    
-
-    
-
-    
-
-    
-  </div>
-
-  
-
 <script>
-  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
-    window.Promise = null;
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
   }
 </script>
 
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong" src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.8.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.6.0
+  </div>
+
+        
 
 
 
@@ -3261,116 +2119,35 @@
 
 
 
+      </div>
+    </footer>
+  </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
 
 
 
   
-  <script src="/lib/jquery/index.js?v=2.1.3"></script>
-
-  
-  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
-
-  
-  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-
-
-  
-
-
-  <script src="/js/utils.js?v=7.1.1"></script>
-
-  <script src="/js/motion.js?v=7.1.1"></script>
-
-
-
-  
-  
-
-
-  <script src="/js/affix.js?v=7.1.1"></script>
-
-  <script src="/js/schemes/pisces.js?v=7.1.1"></script>
 
 
 
 
-  
-
-  
-
-
-  <script src="/js/next-boot.js?v=7.1.1"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
-</script>
-
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Queue(function() {
-    var all = MathJax.Hub.getAllJax(), i;
-    for(i=0; i < all.length; i += 1) {
-      all[i].SourceElement().parentNode.className += ' has-jax';
-    }
-  });
-</script>
-
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js">
-</script>
-<!-- End: Injected MathJax -->
-<!-- hexo-inject:end -->
-
-
-  
-
-  
-
-  
-
-  
-
-
-
-  
 
 
 
 
-  
 
-  
 
-  
 
-  
 
-  
 
-  
 
-  
-
-  
-
-  
-
-  
-
-  
-
-  
 
   
 
