@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;yoursite.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Gemini&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="IntroductionCode pointers can be divided into two categories: backward edge, i.e., return address or forward edge pointers, such as function pointers or virtual table pointers. Control-Flow Integrity">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Shining Light on Shadow Stacks">
+<meta property="og:url" content="http://yoursite.com/2019/04/11/Shining-Light-on-Shadow-Stacks/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="IntroductionCode pointers can be divided into two categories: backward edge, i.e., return address or forward edge pointers, such as function pointers or virtual table pointers. Control-Flow Integrity">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-04-11T13:57:40.000Z">
+<meta property="article:modified_time" content="2021-05-22T09:03:11.290Z">
+<meta property="article:author" content="Zhangtong">
+<meta property="article:tag" content="code-reuse attack">
+<meta property="article:tag" content="shadow stack">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://yoursite.com/2019/04/11/Shining-Light-on-Shadow-Stacks/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;default&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;04&#x2F;11&#x2F;Shining-Light-on-Shadow-Stacks&#x2F;&quot;,&quot;path&quot;:&quot;2019&#x2F;04&#x2F;11&#x2F;Shining-Light-on-Shadow-Stacks&#x2F;&quot;,&quot;title&quot;:&quot;Shining Light on Shadow Stacks&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Shining Light on Shadow Stacks | Zhangtong's Notebook</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Zhangtong's Notebook</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Shadow-stack-design-space"><span class="nav-number">2.</span> <span class="nav-text">Shadow stack design space</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Shadow-stack-mechanisms"><span class="nav-number">2.1.</span> <span class="nav-text">Shadow stack mechanisms</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Shadow-stack-mechanisms-based-on-register"><span class="nav-number">2.2.</span> <span class="nav-text">Shadow stack mechanisms based on register.</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Shadow-stack-implementations"><span class="nav-number">3.</span> <span class="nav-text">Shadow stack implementations</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Instrumented-locations"><span class="nav-number">3.1.</span> <span class="nav-text">Instrumented locations</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Runtime-support"><span class="nav-number">3.2.</span> <span class="nav-text">Runtime support</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Shadow-stack-epilogue-optimizations"><span class="nav-number">3.3.</span> <span class="nav-text">Shadow stack epilogue optimizations</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Hardware-integrity-mechanisms"><span class="nav-number">4.</span> <span class="nav-text">Hardware integrity mechanisms</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Thread-centric-solutions"><span class="nav-number">4.1.</span> <span class="nav-text">Thread centric solutions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Code-centric-solutions"><span class="nav-number">4.2.</span> <span class="nav-text">Code centric solutions</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Evaluation"><span class="nav-number">5.</span> <span class="nav-text">Evaluation</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/11/Shining-Light-on-Shadow-Stacks/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Shining Light on Shadow Stacks
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-04-11 21:57:40" itemprop="dateCreated datePublished" datetime="2019-04-11T21:57:40+08:00">2019-04-11</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-05-22 17:03:11" itemprop="dateModified" datetime="2021-05-22T17:03:11+08:00">2021-05-22</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>Code pointers can be divided into two categories: <em>backward edge</em>, i.e., return address or <em>forward edge</em> pointers, such as function pointers or virtual table pointers. Control-Flow Integrity protects forward edges and assumes that the backward edges are protected. However, stack canaries and safe stacks are the strongest backward edge protection available in mainline compilers, and both are easily bypassed by information leaks.</p>
+<p>Shadow stacks enforce stack integrity, protecting against stack pivot attacks and overwriting return addresses. Shadow stacks store the return address in a separate, isolated region of memory that is not accessible by the attacker. Upon returning, the integrity of the program return address is checked against the protected copy on the shadow stack. Two shadow stack designs have been proposed: compact shadow stacks, which rely on a separate shadow stack pointer, and parallel shadow stacks, which place the shadow stack at a constant offset to the orignal stack. These existing shadow stack designs suffer from a combination of poor performance, i.g., greater than 5%, and difficulty supporting C and C++ programming paradigms, i.g., multi-threading and exception handling.</p>
+<h2 id="Shadow-stack-design-space"><a href="#Shadow-stack-design-space" class="headerlink" title="Shadow stack design space"></a>Shadow stack design space</h2><p>For any shadow stack mechanism to be adopted in practice, it must be highly performance, compatible with existing code, and provide meaningful security.</p>
+<p>Shadow stack mechanisms are defined by how they map from the program stack to the shadow stack. This includes the type of mapping, as well as how the mapping is encoded in the protected binary.</p>
+<h3 id="Shadow-stack-mechanisms"><a href="#Shadow-stack-mechanisms" class="headerlink" title="Shadow stack mechanisms"></a>Shadow stack mechanisms</h3><p>Direct mapping schemes for parallel shadow stacks use the location of the return address on the program stack to directly find the corresponding entry on the shadow stack. The parallel shadow stack is as large as the program stack, and a simple offset maps from the program stack to the shadow stack.</p>
+<p>Indirect mapping schemes for compact shadow stacks maintain a shadow stack pointer, equivalent to the stack pointer used for the program stack. The shadow stack pointer points to the last entry on the shadow stack, exactly as the stack pointer does for the program stack. Maintaining a shadow stack pointer allows a compact shadow stack to allocate significantly less memory, as only room for the return address is required, instead of duplicating the program stack.</p>
+<p>Parallel and compact shadow stacks have different compatibility implications. if calls and returns were always perfectly matched, there would be no difference. However, the <code>setjump / longjump</code> functionality of C, which allows jumping mutiple stack frames back up the stack, and the equivalent stack unwinding capability used by C++ for exception handling, both break the assumption of perfectly matched calls and returns. Consequently, this leads to additional overhead for indirect shadow stack mapping schemes, while having no effect on direct mapping schemes.</p>
+<h3 id="Shadow-stack-mechanisms-based-on-register"><a href="#Shadow-stack-mechanisms-based-on-register" class="headerlink" title="Shadow stack mechanisms based on register."></a>Shadow stack mechanisms based on register.</h3><p>All 64 bit architecture have at least 16 general purpose registers, and it is possible to dedicate a general purpose register to the shadow stack mechanism.</p>
+<p><strong>Parallel shadow stack mechanisms:</strong> The existing mechanism places shadow stack entries at a constant offset from the program stack, which is very efficient but higher memory overhead and lower security. However, the compatibility concerns arise from requiring a constant offset, which is limited to 32 bits for immediate operand in x86, from the program to the shadow stack from all threads, severely constraining the address space layout for programs with many threads, such as browsers.</p>
+<p>To mitigate the compatibility and security concerns, we propose a new parallel shadow stack mechanism, which encodes the offset in a dedicated register, allowing the offset to the shadow stack to be determined at runtime. Further, the offset may vary from thread to thread as register are thread as register are thread local, and the offset can be set when the thread is created.</p>
+<p><strong>Compact Shadow Stack Mechanisms:</strong> For compact shadow stack mechanisms, the key question is where to store the shadow stack pointer. The shadow stack pointer will be dereferenced twice in every function: once in the prologue to push the correct return address, and once in the epilogue to pop the shadow return address.</p>
+<p>The earliest approach of a shadow stack scheme with a dedicated register focuses on x86_32. We rejuvenate this idea for 64 bit architectures as gerneral purpose register provide the fastest possible option for storing the shadow stack pointer.</p>
+<h2 id="Shadow-stack-implementations"><a href="#Shadow-stack-implementations" class="headerlink" title="Shadow stack implementations"></a>Shadow stack implementations</h2><p>Each of the shadow stack mechanisms we evaluate is implemented as a backend compiler pass in LLVM 7.0.0. In particular, each shadow stack mechanism must instrument calls and returns to update its shadow stack and validate the return address before using it to transfer control. We show that the best way to accomplish this is to instrument function prologues and epilogues.</p>
+<h3 id="Instrumented-locations"><a href="#Instrumented-locations" class="headerlink" title="Instrumented locations"></a>Instrumented locations</h3><p>The instrumentation is responsible for pushing the return address to the shadow stack, and updating the shadow stack pointer for compact shadow stacks. Returns must be instrumented to pop from the shadow stack and validate the program return address in the function epilogue before the control-flow transfer to mitigate control-flow hijacking attacks.</p>
+<p>The elegant solution for instrumenting calls is to place the protection in the function prologue. In this way, the <em>function</em> is protected, not particular call sites. instrumenting function prologues and epilogues maintains the symmetry of calls and returns naturally, as each will be executed for every function call.</p>
+<p>On x86, instrumenting the function prologues results in  a one-instruction wide Time Of Check To Time Of Use (TOCTTOU) opportunity due to architecture limitations. The <code>call</code> instruction pushes the return address to the stack where it may be modified by an attacker before it is picked up by the prologue in the called function. <strong>Architectures, such as ARM</strong>, where the address of the called function is stored in a register, do not have this limitation.</p>
+<p>Our proposed mechanism halves the attack window as we jump to the verified address, but not fully mitigate the TOCTTOU window. Intel Control Enforcement Technology (CET) introduces a shadow stack based on hardare and compiler support. This extension will mitigate the TOCTTOU window on x86 and simplify the required instrumentation.</p>
+<p>Stack unwinding mechanisms such as <code>longjmp</code> and c++ exceptions require additional instrumentation for compact shadow stacks. We must be able to unwind to the correct point on the shadow stack as well. Simply matching return addresses does not suffice for this, as the same address can show up multiple times in the call stack due to, e.g., recursive calls. To deal with this, our compact shadow stack implementations also push the stack pointer, i.g., <code>rsp</code>. The stack pointer and return address uniquely identify the stack frame to unwind to, allowing our mechanisms to support stack unwinding.</p>
+<p>For the shadow stack mechanisms that use a register to encode the shadow stack mapping, ensuring compatibility with unprotected code constrains our selection of register. Our implementations use <code>r15</code> in practice.</p>
+<h3 id="Runtime-support"><a href="#Runtime-support" class="headerlink" title="Runtime support"></a>Runtime support</h3><p>Our runtime library is responsible for allocating the shadow stack, and hooking <code>setjump</code> and <code>longjmp</code>. We add a new function in the <code>pre_init</code> array that initializes the shadow stack for the main program thread. This function also initializes the shadow stack pointer for compact shadow stack mappings.</p>
+<p>For compact shadow stack mappings to support multi-threading and libunwind, we preload a small support library. It intercepts calls to <code>pthread_create</code> and <code>pthread_exit</code> to set up and tear down shadow stacks for additional threads.</p>
+<h3 id="Shadow-stack-epilogue-optimizations"><a href="#Shadow-stack-epilogue-optimizations" class="headerlink" title="Shadow stack epilogue optimizations"></a>Shadow stack epilogue optimizations</h3><p>Traditionally, shadow stacks have relied on compare instructions to validate the shadow return address and program return address are equivalent, which potentially leads to pipe line stalls even with branch prediction. Consequently, as an optimization, we explore two different methods to optimize this validation.</p>
+<p>To replace the compare instruction, we propose an <code>xor</code> of the program return address and shadow return address. This will result in <code>0</code> bits anywhere the two are identical, and <code>1</code>s elsewhere. x86 has an instruction, <code>popcnt</code>, that returns the number of bits set to <code>1</code>. Consequently, if the <code>popcnt</code> of the <code>xor</code> of the program return address and shadow return address is <code>0</code>, then two are equivalent.</p>
+<p>We leverage the memory managment unit (MMU) to compare the <code>popcnt</code> to zero as a side effect by creating a protection fault: triggering a page fault.</p>
+<ol>
+<li><p>By shifting this value left 48 and <code>or</code> it into the return address, we create a general purpose fault for a non-canonical address from if its value is not zero.</p>
+</li>
+<li><p>The Last Byte in Page (LBP) scheme create two pages in memory, the first of which is mapped read write, the second of which has no permissions. We then attempt to read from the first page at the address of the last valid byte, plus the <code>popcnt</code> value. If the <code>popcnt</code> value is zero, we read the last byte of the valid page, otherwise we read from the guard page, causing the <code>MPU</code> to return a fault.</p>
+</li>
+</ol>
+<h2 id="Hardware-integrity-mechanisms"><a href="#Hardware-integrity-mechanisms" class="headerlink" title="Hardware integrity mechanisms"></a>Hardware integrity mechanisms</h2><p>Once a shadow stack design has been chosen, the shadow stack mechanism must guarantee the integrity of the shadow stack. Integrity guarantees are best provided by hardware solutions, which offer greater security and performance than software solutions, and can be as generic.</p>
+<p>Existing hardware mechanisms take two different approaches to encoding access privileges to provide integrity protection. (i) MPK which encodes access privileges in each thread’s register file, providing per thread integrity, and (ii) MPX which encodes access in the individual instructions, so that access privileges are the same across all threads and depend only on the execution instruction</p>
+<h3 id="Thread-centric-solutions"><a href="#Thread-centric-solutions" class="headerlink" title="Thread centric solutions"></a>Thread centric solutions</h3><p>Thread centric solutions operate by changing the permissions on the page of the protected memory region. Adding write permissions elevates the thread’s privileges, thereby creating a privileged region that is able to modify the protected memory region, i.e., shadow stack.</p>
+<p>Memory Protection Keys (MPK) aims to address this by providing a single, unprivileged instruction that can change page access permissions on a per thread basis.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"># Read Write (disable all MPKs)</span><br><span class="line">mov $0, %eax</span><br><span class="line">xor %ecx, %ecx</span><br><span class="line">xor %edx, %edx</span><br><span class="line">wrpkru</span><br><span class="line"></span><br><span class="line"># protection is off, write to the shadow stack</span><br><span class="line">....</span><br><span class="line"># Read Only (enable write disable bit for shadow stack)</span><br><span class="line">mov $8, %eax</span><br><span class="line">xor %ecx, %ecx</span><br><span class="line">xor %edx, %edx</span><br><span class="line">wrpkru</span><br></pre></td></tr></table></figure>
+
+<p>Note that the <code>wrpkru</code> instructions requires <code>edx</code> and <code>ecx</code> to be set to 0. Consequently, for functions which take more that two arguments, it is necessary to preserve the original values of these registers.</p>
+<h3 id="Code-centric-solutions"><a href="#Code-centric-solutions" class="headerlink" title="Code centric solutions"></a>Code centric solutions</h3><p>The Intel ISA extension Memory Protection Extension (MPX) provides a hardware mechanism that can be used to implement segmentation in a flexible manner. MPX segmentation schemes divide writes into two categories, those that are privileged to write into the protected region, and all others. This approach is surprisingly performant.</p>
+<h2 id="Evaluation"><a href="#Evaluation" class="headerlink" title="Evaluation"></a>Evaluation</h2><p>We believe that Shadesmar, a compact, register based shadow stack that directly uses the shadow RA, and relies on information hiding to protect the shadow stack, is the best candidate for adoption by mainline compilers based on our initial experiments with SPEC CPU 2006.</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/code-reuse-attack/" rel="tag"># code-reuse attack</a>
+              <a href="/tags/shadow-stack/" rel="tag"># shadow stack</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/04/05/Securing-software-by-enforcing-data-flow-integrity/" rel="prev" title="Securing software by enforcing data-flow integrity">
+                  <i class="fa fa-chevron-left"></i> Securing software by enforcing data-flow integrity
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/04/21/Enforcing-kernel-security-invariants-with-data-flow-integrity/" rel="next" title="Enforcing kernel security invariants with data-flow integrity">
+                  Enforcing kernel security invariants with data-flow integrity <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

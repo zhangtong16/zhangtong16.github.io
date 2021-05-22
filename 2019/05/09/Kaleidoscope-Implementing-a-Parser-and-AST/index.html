@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;yoursite.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Gemini&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="Chapter 2 Introduction这一章将会使用 Chapter 1 中实现的 lexer 来构造 Kaleidoscope 的 parser. 一旦我们完成 parser 的实现, 我们就能定义并且构造一个抽象语法树 (Abstract Syntax Tree, AST). The Abstract Syntax Tree (AST)AST 是源代码语法结构的抽象表示, 它以树状的形式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kaleidoscope: Implementing a Parser and AST">
+<meta property="og:url" content="http://yoursite.com/2019/05/09/Kaleidoscope-Implementing-a-Parser-and-AST/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="Chapter 2 Introduction这一章将会使用 Chapter 1 中实现的 lexer 来构造 Kaleidoscope 的 parser. 一旦我们完成 parser 的实现, 我们就能定义并且构造一个抽象语法树 (Abstract Syntax Tree, AST). The Abstract Syntax Tree (AST)AST 是源代码语法结构的抽象表示, 它以树状的形式">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-05-09T11:39:37.000Z">
+<meta property="article:modified_time" content="2021-05-22T09:03:11.290Z">
+<meta property="article:author" content="Zhangtong">
+<meta property="article:tag" content="llvm">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://yoursite.com/2019/05/09/Kaleidoscope-Implementing-a-Parser-and-AST/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;default&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;05&#x2F;09&#x2F;Kaleidoscope-Implementing-a-Parser-and-AST&#x2F;&quot;,&quot;path&quot;:&quot;2019&#x2F;05&#x2F;09&#x2F;Kaleidoscope-Implementing-a-Parser-and-AST&#x2F;&quot;,&quot;title&quot;:&quot;Kaleidoscope: Implementing a Parser and AST&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Kaleidoscope: Implementing a Parser and AST | Zhangtong's Notebook</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Zhangtong's Notebook</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Chapter-2-Introduction"><span class="nav-number">1.</span> <span class="nav-text">Chapter 2 Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#The-Abstract-Syntax-Tree-AST"><span class="nav-number">2.</span> <span class="nav-text">The Abstract Syntax Tree (AST)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Parser-Basics"><span class="nav-number">3.</span> <span class="nav-text">Parser Basics</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Basic-Expression-Parsing"><span class="nav-number">4.</span> <span class="nav-text">Basic Expression Parsing</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Binary-Expression-Parsing"><span class="nav-number">5.</span> <span class="nav-text">Binary Expression Parsing</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Parsing-the-Rest"><span class="nav-number">6.</span> <span class="nav-text">Parsing the Rest</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#The-Driver"><span class="nav-number">7.</span> <span class="nav-text">The Driver</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/09/Kaleidoscope-Implementing-a-Parser-and-AST/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kaleidoscope: Implementing a Parser and AST
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-05-09 19:39:37" itemprop="dateCreated datePublished" datetime="2019-05-09T19:39:37+08:00">2019-05-09</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-05-22 17:03:11" itemprop="dateModified" datetime="2021-05-22T17:03:11+08:00">2021-05-22</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="Chapter-2-Introduction"><a href="#Chapter-2-Introduction" class="headerlink" title="Chapter 2 Introduction"></a>Chapter 2 Introduction</h2><p>这一章将会使用 <a href="./Chapter1.md">Chapter 1</a> 中实现的 lexer 来构造 Kaleidoscope 的 parser. 一旦我们完成 parser 的实现, 我们就能定义并且构造一个抽象语法树 (Abstract Syntax Tree, AST).</p>
+<h2 id="The-Abstract-Syntax-Tree-AST"><a href="#The-Abstract-Syntax-Tree-AST" class="headerlink" title="The Abstract Syntax Tree (AST)"></a>The Abstract Syntax Tree (AST)</h2><p>AST 是源代码语法结构的抽象表示, 它以树状的形式来表示源代码中的语法结构, 树上的每个节点都表示源代码中的一种结构, 从而能建模这个语言, 方便编译器后续的解释 (code generation). 在 Kaleidoscope 中, 我们有表达式 (expressions), 函数原型 (prototype), 函数对象 (function object). 我们先从表达式开始:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ExprAST - Base class for all expression nodes</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExprAST</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">ExprAST</span>() &#123;&#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NumberExprAST - Expression class for numeric literals like &quot;1.0&quot;</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">NumberExprAST</span> :</span> <span class="keyword">public</span> ExprAST</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">double</span> Val;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">NumberExprAST</span>(<span class="keyword">double</span> Val) : <span class="built_in">Val</span>(Val) &#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>上述的代码表示了基类 <code>ExprAST</code> 和它的一个子类 <code>NumberExprAST</code> 的定义. <code>NumberExprASR</code> 将数字常量的值存储到实例中的成员变量, 使得编译器能够在后面的步骤中对它进行处理.</p>
+<p>然后是其他 AST 节点的定义：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// VariableExprAST - Expression class for referencing a variable, like &quot;a&quot;</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">VariableExprAST</span> :</span> <span class="keyword">public</span> ExprAST</span><br><span class="line">&#123;</span><br><span class="line">    std::string Name;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">VariableExprAST</span>(<span class="keyword">const</span> std::string &amp;Name) : <span class="built_in">Name</span>(Name) &#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// BinaryExprAST - Expression class for a binary operator</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BinaryExprAST</span> :</span> <span class="keyword">public</span> ExprAST</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">char</span> Op;</span><br><span class="line">    std::unique_ptr&lt;ExprAST&gt; LHS, RHS;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">BinaryExprAST</span>(<span class="keyword">char</span> Op, std::unique_ptr&lt;ExprAST&gt; LHS, std::unique_ptr&lt;ExprAST&gt; RHS) : <span class="built_in">Op</span> (Op), <span class="built_in">LHS</span> (std::<span class="built_in">move</span>(LHS)), <span class="built_in">RHS</span>(std::<span class="built_in">move</span>(RHS)) &#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// CallExprAST - Expression class for function calls</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CallExprAST</span> :</span> <span class="keyword">public</span> ExprAST &#123;</span><br><span class="line">    std::string Callee;</span><br><span class="line">    std::vector&lt;std::unique_ptr&lt;ExprAST&gt;&gt; Args;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CallExprAST</span>(<span class="keyword">const</span> std::string &amp;Callee, std::vector&lt;std::unique_ptr&lt;ExprAST&gt;&gt; args) : <span class="built_in">Callee</span>(Callee), <span class="built_in">Args</span>(std::<span class="built_in">move</span>(Args)) &#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>以上的定义都比较直接, 使用一个 <code>std::string Name</code> 变量来获取变量的名字; 二元操作符使用 <code>char Op</code> 来获取操作符, 然后使用 <code>std::unique_ptr&lt;ExprAST&gt; LHS, RHS</code> 分别持有左边和右边的表达式; 函数调用使用 <code>std::string Callee</code> 来存储被调用的函数名, 使用 <code>std::vector&lt;std::unique_ptr&lt;ExprAST&gt;&gt; args</code> 来持有函数的参数列表.</p>
+<p>对于我们最基本的语言, <strong>目前</strong>没有条件跳转的控制流, 所以还不是图灵完全的. 我们会在之后添加条件跳转. 接下来我们讨论函数接口和函数定义:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// PrototypeAST - This class represents the &quot;prototype&quot;</span></span><br><span class="line"><span class="comment">// for a function, which captures its name, and its</span></span><br><span class="line"><span class="comment">// argument names (thus implicitly the number of</span></span><br><span class="line"><span class="comment">// arguments the function takes)</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">PrototypeAST</span> &#123;</span></span><br><span class="line">    std::string Name;</span><br><span class="line">    std::vector&lt;std::string&gt; Args;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">PrototypeAST</span>(<span class="keyword">const</span> std::string &amp;Name, std::vector&lt;std::string&gt; Args) : <span class="built_in">Name</span>(Name), <span class="built_in">Args</span>(std::<span class="built_in">move</span>(Args)) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">const</span> std::string &amp;<span class="title">getName</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123;<span class="keyword">return</span> Name&#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// FunctionAST - This class represents a function definition itself</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">FunctionAST</span> &#123;</span></span><br><span class="line">    std::unique_ptr&lt;PrototypeAST&gt; Proto;</span><br><span class="line">    std::unique_ptr&lt;ExprAST&gt; Body;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">FunctionAST</span>(std::unique_ptr&lt;PrototypeAST&gt; Proto, std::unique_ptr&lt;ExprAST&gt; Body) : <span class="built_in">Proto</span> (std::<span class="built_in">move</span>(Proto)), <span class="built_in">Body</span> (std::<span class="built_in">move</span>(Body)) &#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>注意, 在 Kaleidoscope 中,函数原型和函数定义并不是表达式, 所以没有继承 <code>class ExprAST</code>. 由于在 Kaleidoscope 中只有 <code>double</code> 类型, 所以函数的类型也仅仅和参数数量有关. 在更为复杂的语言中, <code>class ExprAST</code> 会有一个 field 专门存放类型信息.</p>
+<h2 id="Parser-Basics"><a href="#Parser-Basics" class="headerlink" title="Parser Basics"></a>Parser Basics</h2><p>我们需要使用一个 parser 来构造 AST. 例如, 我们想解析 <code>x + y</code> 这类的表达式, 并生成一个 AST 时， 我们可以进行如下的操作:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> LHS = std::make_unique&lt;VariableExprAST&gt;(<span class="string">&quot;x&quot;</span>);</span><br><span class="line"><span class="keyword">auto</span> RHS = std::make_unique&lt;VariableExprAST&gt;(<span class="string">&quot;y&quot;</span>);</span><br><span class="line"><span class="keyword">auto</span> Result = std::make_unique&lt;BinaryExprAST&gt;(<span class="string">&#x27;+&#x27;</span>, std::<span class="built_in">move</span>(LHS), std::<span class="built_in">move</span>(RHS));</span><br></pre></td></tr></table></figure>
+
+<p>为了实现上述操作， 我们先定义一些基本的辅助过程:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// CurTok - CurTok is the current token the parser is looking at.</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> CurTok;</span><br><span class="line"><span class="comment">// getNextToken - getNextToken reads another token from the lexer and update CurTok with its values.</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getNextToken</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> CurTok = <span class="built_in">gettok</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这在 lexer 的基础上实现了一个简单的 token buffer. 使得我们能够保存 lexer 返回的 token. Parser 中的函数都假定 <code>static int CurTok</code> 是当前需要被处理的 token.</p>
+<p>然后是一些简单的错误处理函数:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LogError* - These are little helper functions for error handling</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;ExprAST&gt; <span class="title">LogError</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *Str)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;LogError: %s\n&quot;</span>, Str);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function">std::unique_ptr&lt;PrototypeAST&gt; <span class="title">LogErrorP</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *Str)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">LogError</span>(Str);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Basic-Expression-Parsing"><a href="#Basic-Expression-Parsing" class="headerlink" title="Basic Expression Parsing"></a>Basic Expression Parsing</h2><p>我们首先处理数字常量. 对每种不同的表达式，我们都定义单独的函数进行处理. 下面是对数字常量进行处理的函数:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// numberexpr ::= number</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;ExprAST&gt; <span class="title">ParseNumberExpr</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> Result = std::make_unique&lt;NumberExprAST&gt; (NumVal);</span><br><span class="line">    <span class="comment">// consume the number</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">move</span>(Result);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当 <code>gettok()</code> 返回 <code>tok_number</code> 时它会被调用. 此时 <code>static int NumVal</code> 已被设置为对应的值, 因此 <code>ParseNumberExpr()</code> 构造一个 <code>NumberExprAST</code> 的节点, 并使 lexer 获取下一个 token, 然后返回构造出的节点.</p>
+<p>所以, 递归下降解析器的特点就是: 将当前表达式的 token 全部获取, 构造出表达式节点. 然后使 lexer 获取下一个 token, 再返回构造出的表达式节点.</p>
+<p>下面是一个带括号的表达式的例子:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// parenexpr ::= &#x27;(&#x27; expression &#x27;)&#x27;</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;ExprAST&gt; <span class="title">ParseParenExpr</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// eat &#x27;(&#x27;</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line">    <span class="keyword">auto</span> V = <span class="built_in">ParseExpression</span>();</span><br><span class="line">    <span class="keyword">if</span> (!V) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (CurTok != <span class="string">&#x27;)&#x27;</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">LogError</span>(<span class="string">&quot;Expected &#x27;)&#x27;&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// eat &#x27;)&#x27;</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line">    <span class="keyword">return</span> V;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个函数说明了以下几个方法:</p>
+<ol>
+<li><p>告诉我们怎么使用 <code>LogError</code> 函数来打印错误.</p>
+</li>
+<li><p>在处理过程中, 递归调用 <code>ParseExpression</code> 来进行表达式的处理. <code>ParseExpression</code> 调用不同的 parser 函数来对不同的表达式进行处理. 这种递归调用使得我们可以实现递归语法.</p>
+</li>
+</ol>
+<p>接下来是变量引用和函数调用的 parser 函数:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// identifierexpr</span></span><br><span class="line"><span class="comment">//       :: = identifier</span></span><br><span class="line"><span class="comment">//       :: = identifier &#x27;(&#x27; expression* &#x27;)&#x27;</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;ExprAST&gt; <span class="title">ParseIdentifierExpr</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    std::string IdName = IdentifierStr;</span><br><span class="line">    <span class="comment">// eat identifier</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (CurTok != <span class="string">&#x27;(&#x27;</span>) &#123;</span><br><span class="line">        <span class="comment">// It&#x27;s a variable ref</span></span><br><span class="line">        <span class="keyword">return</span> std::make_unique&lt;VariableExprAST&gt;(IdName);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// It&#x27;s a functional call</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// eat &#x27;(&#x27;</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line">    std::vector&lt;std::unique_ptr&lt;ExprAST&gt;&gt; Args;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (CurTok != <span class="string">&#x27;)&#x27;</span>) &#123;</span><br><span class="line">        <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">auto</span> Arg = <span class="built_in">ParseExpression</span>()) &#123;</span><br><span class="line">                Args.<span class="built_in">push_back</span>(std::<span class="built_in">move</span>(Arg));</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (CurTok == <span class="string">&#x27;)&#x27;</span>) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (CurTok != <span class="string">&#x27;,&#x27;</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="built_in">LogError</span>(<span class="string">&quot;Expected &#x27;)&#x27; or &#x27;,&#x27; in argument list&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="built_in">getNextToken</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// eat &#x27;&#x27;)</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> std::make_unique&lt;CallExprAST&gt;(IdName, std::<span class="built_in">move</span>(Args));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个函数和上面的函数类似, 在 <code>gettok()</code> 返回 <code>tok-identifier</code> 时被调用. 它也有递归处理和错误处理. 它使用 <em>lookahead</em> 来判断这是一个简单的变量引用或者是一个函数调用. 在消耗掉第一个 identifier 之后, 它会看看后面是不是一个 <code>(</code>, 如果是的话, 那就构造一个参数列表, 并返回一个 <code>class CallExprAst</code> 节点; 如果不是, 那就直接返回一个 <code>class VariableExprAST</code> 节点.</p>
+<p>现在我们有了一个简单的 expression-parser 逻辑. 我们可以定义一个辅助的 primary parser 函数来 wrap 这些 parser 函数. 这个 primary 函数能够根据 <code>static int CurTok</code> 来调用对应的 parser.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// primary</span></span><br><span class="line"><span class="comment">//      :: = identifierexpr</span></span><br><span class="line"><span class="comment">//      :: = numberexpr</span></span><br><span class="line"><span class="comment">//      :: = parenexpr</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;ExprAST&gt; <span class="title">ParsePrimary</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in"><span class="keyword">switch</span></span> (CurTok)</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="keyword">case</span> tok_identifier:</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">ParseIdentifierExpr</span>();</span><br><span class="line">    <span class="keyword">case</span> tok_number:</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">ParseNumberExpr</span>();</span><br><span class="line">    <span class="keyword">case</span> <span class="string">&#x27;)&#x27;</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">ParseParenExpr</span>();</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">LogError</span>(<span class="string">&quot;unknown token when expecting an expression&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Binary-Expression-Parsing"><a href="#Binary-Expression-Parsing" class="headerlink" title="Binary Expression Parsing"></a>Binary Expression Parsing</h2><p>由于二义性， 二元表达式更加难以处理. 比如说当给定一个字符串 <code>x + y * z</code>, parser 可以选择解释为 <code>(x + y) * z</code> 也可以解释为 <code>x + (y * z)</code>. 不过一般来讲, 符合常规的是第二种做法.</p>
+<p>所以我们需要使用运算符优先级来处理这个问题, Operator-Precedence Parsing 使用运算符的优先级来告诉我们递归的顺序, 即首先处理哪个表达式. 首先我们定义一个运算符优先级表:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// GetTokPrecedence - Get the precedence of the pending binary operator token.</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">GetTokPrecedence</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">isascii</span>(CurTok)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> TokPrec = BinOpPrecedence[CurTok];</span><br><span class="line">    <span class="comment">// Make sure it&#x27;s a declared binOp</span></span><br><span class="line">    <span class="keyword">if</span> (TokPrec &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> TokPrec;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// InitTokPrecedence - Install standard binary operators with their precedence</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">initTokPrecedence</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Install standard binary operators</span></span><br><span class="line">    BinOpPrecedence[<span class="string">&#x27;&lt;&#x27;</span>] = <span class="number">10</span>;</span><br><span class="line">    BinOpPrecedence[<span class="string">&#x27;+&#x27;</span>] = <span class="number">20</span>;</span><br><span class="line">    BinOpPrecedence[<span class="string">&#x27;-&#x27;</span>] = <span class="number">20</span>;</span><br><span class="line">    BinOpPrecedence[<span class="string">&#x27;*&#x27;</span>] = <span class="number">40</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在最基本的 Kaleidoscope 中, 我们只支持 4 个二元操作符. 不过这个可以按需添加. <code>GetTokPrecedence()</code> 会返回当前 <code>static int CurTok</code> 的优先级.</p>
+<p>当定义完上述的辅助函数之后, 我们就可以开始解析二元表达式. 操作符优先级解析器的思路就是, 将具有二义性的表达式拆分成不同的部分. 例如, 针对表达式 <code>a + b + (c + d) * e * f + g</code>, 我们可以将它看作被二元操作符分割的 primary 表达式流 (a stream of primary expressions separated by binary operators). 就这样, 首先处理第一个表达式 <code>a</code>, 然后就是 <code>[+, b], [+, (c + d)], [*, e], [*, f] and [+, g]</code>.</p>
+<p>所以, 一个表达式就是一个 primary 表达式， 加上后面可能存在的 [binOp, primary expr] 序列.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// expression</span></span><br><span class="line"><span class="comment">//      :: = primary binOpRHS</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;ExprAST&gt; <span class="title">ParseExpression</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> LHS = <span class="built_in">ParsePrimary</span>();</span><br><span class="line">    <span class="keyword">if</span> (!LHS)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ParseBinOpRHS</span>(<span class="number">0</span>, std::<span class="built_in">move</span>(LHS));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>ParseBinOpRHS()</code> 能够解析 [binOp, primary expr] 序列流. 它的参数是优先级 (上述例子为 <code>0</code>), 和目前已经被解析的部分 (上述例子为 <code>LHS</code>). 以表达式 <code>x</code> 为例, 它被划分为 <code>x</code> 和一个空的 <code>binOpRHS</code>. 以 <code>a + b + (c + d) * e * f + g</code> 为例, <code>a</code> 是一个合法的 primary 表达式， 即 <code>LHS</code>, 同时 <code>binOpRHS</code> 为 <code>+ b + (c + d) * e * f + g</code>, 当前的 <code>static int CurTok</code> 是 <code>+</code>.</p>
+<p>传给 <code>ParseBinOpRHS()</code> 的第一个参数是优先级值, 它表明了这个函数能处理的最小操作符优先级. 如果当前的 pair stream 是 <code>[+, x]</code> 并且第一个传入的参数为 <code>40</code>, 那它不会再消耗 tokens (因为 <code>+</code> 的优先级为 <code>20</code> 小于 <code>40</code>), 所以:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// binOpRHS</span></span><br><span class="line"><span class="comment">//      :: = ( binOp primary)*</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;ExprAST&gt; <span class="title">ParseBinOpRHS</span><span class="params">(<span class="keyword">int</span> ExprPrec, std::unique_ptr&lt;ExprAST&gt; LHS)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// if this is a binOp, find its precedence</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">int</span> TokPrec = <span class="built_in">GetTokPrecedence</span>();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// if this is a binOp that binds at least </span></span><br><span class="line">        <span class="comment">// as tightly as the current binOP, </span></span><br><span class="line">        <span class="comment">// consume it, otherwise we are done.</span></span><br><span class="line">        <span class="keyword">if</span> (TokPrec &lt; ExprPrec) &#123;</span><br><span class="line">            <span class="keyword">return</span> LHS;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// we know it&#x27;s a binOP</span></span><br><span class="line">        <span class="keyword">int</span> BinOp = CurTok;</span><br><span class="line">        <span class="comment">// eat binOp</span></span><br><span class="line">        <span class="built_in">getNextToken</span>();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// parse the primary expression after the binOP.</span></span><br><span class="line">        <span class="keyword">auto</span> RHS = <span class="built_in">ParsePrimary</span>();</span><br><span class="line">        <span class="keyword">if</span> (!RHS) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// If binOP binds less tightly with RHS than the</span></span><br><span class="line">        <span class="comment">// operator after RHS, let the pending operator take</span></span><br><span class="line">        <span class="comment">// RHS and its LHS</span></span><br><span class="line">        <span class="keyword">int</span> NextPrec = <span class="built_in">GetTokPrecedence</span>();</span><br><span class="line">        <span class="keyword">if</span> (TokPrec &lt; NextPrec) &#123;</span><br><span class="line">            <span class="comment">// a + b * c -&gt; a + (b * c)</span></span><br><span class="line">            RHS = <span class="built_in">ParseBinOpRHS</span>(TokPrec + <span class="number">1</span>, std::<span class="built_in">move</span>(RHS));</span><br><span class="line">            <span class="keyword">if</span> (!RHS) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// a + b + c -&gt; (a + b) + c</span></span><br><span class="line">        LHS = std::make_unique&lt;BinaryExprAST&gt;(BinOp, std::<span class="built_in">move</span>(LHS), std::<span class="built_in">move</span>(RHS));</span><br><span class="line"></span><br><span class="line">        <span class="comment">// loop until the ends of expr.</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>ParseBinOpRHS()</code> 首先比较当前 token 的优先级和传入参数的优先级. 如果当前 binOp 优先级, <code>TokPrec</code> 低于传入参数的优先级, 那么就说明 binOp 左边的 primary 表达式要优先计算, 直接返回 <code>LHS</code> 即可. 若 binOP 的优先级不低于传入参数, 那么就使用 <code>int BinOp</code> 持有当前的这个 binOp, 并调用 <code>getNextToken()</code> 处理好当前 binOp 右边的这个 primary 表达式, 并使用 <code>RHS</code> 持有引用， 所以现在 <code>static int CurTok</code> 表示的是下一个 binOp, 它的优先级是 <code>NextPrec</code>. 然后, 需要判断上面的这个 <code>RHS</code> 是和 <code>LHS</code> 结合的紧还是和下一个 primary 表达式结合的紧. 如果 <code>NextPrec</code> 优先级大于 <code>TokPrec</code>, 那么 <code>RHS</code> 和它右边的 primary 表达式结合的紧, 所以递归调用 <code>ParseBinOpRHS()</code>, 第一个参数为 <code>TokPrec + 1</code>, 第二个为 <code>RHS</code>, 可以将高优先级的序列先处理完毕, 并作为 <code>RHS</code> 返回. 若 <code>NextPrec</code> 不大于 <code>TokPrec</code> 那么, <code>LHS</code> 和 <code>RHS</code> 结合得更紧, 那么先算出 <code>LHS</code> 和 <code>RHS</code>, 之后再将它们的结果作为 <code>LHS</code> 循环算出后面的值.</p>
+<blockquote>
+<p>在遇到优先级高的 binOP, 递归调用 <code>ParseBinOpRHS()</code> 时, 传的参数一定是 <code>TokPrec + 1</code> 才能在第一个条件判断中退出.</p>
+</blockquote>
+<h2 id="Parsing-the-Rest"><a href="#Parsing-the-Rest" class="headerlink" title="Parsing the Rest"></a>Parsing the Rest</h2><p>然后我们要处理函数原型, 和函数定义. 函数原型如下:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// prototype</span></span><br><span class="line"><span class="comment">//      :: = id &#x27;(&#x27; id* &#x27;)&#x27;</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;PrototypeAST&gt; <span class="title">ParsePrototype</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (CurTok != tok_identifier)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">LogErrorP</span>(<span class="string">&quot;Expected function name in prototype&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    std::string FnName = IdentifierStr;</span><br><span class="line">    <span class="comment">// eat the function name</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (CurTok != <span class="string">&#x27;(&#x27;</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">LogErrorP</span>(<span class="string">&quot;Expected &#x27;(&#x27; in prototype&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// feed the arg list into vector</span></span><br><span class="line">    std::vector&lt;std::string&gt; ArgNames;</span><br><span class="line">    <span class="keyword">while</span> (<span class="built_in">getNextToken</span>() == tok_identifier)</span><br><span class="line">    &#123;</span><br><span class="line">        ArgNames.<span class="built_in">push_back</span>(IdentifierStr);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (CurTok != <span class="string">&#x27;)&#x27;</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">LogErrorP</span>(<span class="string">&quot;Expected &#x27;)&#x27; in prototype&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// eat &#x27;)&#x27;</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> std::make_unique&lt;PrototypeAST&gt;(FnName, std::<span class="built_in">move</span>(ArgNames));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>函数定义就是函数原型加上函数体:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// function definition</span></span><br><span class="line"><span class="comment">//          :: = &#x27;def&#x27; prototype expression</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;FunctionAST&gt; <span class="title">ParseDefinition</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// eat def</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> Proto = <span class="built_in">ParsePrototype</span>();</span><br><span class="line">    <span class="keyword">if</span> (!Proto) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">auto</span> E = <span class="built_in">ParseExpression</span>()) &#123;</span><br><span class="line">        <span class="keyword">return</span> std::make_unique&lt;FunctionAST&gt;(std::<span class="built_in">move</span>(Proto), std::<span class="built_in">move</span>(E));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>并且我们支持使用 <code>extern</code> 关键字进行前向声明:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// external forward declaration</span></span><br><span class="line"><span class="comment">//          :: = &#x27;extern&#x27; prototype</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;PrototypeAST&gt; <span class="title">ParseExtern</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// eat &#x27;extern&#x27;</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ParsePrototype</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后我们允许用户使用任意的顶级 (非嵌套) 表达式 (top-level expressions), 我们使用匿名零元函数 (anonymous nullary function) 来处理:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// toplevelexpr</span></span><br><span class="line"><span class="comment">//      :: = expression</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;FunctionAST&gt; <span class="title">ParseTopLevelExpr</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">auto</span> E = <span class="built_in">ParseExpression</span>()) &#123;</span><br><span class="line">        <span class="comment">// anonymous nullary function</span></span><br><span class="line">        <span class="keyword">auto</span> Proto = std::make_unique&lt;PrototypeAST&gt;(<span class="string">&quot;&quot;</span>, std::vector&lt;std::string&gt;());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> std::make_unique&lt;FunctionAST&gt;(std::<span class="built_in">move</span>(Proto), std::<span class="built_in">move</span>(E));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="The-Driver"><a href="#The-Driver" class="headerlink" title="The Driver"></a>The Driver</h2><p>Driver 就是使用循环来调用不同的 parser 函数 (dispatch loop):</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleDefinition</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">ParseDefinition</span>()) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;Parsed a function definition.\n&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        <span class="built_in">getNextToken</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleExtern</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">ParseExtern</span>()) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;Parsed an extern.\n&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        <span class="built_in">getNextToken</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleTopLevelExpression</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">ParseTopLevelExpr</span>()) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;Parsed a top-level expression.\n&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        <span class="built_in">getNextToken</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// top ::= definition | external | expression | &#x27;;&#x27;</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">MainLoop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;ready&gt; &quot;</span>);</span><br><span class="line">        <span class="built_in"><span class="keyword">switch</span></span> (CurTok) &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;;&#x27;</span> : <span class="comment">// ignore top-level semicolons </span></span><br><span class="line">            <span class="built_in">getNextToken</span>();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> tok_def :</span><br><span class="line">            <span class="built_in">HandleDefinition</span>();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> tok_extern :</span><br><span class="line">            <span class="built_in">HandleExtern</span>();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> tok_eof :</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            <span class="built_in">HandleTopLevelExpression</span>();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/llvm/" rel="tag"># llvm</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/05/09/Kaleidoscope-Tutorial-Introduction-and-the-Lexer/" rel="prev" title="Kaleidoscope: Tutorial Introduction and the Lexer">
+                  <i class="fa fa-chevron-left"></i> Kaleidoscope: Tutorial Introduction and the Lexer
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/05/09/Kaleidoscope-Code-generation-to-LLVM-IR/" rel="next" title="Kaleidoscope: Code generation to LLVM IR">
+                  Kaleidoscope: Code generation to LLVM IR <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

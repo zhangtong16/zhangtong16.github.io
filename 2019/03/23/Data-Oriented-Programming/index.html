@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;yoursite.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Gemini&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="IntroductionControl-flow hijacking attacks are the predominant category of memory exploits today. In response, numerous principled defenses which aim to ensure legal control flow has been proposed. A">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Data-Oriented Programming">
+<meta property="og:url" content="http://yoursite.com/2019/03/23/Data-Oriented-Programming/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="IntroductionControl-flow hijacking attacks are the predominant category of memory exploits today. In response, numerous principled defenses which aim to ensure legal control flow has been proposed. A">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-03-23T08:38:19.000Z">
+<meta property="article:modified_time" content="2021-05-22T09:03:11.290Z">
+<meta property="article:author" content="Zhangtong">
+<meta property="article:tag" content="code-reuse attack">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://yoursite.com/2019/03/23/Data-Oriented-Programming/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;default&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;03&#x2F;23&#x2F;Data-Oriented-Programming&#x2F;&quot;,&quot;path&quot;:&quot;2019&#x2F;03&#x2F;23&#x2F;Data-Oriented-Programming&#x2F;&quot;,&quot;title&quot;:&quot;Data-Oriented Programming&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Data-Oriented Programming | Zhangtong's Notebook</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Zhangtong's Notebook</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Problem"><span class="nav-number">2.</span> <span class="nav-text">Problem</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Non-control-Data-Attacks"><span class="nav-number">2.1.</span> <span class="nav-text">Non-control Data Attacks</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Example"><span class="nav-number">2.2.</span> <span class="nav-text">Example</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Data-Oriented-Programming"><span class="nav-number">3.</span> <span class="nav-text">Data-Oriented Programming</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#DOP-Overview"><span class="nav-number">3.1.</span> <span class="nav-text">DOP Overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Data-Oriented-Gadgets"><span class="nav-number">3.2.</span> <span class="nav-text">Data-Oriented Gadgets</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Gadget-Dispatcher"><span class="nav-number">3.3.</span> <span class="nav-text">Gadget Dispatcher</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DOP-Attack-Construction"><span class="nav-number">4.</span> <span class="nav-text">DOP Attack Construction</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Challenges"><span class="nav-number">4.1.</span> <span class="nav-text">Challenges</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Gadget-Identification"><span class="nav-number">4.2.</span> <span class="nav-text">Gadget Identification</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dispatcher-Identification"><span class="nav-number">4.3.</span> <span class="nav-text">Dispatcher Identification</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Attack-Construction"><span class="nav-number">4.4.</span> <span class="nav-text">Attack Construction</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Evaluation"><span class="nav-number">5.</span> <span class="nav-text">Evaluation</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Feasibility-of-DOP"><span class="nav-number">5.1.</span> <span class="nav-text">Feasibility of DOP</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Turing-Complete-examples"><span class="nav-number">5.2.</span> <span class="nav-text">Turing-Complete examples</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Why-are-expressive-payload-useful"><span class="nav-number">5.3.</span> <span class="nav-text">Why are expressive payload useful</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/23/Data-Oriented-Programming/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Data-Oriented Programming
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-03-23 16:38:19" itemprop="dateCreated datePublished" datetime="2019-03-23T16:38:19+08:00">2019-03-23</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-05-22 17:03:11" itemprop="dateModified" datetime="2021-05-22T17:03:11+08:00">2021-05-22</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>Control-flow hijacking attacks are the predominant category of memory exploits today. In response, numerous principled defenses which aim to ensure legal control flow has been proposed.</p>
+<p>A natural question is to analyze the limits of protection offered by control-flow defenses, and the remaining capabilities of the adversary. Control-flow defenses aim to ensure the execution of the program stay legitimate, by protecting the integrity of the <em>control plane</em> memory of by directly checking the targets of control transfers. However, the data plane of memory can offer an additional source of advantage for adversaries (e.g., <em>non-control data attacks</em>).</p>
+<p>In this paper, we show that non-control data attacks with rich expressiveness can be crafted using systematic construction techniques. The key idea in our contribution is to find <em>data-oriented gadgets</em>. then we find <em>gadget dispatchers</em> which are fragment of logic that chain together disjoint gadgets in an arbitrary sequence.</p>
+<h2 id="Problem"><a href="#Problem" class="headerlink" title="Problem"></a>Problem</h2><h3 id="Non-control-Data-Attacks"><a href="#Non-control-Data-Attacks" class="headerlink" title="Non-control Data Attacks"></a>Non-control Data Attacks</h3><p>Non-control data attacks tamper with or leak security-sensitive memory, which is not directly used in control-flow transfer instruction.  The attack payloads, however, exhibit limited expressiveness, such as writing a target variable of choice or leaking contents of a sensitive memory region. Such simple payloads can enable privilege escalation and sensitive data-leakage attacks.</p>
+<p>However, non-control data attacks cannot divert the control flow to arbitrary location, unlike ROP attacks, the expressiveness is believed to be very limited.</p>
+<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><p>In fact, non-control data attacks can offer rich exploits from common vulnerabilities.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">server</span>&#123;</span> <span class="keyword">int</span> * cur_max, total, typ;&#125; *srv;</span><br><span class="line"><span class="keyword">int</span> connect_limit = MAX_CONN; <span class="keyword">int</span> *size, *type;</span><br><span class="line"><span class="keyword">char</span> buf[MAXLEN];</span><br><span class="line">size = &amp;buf[<span class="number">8</span>]; type = &amp;buf[<span class="number">12</span>];</span><br><span class="line">...</span><br><span class="line"><span class="keyword">while</span> (connect_limit--) &#123;</span><br><span class="line">  readData(socketfd, buf);        <span class="comment">// stack bof</span></span><br><span class="line">  <span class="keyword">if</span> (*type == NONE)  <span class="keyword">break</span>;      </span><br><span class="line">  <span class="keyword">if</span> (*type == STREAM) &#123;          <span class="comment">// condition</span></span><br><span class="line">    * size = * (srv -&gt; cur_max);  <span class="comment">// dereference</span></span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    srv -&gt; typ = * type;          <span class="comment">// assignment</span></span><br><span class="line">    srv -&gt; total += * size;       <span class="comment">// addition</span></span><br><span class="line">  &#125;</span><br><span class="line">...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>This code does not invoke any security-critical functions in its benign control-flow, and the vulnerability just corrupts a handful of local variables.</p>
+<p>The assignment, dereference and the addition operation can be considered as <em>data-oriented gadgets</em>. The loop structure is called <em>gadget dispatchers</em>.</p>
+<h2 id="Data-Oriented-Programming"><a href="#Data-Oriented-Programming" class="headerlink" title="Data-Oriented Programming"></a>Data-Oriented Programming</h2><h3 id="DOP-Overview"><a href="#DOP-Overview" class="headerlink" title="DOP Overview"></a>DOP Overview</h3><p>The key is to manipulate non-control data such the executed instructions do the attacker’s bidding. In order to give a concrete and systematic construction, we define a simple mini-language called MINDOP with a virtual instruction set and virtual register operands, in which payload we can specific.</p>
+<p>The MINDOP language has 6 kinds of virtual instructions, each operating on virtual register operands. Each virtual operation is simulated by real x86 instruction sequences available in the vulnerable program, which we call data-oriented gadgets. The control structure allows chaining of gadgets, and the x86 code sequences that simulate the virtual control operations are referred to as gadget dispatchers. None of the gadgets or dispatchers modify any code-pointers or violate CFI in the real program execution.</p>
+<table>
+<thead>
+<tr>
+<th>Semantics</th>
+<th align="center">Instructions in C</th>
+<th align="center">Data-Oriented Gadgets in DOP</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>arithmetic/logical</td>
+<td align="center">a op b</td>
+<td align="center">*p op *q</td>
+</tr>
+<tr>
+<td>assignment</td>
+<td align="center">a = b</td>
+<td align="center">*p = *q</td>
+</tr>
+<tr>
+<td>load</td>
+<td align="center">a = *b</td>
+<td align="center">*p = **q</td>
+</tr>
+<tr>
+<td>store</td>
+<td align="center">*a = b</td>
+<td align="center">**p = *q</td>
+</tr>
+<tr>
+<td>jump</td>
+<td align="center"><strong>goto</strong> L</td>
+<td align="center">vpc = &amp;input</td>
+</tr>
+<tr>
+<td>conditional jump</td>
+<td align="center"><strong>if</strong> a <strong>goto</strong> L</td>
+<td align="center">vpc = &amp;input if *p</td>
+</tr>
+</tbody></table>
+<h3 id="Data-Oriented-Gadgets"><a href="#Data-Oriented-Gadgets" class="headerlink" title="Data-Oriented Gadgets"></a>Data-Oriented Gadgets</h3><p>Virtual operations in MINDOP are simulated using concrete x86 instruction sequences in the vulnerable program execution. Such instruction sequences or gadgets read inputs from and write output to memory locations which simulate virtual register operands in MINDOP. Gadgets is within the legitimate CFG of the program, therefore, between two gadgets there maybe several uninteresting instructions which out of the attacker’s control.</p>
+<p>Conceptually, a data-oriented gadget simulates three logical micro-operations: the load micro-operation, the intended virtual operation’s semantics, which are different for each gadget, and the final store micro-operation.</p>
+<table>
+<thead>
+<tr>
+<th>C code</th>
+<th align="left">srv -&gt; total += *size</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ASM Code</td>
+<td align="left">1. mov (%esi), %ebx &emsp;// load micro-op<br> 2. mov 0x4(%edi), %eax  &emsp;// load micro-op<br> 3. add %ebx, %eax &emsp;// addition <br> 4. mov %eax, 0x4(%edi) &emsp;//store micro-op</td>
+</tr>
+</tbody></table>
+<p>Data-oriented gadgets are similar to code gadgets employed in return-oriented programming or in jump-oriented programming. However, there are two differences between data-oriented gadgets and code gadgets. First, data-oriented gadgets require to deliver operation result with memory. Second, data-oriented gadgets must execute in at least one legitimate control flow, and need not execute immediately one after another.</p>
+<p><strong>Simulating Arithmetic Operations.</strong> With addition over arbitrary values, it is possible to simulate multiplication efficiently if the language supports conditional jumps. MINDOP supports conditional jumps which allow to check if a value is smaller / greater than a constant. This can help us to compute the bit-decomposition of a finite-size integer. With bit-decomposition, simulating a multiplication a * b reduces to the efficient shift-and-add procedure, adding a to itself in each step conditional on the bits in b.</p>
+<p><strong>Simulating Assignment Operations.</strong> In MINDOP, assignment gadgets read data from one memory location and directly write to another memory location, e.g., load -&gt; move -&gt; store.</p>
+<p><strong>Simulating Dereference (Load/Store) Operations.</strong> In data-oriented programming. registers are simulated by memory, therefore the memory dereference is simulated by two memory dereferences.</p>
+<h3 id="Gadget-Dispatcher"><a href="#Gadget-Dispatcher" class="headerlink" title="Gadget Dispatcher"></a>Gadget Dispatcher</h3><p>Various gadgets can be chained sequentially by gadget dispatchers to enable recursive computation. Gadget dispatchers are sequences of x86 instructions that equip attackers with the ability to repeat gadget invocations and, for each invocation, to selectively activate specific gadgets.</p>
+<p>Each iteration executes a subset of gadgets using outputs from gadgets in the previous iteration, which done by change the load address if iteration i+1 to the store addresses of iteration i. Additionally, the selector’s behavior is controlled by attackers through the memory error. The corruption is done in a way that it enables only the gadgets of the attacker’s choice. These gadgets take as input the outputs of the previous round’s gadget by selectively corrupting operand pointers. The remaining gadgets may still get executed, but their inputs and outputs are set up such that they behave like NOPs.</p>
+<p>An <em>interactive</em> attack means attacker can prepare the memory state at the start of loop iteration i in a way that the desired gadget works as required and other gadgets operate on unused memory.</p>
+<p>Another class of DOP attacks are <em>non-interactive</em>, whereby the attacker provides the entire malicious input as a single data transmission. In such a scenario, all the memory setup and conditions for deciding loop termination and selective gadget activation need to be encoded in a single malicious payload. To support such attacks, MINDOP has two virtual operations that enable conditional chaining of operations, or virtual jumps. The basic idea is as follows: the attacker provides the memory configuration Mj necessary for each gadget j to be selectively executed in a particular iteration in the input payload. In addition, it keeps a pointer called <em>virtual PC</em> which points to the desired configuration Mj at the start of each iteration. It suffices to corrupt only the virtual PC, so that the program execution in that iteration operates on the configuration Mj. To decide how to switch to Mk in the next instruction, MINDOP provides virtual operations that set the virtual PC, conditionally or unconditionally.</p>
+<p><strong>Simulating Jump Operations.</strong> The key here is to identify a suitable variable to implement a virtual PC which can be corrupted in each loop iteration. To simulate an unconditional jump, attackers just prepare the memory configuration to trigger another operation gadget (e.g., addition, assignment) to change the value of the virtual PC.</p>
+<h2 id="DOP-Attack-Construction"><a href="#DOP-Attack-Construction" class="headerlink" title="DOP Attack Construction"></a>DOP Attack Construction</h2><h3 id="Challenges"><a href="#Challenges" class="headerlink" title="Challenges"></a>Challenges</h3><p>Though the concept of data-oriented programming is intuitive, it is challenging to construct data-oriented attacks in real-world programs:</p>
+<ul>
+<li><p><strong>Data-oriented gadget identification.</strong> We use static analysis as an aid in identifying these gadgets.</p>
+</li>
+<li><p><strong>Gadget dispatcher identification.</strong> Our gadget dispatcher requires a loop with various gadgets and a selector controlled by the memory error. But it is possible to have the selector and gadgets inside the functions called from loop body.</p>
+</li>
+<li><p><strong>Data-oriented gadget stitching.</strong> The reachability of gadgets depends on concrete memory errors. We need to find malicious input that makes the program execute selected gadgets with the expected addresses and order.</p>
+</li>
+</ul>
+<h3 id="Gadget-Identification"><a href="#Gadget-Identification" class="headerlink" title="Gadget Identification"></a>Gadget Identification</h3><p>A useful data-oriented gadget needs to satisfy the following requirements:</p>
+<ul>
+<li><strong>MINDOP semantics.</strong> It should have instructions for the load micro-operation, the store micro-operation, and others simulating semantics of MINDOP.</li>
+<li><strong>Gadget internal order.</strong> The three micro-operations should appear in the load-operation-store order, and this correct order should show up in at  least one legitimate control flow.</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">Input:  G:- the vulnerable program</span><br><span class="line">Output: S:- data-oriented gadget <span class="built_in">set</span></span><br><span class="line"></span><br><span class="line">S = ∅;</span><br><span class="line">FuncSet = getFuncSet(G)</span><br><span class="line">foreach f ∈ FuncSet <span class="keyword">do</span></span><br><span class="line">    cfg = getCFG(f)</span><br><span class="line">    <span class="keyword">for</span> instr = getNextInstr(cfg) <span class="keyword">do</span></span><br><span class="line">        <span class="keyword">if</span> isMemStore(instr) then</span><br><span class="line">            gadget = getBackwardSlice(instr, f)</span><br><span class="line">            input = getInput(gadget)</span><br><span class="line">            <span class="keyword">if</span> isMemLoad(input) then</span><br><span class="line">                S = S ∪ &#123;gadget&#125;</span><br></pre></td></tr></table></figure>
+
+<p>We compile the program source code into LLVM intermediate representation (IR) and perform our analysis on LLVM IR. Our analysis iterates through all functions in the program. We treat each store instruction in the function as a store micro-operation of a new potential gadget. Then our analysis uses a backward data-flow analysis to identify the definitions of the operands in the store instruction. The generated data-flow contains the instructions that derive the operands, like loaded from memory or calculated from registers.</p>
+<p><strong>Gadget Classification.</strong> We classify data-oriented gadgets into different categories based on their semantics and computed variables. Gadgets with the same semantics are functional-equivalent to simulate one MINDOP operation. <strong>There are no function call gadgets in data-oriented programming, as it does not change the  control data.</strong> Based on the computed variables, we further classify gadgets into three categories: <em>global gadget</em>, <em>function-parameter gadget</em> and <em>local gadget</em>.</p>
+<h3 id="Dispatcher-Identification"><a href="#Dispatcher-Identification" class="headerlink" title="Dispatcher Identification"></a>Dispatcher Identification</h3><p>We use static analysis on LLVM IR for the initial pharse of dispatcher identification. Since loops are necessary for attackers to repeatedly connect gadgets, we first identify all possible loops in the program. For each loop, we scan the instructions in the loop body to find interesting gadgets. For function calls within the loop, we step into functions through the call graph and iterate through all instruction inside.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">Input: G:- the vulnerable program</span><br><span class="line">Output: D:- gadget dispatcher <span class="built_in">set</span></span><br><span class="line"></span><br><span class="line">D = ∅;</span><br><span class="line">FuncSet = getFuncSet(G)</span><br><span class="line">foreach f ∈ FuncSet <span class="keyword">do</span></span><br><span class="line">    foreach loop = getLoop(f) <span class="keyword">do</span></span><br><span class="line">        loop.gadgets = ∅</span><br><span class="line">        foreach instr = getNextInstr(loop) <span class="keyword">do</span></span><br><span class="line">            <span class="keyword">if</span> isMemStore(instr) then</span><br><span class="line">                loop.gadgets ∪= getGadget(instr)</span><br><span class="line">            <span class="keyword">else</span> <span class="keyword">if</span> isCall(instr) then</span><br><span class="line">                target = getTarget(instr)</span><br><span class="line">                loop.gadgets ∪= getGadget(target)</span><br><span class="line">        <span class="keyword">if</span> loop.gadgets != ∅ then</span><br><span class="line">            D = D ∪ &#123;loop&#125;</span><br></pre></td></tr></table></figure>
+
+<p>The second phase of dispatchers identification correlates the identified dispatcher candidates with a known memory error. In this phase, we use a static-dynamic approach to provide identification results with varying degrees of coverage and precision. We mark a loop as reachable if it enfolds the given memory error.</p>
+<h3 id="Attack-Construction"><a href="#Attack-Construction" class="headerlink" title="Attack Construction"></a>Attack Construction</h3><p>For a given concrete memory error, the available gadgets and dispatchers rely on the location of the vulnerable code in the program, while the stitchability of gadgets depends on the corruptibility of the memory error. To connect two disjoint data-oriented gadgets, attackers should have the control over the address in the load micro-operation of the second gadget or the address in the store micro-operation of the first gadget.</p>
+<ol>
+<li><p><strong>Gadget preparation (semi-automated).</strong> Given a memory error, we locate the vulnerable function from the source code. Then we identify the gadget dispatchers that enfold the vulnerable code and collect data-oriented gadgets.</p>
+</li>
+<li><p><strong>Exploit chain construction (Manual).</strong> We take the expected malicious MINDOP program as input.</p>
+</li>
+<li><p><strong>Stichability verification (Manual).</strong> We feed concrete input to the program to trigger memory errors to connect expected gadgets.</p>
+</li>
+</ol>
+<h2 id="Evaluation"><a href="#Evaluation" class="headerlink" title="Evaluation"></a>Evaluation</h2><h3 id="Feasibility-of-DOP"><a href="#Feasibility-of-DOP" class="headerlink" title="Feasibility of DOP"></a>Feasibility of DOP</h3><p>We study 9 applications and measure how many x86 gadgets in these programs can simulate MINDOP operations. We aim to evaluate the following four aspects in our analysis:</p>
+<ul>
+<li>Empirically justify the choice of operations in MINDOP based on the prevalence of x86 gadgets.</li>
+<li>Study the distribution of various types of gadgets based on the scope of input operands.</li>
+<li>Measure the reachability of these x86 gadgets in concrete executions in presence of an exploitable memory corruption.</li>
+<li>Verify if the memory error (in the public CVEs) have the capability to control the input operands and activate the gadgets in concrete executions.</li>
+</ul>
+<p><strong>Gadgets classification.</strong> We classify data-oriented gadgets into three categories based on the scope of the operands, such as global gadgets, function-parameter gadgets and hybrid gadgets</p>
+<p><strong>Execution reachability from memory errors.</strong> We run the vulnerable program with given CVE PoC to get dynamic function call trace, including the vulnerable function. From function call trace, we identify the function invoked by the vulnerable function during the execution. The gadgets inside the invoked function and enfolding loops are the reachable gadgets from the dispatcher.</p>
+<h3 id="Turing-Complete-examples"><a href="#Turing-Complete-examples" class="headerlink" title="Turing-Complete examples"></a>Turing-Complete examples</h3><p>ProFTPD is a file server and it’s 1.2-1.3 versions have a stack-based buffer overflow vulnerability in the sreplace function.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">sreplace</span><span class="params">(<span class="keyword">char</span> *s, ...)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">char</span> *src; *cp, **mptr, **rptr;</span><br><span class="line">    <span class="keyword">char</span> *marr[<span class="number">33</span>], *rarr[<span class="number">33</span>];</span><br><span class="line">    <span class="keyword">char</span> buf[PR_TUNABLE_PATH_MAX] = &#123;<span class="string">&#x27;0&#x27;</span>&#125;;</span><br><span class="line">    src = s; cp = buf; mptr = marr; rptr = rarr;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">while</span> (*src) &#123;</span><br><span class="line">        <span class="keyword">for</span> (; *mptr; mptr++, rptr++) &#123;</span><br><span class="line">            sstrncpy(cp, *rptr, blen - <span class="built_in">strlen</span>(pbuf));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/*memory error &amp; assignment*/</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>Conditional assignment operation. We use the sstrncpy function to simulate an assignment which moves data from on arbitrary location to another. In the first iteration of the while loop, the memory error corrupts the variable cp and the content of the array rarr. So in the next iteration, both the source and the target of the string copy sstrncpy are controlled by the attacker. This way, the attacks simulate a assignment operation which is conditional because the attacker can corrupt src.</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">pr_display_file</span><span class="params">(...)</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    outs = sreplace(p, buf, ..., <span class="string">&quot;%V&quot;</span>, main_server -&gt; ServerName,);</span><br><span class="line">    pr_response_send_raw(<span class="string">&quot;%s-%s&quot;</span>, code, outs);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">pr_response_send_raw</span><span class="params">(<span class="keyword">const</span> chat *fmt, ...)</span> </span>&#123;</span><br><span class="line">    vsnprintf(resp_buf, size, fmt, msg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>Dereference operations(Load/Store). The load operations takes two memory addresser as input(p and q) and performs operation *p == ** q. We decompose the operation into two sub-operations: * ptmp = * q and * p = * tmp, such that the ptmp is the address of tmp. We use the assignment gadgets to move data from resp_buf to &amp;ServerName as the first dereference. Then we use the fuction pr_display_file, which reads the contents of ServerName to the buffer resp_buf as the second dereference. These two dereference from MINDOP load operation *resp_buf = ** resp_buf.</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">MODRET <span class="title">xfer_log_retr</span><span class="params">(cmd_rec *cmd)</span> </span>&#123;</span><br><span class="line">    session.total_bytes_out += session.xfer.total_bytes;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>Addition operation. The structure session is a global variable and hence all the operands of this gadget are under attacker’s control. To achieve an addition operation on arbitrary memory locations, we use the MINDOP assignment operation to load operands from desired source locations to the session structure, perform the addition, and then move the result to the desired destination location.</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">cmd_loop</span><span class="params">( server)</span>rec * server, <span class="keyword">conn_t</span> *c) </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (True) &#123;</span><br><span class="line">        pr_netio_telnet_gets(buf, ..);</span><br><span class="line">        cmd = make_ftp_cmd(buf, ...);</span><br><span class="line">        pr_cmd_dispatch(cmd);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">char</span> * <span class="title">pr_netio_telnet_gets</span><span class="params">(<span class="keyword">char</span> * buf, ...)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (* pbuf -&gt; current != <span class="string">&#x27;\n&#x27;</span> &amp;&amp; toread &gt; <span class="number">0</span>)</span><br><span class="line">        * buf++ = * pbuf -&gt; current++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>(Conditional) jump operation. pbuf -&gt; current is a pointer to next command in the input, thus forming a virtual PC for attacker’s MINDOP program. By corrupting  pbuf -&gt; current, the attacker can select a particular input that invokes a specific MINDOP operation. We use assignment operation to conditionally update virtual PC, thus simulating a conditional jump operation.</li>
+</ul>
+<hr>
+<p>Wireshark is a widely used network packet analyzer and its versions before 1.80 have a stack-based buffer overflow vulnerability. The buffer pd in function packet_list_dissect_and_cache_record accepts frame data from a mpeg trace file. If the attacker sends a malicious trace file containing a large frame, the frame data overflows the buffer. This is used to overwrite variables col, cinfo, and parameter packet_list with malicious input.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">packet_list_dissect_and_cache_record</span> <span class="params">(PacketList * packet_list, ...)</span> </span>&#123;</span><br><span class="line">    gint col; column_info * cinfo;</span><br><span class="line">    guint8 pd[WTAP_MAX_PACKET_SIZE];    <span class="comment">// vul buf</span></span><br><span class="line">    <span class="comment">// memory error function</span></span><br><span class="line">    cf_read_frame_r(..., fdata, ..., pd);</span><br><span class="line">    packet_list_change_record(packet_list, ..., col, cinfo);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">packet_list_change_record</span><span class="params">(PacketList * packet_list, ..., gint col, column_info * cinfo)</span> </span>&#123;</span><br><span class="line">    record = packet_list -&gt; physical_rows[row];</span><br><span class="line">    record -&gt; col_text[col] = (gchar * )cinfo -&gt; col_data[col];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!record-&gt; col_text_len[col])</span><br><span class="line">        ++packet_list -&gt; const_strings;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">gtk_tree_view_column_cell_set_cell_data</span><span class="params">(...)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (cell_list = tree_column -&gt; cell_list; cell_list;</span><br><span class="line">         cell_list = cell_list -&gt; next) &#123;</span><br><span class="line">             ...</span><br><span class="line">             <span class="comment">// finally calls vulnerable function</span></span><br><span class="line">             show_cell_data_func();</span><br><span class="line">         &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>Assignment operation. Line <code>record -&gt; col_text[col] = (gchar * )cinfo -&gt; col_data[col];</code> shows the gadget. The attacker corrupts record and cinfo to point to controllable memory location.</p>
+</li>
+<li><p>Dereference operation(Load / Store). To simulate a load operation, the attacker corrupts record-&gt;col_text and cinfo. To simulate a store operation, the attacker can change the value of record and cinfo-&gt;col_data.</p>
+</li>
+<li><p>Conditional addition operation. <code>if (!record-&gt; col_text_len[col])</code> and <code>++packet_list -&gt; const_strings;</code> if the attacker corrupts packet_list, she can invoke it to perform add operation on the target location.</p>
+</li>
+<li><p>Conditional jump operation. The memory error is triggered by the file read, and the program maintains a file position indicator in the FILE structure. The attacker can change the file position indicator which serves as a virtual PC.</p>
+</li>
+</ul>
+<p>To chain a large number of gadgets together, we identify a gadget dispatcher from the parent function <code>gtk_tree_view_column_cell_set_cell_data</code>. In the first invocation of the memory error, the attacker uses the assignment operation to corrupt the loop condition cell_list, and points it to a fake linked-list in the malicious payload, making it an infinite loop.</p>
+<h3 id="Why-are-expressive-payload-useful"><a href="#Why-are-expressive-payload-useful" class="headerlink" title="Why are expressive payload useful"></a>Why are expressive payload useful</h3><p><strong>Bypassing Randomization Defenses.</strong> We show how to defeat ASLR with DOP without leaking any addresses to the network. As a real example, consider the vulnerable ProFTPD server, which internally uses OpenSSL for authentication. Our goal is to leak the server’s OpenSSL private key. We found that the private key has a chain of 8 pointers pointing the private key buffer.</p>
+<p>The key idea is to use a short MINDOP virtual program that starts from the base pointer (of known location) and dereference it 7 times within the server’s memory to correctly determine the randomized location of the private key. Once we have the private key buffer’s address, we simply replace an address used by a public output function, causing it to leak the private data to the network.</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/code-reuse-attack/" rel="tag"># code-reuse attack</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/02/25/The-Guard-s-Dilemma/" rel="prev" title="The Guard's Dilemma">
+                  <i class="fa fa-chevron-left"></i> The Guard's Dilemma
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/04/01/Block-oriented-programming/" rel="next" title="Block-oriented programming">
+                  Block-oriented programming <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

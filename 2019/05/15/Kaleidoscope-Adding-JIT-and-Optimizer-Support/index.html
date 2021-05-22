@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;yoursite.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Gemini&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="Chapter 4 Introduction这一章主要是两个部分: (1) 给语言添加一个 Optimizer, (2) 添加 JIT 支持. Trivial Constant Folding第二章中我们并没有添加任何的优化操作, 然而, IRBuilder 自动帮我们完成了下列的优化: 1234567ready&gt; def test(x) 1+2+x;Read function defini">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kaleidoscope: Adding JIT and Optimizer Support">
+<meta property="og:url" content="http://yoursite.com/2019/05/15/Kaleidoscope-Adding-JIT-and-Optimizer-Support/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="Chapter 4 Introduction这一章主要是两个部分: (1) 给语言添加一个 Optimizer, (2) 添加 JIT 支持. Trivial Constant Folding第二章中我们并没有添加任何的优化操作, 然而, IRBuilder 自动帮我们完成了下列的优化: 1234567ready&gt; def test(x) 1+2+x;Read function defini">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-05-15T13:52:27.000Z">
+<meta property="article:modified_time" content="2021-05-22T09:03:11.290Z">
+<meta property="article:author" content="Zhangtong">
+<meta property="article:tag" content="llvm">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://yoursite.com/2019/05/15/Kaleidoscope-Adding-JIT-and-Optimizer-Support/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;default&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;05&#x2F;15&#x2F;Kaleidoscope-Adding-JIT-and-Optimizer-Support&#x2F;&quot;,&quot;path&quot;:&quot;2019&#x2F;05&#x2F;15&#x2F;Kaleidoscope-Adding-JIT-and-Optimizer-Support&#x2F;&quot;,&quot;title&quot;:&quot;Kaleidoscope: Adding JIT and Optimizer Support&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Kaleidoscope: Adding JIT and Optimizer Support | Zhangtong's Notebook</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Zhangtong's Notebook</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Chapter-4-Introduction"><span class="nav-number">1.</span> <span class="nav-text">Chapter 4 Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Trivial-Constant-Folding"><span class="nav-number">2.</span> <span class="nav-text">Trivial Constant Folding</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LLVM-Optimization-Passes"><span class="nav-number">3.</span> <span class="nav-text">LLVM Optimization Passes</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Adding-a-JIT-compiler"><span class="nav-number">4.</span> <span class="nav-text">Adding a JIT compiler</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/15/Kaleidoscope-Adding-JIT-and-Optimizer-Support/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kaleidoscope: Adding JIT and Optimizer Support
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-05-15 21:52:27" itemprop="dateCreated datePublished" datetime="2019-05-15T21:52:27+08:00">2019-05-15</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-05-22 17:03:11" itemprop="dateModified" datetime="2021-05-22T17:03:11+08:00">2021-05-22</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="Chapter-4-Introduction"><a href="#Chapter-4-Introduction" class="headerlink" title="Chapter 4 Introduction"></a>Chapter 4 Introduction</h2><p>这一章主要是两个部分: (1) 给语言添加一个 Optimizer, (2) 添加 JIT 支持.</p>
+<h2 id="Trivial-Constant-Folding"><a href="#Trivial-Constant-Folding" class="headerlink" title="Trivial Constant Folding"></a>Trivial Constant Folding</h2><p>第二章中我们并没有添加任何的优化操作, 然而, <code>IRBuilder</code> 自动帮我们完成了下列的优化:</p>
+<figure class="highlight llvm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ready&gt; def test(<span class="keyword">x</span>) <span class="number">1</span>+<span class="number">2</span>+<span class="keyword">x</span><span class="comment">;</span></span><br><span class="line">Read function definition:</span><br><span class="line"><span class="keyword">define</span> <span class="keyword">double</span> <span class="title">@test</span>(<span class="keyword">double</span> <span class="variable">%x</span>) &#123;</span><br><span class="line"><span class="symbol">    entry:</span></span><br><span class="line">        <span class="variable">%addtmp</span> <span class="operator">=</span> <span class="keyword">fadd</span> <span class="keyword">double</span> <span class="number">3.000000e+00</span><span class="punctuation">,</span> <span class="variable">%x</span></span><br><span class="line">        <span class="keyword">ret</span> <span class="keyword">double</span> <span class="variable">%addtmp</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果没有这个优化 (Constant folding), 我们得到的代码里就会把 <code>1</code> <code>2</code> 相加, 再把结果加上 <code>x</code>. 这个类型的优化叫做 Constant folding, 很多语言在实现它的时候都是在 AST 表达中进行的. 但是使用 LLVM 实现语言, 使用 <code>IRBuilder</code> 来生成代码时, 这个优化会自动完成.</p>
+<p>然而, <code>IRBuilder</code> 自身的优化也受到一定程度的限制:</p>
+<figure class="highlight llvm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ready&gt; def test(<span class="keyword">x</span>) (<span class="number">1</span>+<span class="number">2</span>+<span class="keyword">x</span>)*(<span class="keyword">x</span>+(<span class="number">1</span>+<span class="number">2</span>))<span class="comment">;</span></span><br><span class="line">Read the function definition:</span><br><span class="line"><span class="keyword">define</span> <span class="keyword">double</span> <span class="title">@test</span>(<span class="keyword">double</span> <span class="variable">%x</span>) &#123;</span><br><span class="line"><span class="symbol">    entry:</span></span><br><span class="line">        <span class="variable">%addtmp</span> <span class="operator">=</span> <span class="keyword">fadd</span> <span class="keyword">double</span> <span class="number">3.000000e+00</span><span class="punctuation">,</span> <span class="variable">%x</span></span><br><span class="line">        <span class="variable">%addtmp1</span> <span class="operator">=</span> <span class="keyword">fadd</span> <span class="keyword">double</span> <span class="variable">%x</span><span class="punctuation">,</span> <span class="number">3.000000e+00</span></span><br><span class="line">        <span class="variable">%multmp</span> <span class="operator">=</span> <span class="keyword">fmul</span> <span class="keyword">double</span> <span class="variable">%addtmp</span><span class="punctuation">,</span> <span class="variable">%addtmp1</span></span><br></pre></td></tr></table></figure>
+
+<p>在这个例子中, LHS 和 RHS 显然是相同的值, 但 <code>IRBuilder</code> 的 local analysis 不可能能检测到并且优化这些代码. 这需要两个 transformation: (1) reassociation of expressions (重新关联表达式, 使得 <code>+</code> 的表示变得唯一), (2) Common SubExpression Elimination (CSE, 公共子表达式消除, 删除重复的 <code>+</code> 指令).</p>
+<p>所以我们要使用 “<strong>pass</strong>“ 来完成这些优化.</p>
+<h2 id="LLVM-Optimization-Passes"><a href="#LLVM-Optimization-Passes" class="headerlink" title="LLVM Optimization Passes"></a>LLVM Optimization Passes</h2><blockquote>
+<p><code>PassManger</code> 改版了, 这篇教程是基于 <code>llvm::legacy::FunctionPassManager</code> 的, 这个类可以在 <code>LegacyPassManager.h</code> 找到. <del>但我还是尝试用新版的来实现</del></p>
+<p>参考Luke的回答, 使用继承了 PassInfoMixin class 的新版 Pass; 使用 FunctionAnalysisManager 类来注册 Pass; 使用 PassBuilder 工具类辅助.</p>
+<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/a/48726129/4684264">答案链接</a></p>
+</blockquote>
+<p>LLVM 提供了很多优化 pass, 而且同时允许编译器开发者定义, 并在合适的时候调用自己的 pass.</p>
+<p>举个具体的例子, LLVM 提供了对整个 Module 进行处理的 pass, 同时也包括对单个函数的 pass. 在 Kaleidoscope 中, 我们使用的是针对单个函数的优化 pass, 也就是说用户定义一个我们就优化一个.</p>
+<p>首先添加我们需要的全局变量:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> std::unique_ptr&lt;llvm::FunctionPassManager&gt; TheFPM;</span><br><span class="line"><span class="keyword">static</span> std::unique_ptr&lt;llvm::FunctionAnalysisManager&gt; TheFAM;</span><br><span class="line"><span class="keyword">static</span> std::unique_ptr&lt;llvm::PassBuilder&gt; ThePB;</span><br></pre></td></tr></table></figure>
+
+<p>然后我们需要设置好 <code>FunctionPassManager</code>, 用它来添加我们所想运行的 pass, 由于每个 Module 都需要 new 一个 <code>FunctionPassManager</code>， 我们就添加一个初始化它们的函数. 我们在该函数的最后才初始化 <code>TheFAM</code>, <code>ThePB</code>:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">InitializeModuleAndPassManager</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// open a new Module</span></span><br><span class="line">    TheModule = std::make_unique&lt;llvm::Module&gt;(<span class="string">&quot;my cool jit&quot;</span>, TheContext);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create a new pass manager attached to it</span></span><br><span class="line">    TheFPM = std::make_unique&lt;llvm::FunctionPassManager&gt;(TheModule.<span class="built_in">get</span>());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Combine instructions to form fewer, simple</span></span><br><span class="line">    <span class="comment">// instructions. This pass does not modify the CFG. This</span></span><br><span class="line">    <span class="comment">// pass is where algebraic simplification happens.</span></span><br><span class="line">    <span class="comment">// (https://llvm.org/docs/Passes.html#instcombine-combine-redundant-instructions)</span></span><br><span class="line">    TheFPM-&gt;<span class="built_in">addPass</span>(llvm::<span class="built_in">InstCombinePass</span>());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// This pass reassociates commutative expressions in an order</span></span><br><span class="line">    <span class="comment">// that is designed to promote better constant propagation, GCSE, LICM, PRE, etc.</span></span><br><span class="line">    <span class="comment">// (https://llvm.org/docs/Passes.html#reassociate-reassociate-expressions)</span></span><br><span class="line">    TheFPM-&gt;<span class="built_in">addPass</span>(llvm::<span class="built_in">ReassociatePass</span>());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// This pass performs global value numbering to eliminate fully and partially redundant instructions.</span></span><br><span class="line">    <span class="comment">// It also performs redundant load elimination.</span></span><br><span class="line">    <span class="comment">// (https://llvm.org/docs/Passes.html#gvn-global-value-numbering)</span></span><br><span class="line">    TheFPM-&gt;<span class="built_in">addPass</span>(llvm::<span class="built_in">GVN</span>());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Performs dead code elimination and basic block merging.</span></span><br><span class="line">    <span class="comment">// (https://llvm.org/docs/Passes.html#simplifycfg-simplify-the-cfg)</span></span><br><span class="line">    TheFPM-&gt;<span class="built_in">addPass</span>(llvm::<span class="built_in">SimplifyCFGPass</span>());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Using PassBuilder and FunctionAnalysis Manager Register analysis passes</span></span><br><span class="line">    ThePB = std::make_unique&lt;llvm::PassBuilder&gt;();</span><br><span class="line">    TheFAM = std::make_unique&lt;llvm::FunctionAnalysisManager&gt;();</span><br><span class="line">    ThePB-&gt;<span class="built_in">registerFunctionAnalyses</span>(*TheFAM.<span class="built_in">get</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这部分代码首先初始化全局的 <code>TheModule</code>, 和 <code>TheFPM</code>. 然后使用一系列的 <code>addPass()</code> 方法来给 <code>TheFPM</code> 添加 Pass. 添加完之后, 使用 <code>ThePB</code> 和 <code>TheFAM</code> 来注册这些 Pass.</p>
+<p>然后我们得使用它, 所以在 <code>FunctionAST::codegen()</code> 中生成代码之后加上:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Finish off the function</span></span><br><span class="line">Builder.<span class="built_in">CreateRet</span>(RetVal);</span><br><span class="line"><span class="comment">// Validate the generated code, checking for consistency</span></span><br><span class="line">llvm::<span class="built_in">verifyFunction</span>(*TheFunction);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Optimization of the function code</span></span><br><span class="line">    TheFPM-&gt;<span class="built_in">run</span>(*TheFunction, *TheFAM.<span class="built_in">get</span>());</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> TheFunction;</span><br></pre></td></tr></table></figure>
+
+<p>记得在 <code>main()</code> 里面调用 <code>InitializeModuleAndPassManager()</code></p>
+<h2 id="Adding-a-JIT-compiler"><a href="#Adding-a-JIT-compiler" class="headerlink" title="Adding a JIT compiler"></a>Adding a JIT compiler</h2><p>将代码生成为 IR 后, 我们可以使用多种不同的工具来对它进行处理. 比如我们可以优化它 (上一节), 或者将它 dump 下来之后, 将 IR 编译为汇编文件 (.s), 或者使用 JIT 来编译它. LLVM IR 就相同于编译器个部分之间的通货 (common currency).</p>
+<p>在这节我们将要给解释器添加 JIT 支持, 最基本的要求是: 一旦我们将函数体输入进去之后, 它能够立刻算出 top-level 表达式的值. 比如在输入 <code>1+2;</code> 之后立即输出一个 <code>3</code>. 同时定义好的函数也能直接在命令行被调用.</p>
+<p>首先我们先准备 native target 的环境, 并声明和初始化 JIT. 注意这里的 <code>class KaleidoscopeJIT</code> 教程里面引用的是 LLVM 源码中的类, 但我不是源码安装, 所以还是把它复制过来再使用.</p>
+<p>首先定义全局变量 <code>static std::unique_ptr&lt;KaleidoscopeJIT&gt; TheJIT;</code>, <code>class Kaleidoscope</code> 定义在 <a href="./KaleidoscopeJIT.h">KaleidoscopeJIT</a>.</p>
+<p>然后在 <code>main()</code> 函数中, 添加这几段:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> JIT</span></span><br><span class="line">    <span class="comment">// Initialize native target</span></span><br><span class="line">    llvm::<span class="built_in">InitializeNativeTarget</span>();</span><br><span class="line">    llvm::<span class="built_in">InitializeNativeTargetAsmPrinter</span>();</span><br><span class="line">    llvm::<span class="built_in">InitializeNativeTargetAsmParser</span>();</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    <span class="built_in">InitTokPrecedence</span>();</span><br><span class="line">    <span class="comment">// prime the first token</span></span><br><span class="line">    <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;ready&gt; &quot;</span>);</span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line">    TheJIT = std::make_unique&lt;llvm::orc::KaleidoscopeJIT&gt;();</span><br><span class="line">    <span class="built_in">InitializeModuleAndPassManager</span>();</span><br><span class="line">    <span class="built_in">MainLoop</span>();</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> JIT</span></span><br><span class="line">    <span class="comment">// Print out all of the generated code</span></span><br><span class="line">    TheModule-&gt;<span class="built_in">print</span>(llvm::<span class="built_in">errs</span>(), <span class="literal">nullptr</span>);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>同时要在 <code>InitializeModuleAndPassManager()</code> 函数中设置 data layout:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// open a new Module</span></span><br><span class="line">TheModule = std::make_unique&lt;llvm::Module&gt;(<span class="string">&quot;my cool jit&quot;</span>, TheContext);</span><br><span class="line">TheModule-&gt;<span class="built_in">setDataLayout</span>(TheJIT-&gt;<span class="built_in">getTargetMachine</span>().<span class="built_in">createDataLayout</span>());</span><br><span class="line"></span><br><span class="line"><span class="comment">// Create a new pass manager attached to it</span></span><br><span class="line">TheFPM = std::make_unique&lt;llvm::FunctionPassManager&gt;(TheModule.<span class="built_in">get</span>());</span><br></pre></td></tr></table></figure>
+
+<p><code>class Kaleidoscope</code> 是一个简单的 JIT 构造类, 我们会在之后的章节中对它进行扩展. 目前的它提供的 API 非常简单: <code>addModule()</code> 给 JIT 添加了一个 Module, 使得函数能够执行; <code>removeModule()</code> 移除一个 Module, 释放相应的内存空间; <code>findSymbol()</code> 使我们能够通过 <code>string name</code> 来查找编译好代码的指针.</p>
+<p>我们能使用这些 API 在 top-level 的 handle 函数中添加表达式值的计算:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="keyword">auto</span> FnAST = <span class="built_in">ParseTopLevelExpr</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (FnAST-&gt;<span class="built_in">codegen</span>())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// JIT the module containing the anonymous expression, keeping a handle so we free it later</span></span><br><span class="line">            <span class="keyword">auto</span> H = TheJIT-&gt;<span class="built_in">addModule</span>(std::<span class="built_in">move</span>(TheModule));</span><br><span class="line">            <span class="comment">// Optimization of passes</span></span><br><span class="line">            <span class="built_in">InitializeModuleAndPassManager</span>();</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Search the JIT for the __anon_expr symbol</span></span><br><span class="line">            <span class="keyword">auto</span> ExprSymbol = TheJIT-&gt;<span class="built_in">findSymbol</span>(<span class="string">&quot;__anon_expr&quot;</span>);</span><br><span class="line">            <span class="built_in">assert</span>(ExprSymbol &amp;&amp; <span class="string">&quot;Function not found&quot;</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Get the symbol&#x27;s address and cast it to the right type (takes no arguments, returns a double) so we can call it as a native function.</span></span><br><span class="line">            <span class="built_in"><span class="keyword">double</span></span> (*FP)() = (<span class="built_in"><span class="keyword">double</span></span> (*)())<span class="keyword">static_cast</span>&lt;<span class="keyword">intptr_t</span>&gt; (ExprSymbol.<span class="built_in">getAddress</span>().<span class="built_in">get</span>());</span><br><span class="line">            <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;Evaluated to %f\n &quot;</span>, <span class="built_in">FP</span>());</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Delete the anonymous expression module from the JIT</span></span><br><span class="line">            TheJIT-&gt;<span class="built_in">removeModule</span>(H);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果 Parsing 和 codegen 都成功执行, 下一步就是将包含 top-level 表达式的 Module 添加到 JIT, 我们使用 <code>addModule()</code> 这个方法, 触发这个 Module 中 所有函数的代码生成, 并返回一个 <code>VModuleKey</code> 的对象, 使得我们在之后可以移除 Module. 一旦这个 Module 被加入到 JIT, 它就不能被修改, 所以我们需要调用 <code>InitializeModuleAndPassManager()</code> 来打开一个新的 Module, 去持有接下来生成的代码.</p>
+<p>一旦我们将 Module 添加到 JIT, 我们需要找到生成代码的指针, 所以我们使用 JIT 的<code>findSymbol()</code> 方法, 将 top-level 表达式的函数名 “__anon_expr” 当作参数传入, 就可以得到指令地址.</p>
+<p>注意 “__anon_expr” 是要在 Parse top-level 表达式时传入的:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::unique_ptr&lt;FunctionAST&gt; <span class="title">ParseTopLevelExpr</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">auto</span> E = <span class="built_in">ParseExpression</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// anonymous nullary function</span></span><br><span class="line">        <span class="keyword">auto</span> Proto = std::make_unique&lt;PrototypeAST&gt;(<span class="string">&quot;__anon_expr&quot;</span>, std::vector&lt;std::string&gt;());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> std::make_unique&lt;FunctionAST&gt;(std::<span class="built_in">move</span>(Proto), std::<span class="built_in">move</span>(E));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后我们使用 <code>getAddress().get()</code> 来获取这个函数在内存中的地址. 我们定义的匿名函数没有参数, 返回值为 <code>double</code>. 因为 LLVM JIT 编译器匹配了 native 平台的 ABI, 所以我们可以直接将函数地址转化成一个函数指针, 然后直接调用它. 这意味着, JIT 编译出的代码和静态链接到应用的 native 机器码没有区别.</p>
+<p>最后, 由于我们不支持 top-level 的重复计算, 我们在代码生成的最后移除 Module, 释放调关联的内存. 但是我们在之前使用 <code>InitializeModuleAndPassManager()</code> 创建的 Module 仍然开启, 新的代码可以继续添加到其中.</p>
+<p>再调用一次之前定义的函数会找不到符号, 因为一个 Module 是 JIT 分配的一个单元, 定义的函数位于前面 Module 中, 当我们把一个 Module 移除之后, 我们就相当于删除了那个 Module 中所有函数的定义, 所以再次调用就找不到符号.</p>
+<p>最简单的方式就是将匿名表达式放在一个单独的 Module, 和其他函数定义分开.</p>
+<p>实际上, 我们想更进一步, 将每个函数都放到一个单独的 Module, 这样就更加像一个 REPL, 函数能被定义多次, 引用它时, 都是返回最近的定义.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> std::map&lt;std::string, std::unique_ptr&lt;PrototypeAST&gt;&gt; FunctionProtos;</span><br><span class="line"></span><br><span class="line"><span class="function">llvm::Function *<span class="title">FunctionAST::codegen</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Transfer ownership of the prototype to the FunctionProtos  </span></span><br><span class="line">    <span class="comment">// map, but keep a reference to it use below</span></span><br><span class="line">    <span class="keyword">auto</span> &amp;P = *Proto;</span><br><span class="line">    FunctionProtos[Proto-&gt;<span class="built_in">getName</span>()] = std::<span class="built_in">move</span>(Proto);</span><br><span class="line">    <span class="comment">// Check for an existing function from a previous `extern` declaration</span></span><br><span class="line">    llvm::Function *TheFunction = <span class="built_in">getFunction</span>(P.<span class="built_in">getName</span>());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!TheFunction)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ....</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">llvm::Value *<span class="title">CallExprAST::codegen</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Lookup the name in the global module table</span></span><br><span class="line">    llvm::Function *CalleeF = <span class="built_in">getFunction</span>(Callee);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">llvm::Function *<span class="title">getFunction</span><span class="params">(std::string Name)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// First, check if the function has already been added to the </span></span><br><span class="line">    <span class="comment">// current mode</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">auto</span> *F = TheModule-&gt;<span class="built_in">getFunction</span>(Name)) &#123;</span><br><span class="line">        <span class="keyword">return</span> F;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// If not exist, check wether we can codegen the declaration // from some existing prototype</span></span><br><span class="line">    <span class="keyword">auto</span> FI = FunctionProtos.<span class="built_in">find</span>(Name);</span><br><span class="line">    <span class="keyword">if</span> (FI != FunctionProtos.<span class="built_in">end</span>()) &#123;</span><br><span class="line">        <span class="keyword">return</span> FI-&gt;second-&gt;<span class="built_in">codegen</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// if no existing prototype exists, return null</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先添加一个全局的 <code>map&lt;string, unique_ptr&lt;PrototypeAST&gt;&gt; FunctionProtos</code>, 用它来保存每个函数最近的一次函数原型. 并且我们添加了一个 <code>getFunction()</code> , 代替 <code>TheModule-&gt;getFunction()</code>. 自定义的 <code>getFunction()</code>, 首先它搜寻 Module, 看有没有存在的函数声明, 如果没有就生成函数原型的代码. <strong>所以我们可以把之前 <code>Function *FunctionAST::codegen()</code> 之中的那个生成函数原型的代码片段删除</strong>. 同时在 <code>Function *FunctionAST::codegen()</code> 中, 我们首先更新 <code>FunctionProtos</code>, 再调用 <code>getFunction()</code>. 通过使用这个全局的 <code>FunctionProtos</code>, 我们能获取之前声明过的所有函数.</p>
+<p>我们还需要更新 <code>HandleDefinition()</code> 和 <code>HandleExtern()</code>:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleDefinition</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">auto</span> FnAST = <span class="built_in">ParseDefinition</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">auto</span> *FnIR = FnAST-&gt;<span class="built_in">codegen</span>())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;Read the function definition: &quot;</span>);</span><br><span class="line">            FnIR-&gt;<span class="built_in">print</span>(llvm::<span class="built_in">errs</span>());</span><br><span class="line">            <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;\n&quot;</span>);</span><br><span class="line">            TheJIT-&gt;<span class="built_in">addModule</span>(std::<span class="built_in">move</span>(TheModule));</span><br><span class="line">            <span class="built_in">InitializeModuleAndPassManager</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        <span class="built_in">getNextToken</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">HandleExtern</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">auto</span> ProtoAST = <span class="built_in">ParseExtern</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">auto</span> *FnIR = ProtoAST-&gt;<span class="built_in">codegen</span>())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;Read extern: &quot;</span>);</span><br><span class="line">            FnIR-&gt;<span class="built_in">print</span>(llvm::<span class="built_in">errs</span>());</span><br><span class="line">            <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;\n&quot;</span>);</span><br><span class="line">            FunctionProtos[ProtoAST-&gt;<span class="built_in">getName</span>()] = std::<span class="built_in">move</span>(ProtoAST);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Skip token for error recovery</span></span><br><span class="line">        <span class="built_in">getNextToken</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在 <code>HandleDefinition()</code> 中, 我们需要将刚刚定义好的函数所在的 Module 添加到 JIT, 然后打开一个新的 Module, 这样就使得每个函数都在不同的 Module 中. 在 <code>HandleExtern()</code> 中, 只需要将这个外部声明添加到 <code>FunctionProtos</code> 中即可.</p>
+<p>并且, 对于外部声明 <code>e.g., extern sin(x)</code>, JIT 有一套直接的符号解析机制: JIT 按照时间逆序, 搜寻所有添加的 Module, 来查找符号的定义. 如果没找到, 它就 fall back 去调用 <code>dlsym(&quot;sin&quot;)</code>, 去 JIT 的地址空间里面去找这个符号的定义, 然后去调用它 (<code>libm</code>).</p>
+<p>后面我们会进一步讨论 JIT 的符号解析机制, 并调整它来实现一些 feature, 比如安全性, 动态代码生成, 甚至是 lazy evaluation.</p>
+<p>调整符号解析规则一个最直接的好处就是, 我们能使用任意的 C++ 代码来扩展语言:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> <span class="function">DLLEXPORT <span class="keyword">double</span> <span class="title">putchard</span><span class="params">(<span class="keyword">double</span> X)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">fputc</span>((<span class="keyword">char</span>)X, stderr);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>链接时添加 <code>-rdynamic</code>, 使得 <code>dlopen()</code> 打开的 shared object 能解析到自己程序中的符号.</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/llvm/" rel="tag"># llvm</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/05/13/Fast-and-generic-metadata-management-with-mid-fat-pointers/" rel="prev" title="Fast and generic metadata management with mid-fat pointers">
+                  <i class="fa fa-chevron-left"></i> Fast and generic metadata management with mid-fat pointers
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/05/22/Kaleidoscope-Extending-the-language-Control-Flow/" rel="next" title="Kaleidoscope: Extending the Language: Control Flow">
+                  Kaleidoscope: Extending the Language: Control Flow <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;yoursite.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Gemini&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="Chapter 3 Introduction本章主要是将 Chapter 2 中构建的抽象语法树 (AST) 转化成 LLVM IR. 这章主要讲述 LLVM 能做哪些工作, 并且告诉你怎么使用. Note: 这章的代码需要 LLVM 3.7 或更新版. Code Generation Setup为了能生成 IR, 我们首先在每个 AST 类中定义一个生成代码的虚方法 (virtual code">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kaleidoscope: Code generation to LLVM IR">
+<meta property="og:url" content="http://yoursite.com/2019/05/09/Kaleidoscope-Code-generation-to-LLVM-IR/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="Chapter 3 Introduction本章主要是将 Chapter 2 中构建的抽象语法树 (AST) 转化成 LLVM IR. 这章主要讲述 LLVM 能做哪些工作, 并且告诉你怎么使用. Note: 这章的代码需要 LLVM 3.7 或更新版. Code Generation Setup为了能生成 IR, 我们首先在每个 AST 类中定义一个生成代码的虚方法 (virtual code">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-05-09T11:40:53.000Z">
+<meta property="article:modified_time" content="2021-05-22T09:03:11.290Z">
+<meta property="article:author" content="Zhangtong">
+<meta property="article:tag" content="llvm">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://yoursite.com/2019/05/09/Kaleidoscope-Code-generation-to-LLVM-IR/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;default&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;05&#x2F;09&#x2F;Kaleidoscope-Code-generation-to-LLVM-IR&#x2F;&quot;,&quot;path&quot;:&quot;2019&#x2F;05&#x2F;09&#x2F;Kaleidoscope-Code-generation-to-LLVM-IR&#x2F;&quot;,&quot;title&quot;:&quot;Kaleidoscope: Code generation to LLVM IR&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Kaleidoscope: Code generation to LLVM IR | Zhangtong's Notebook</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Zhangtong's Notebook</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Chapter-3-Introduction"><span class="nav-number">1.</span> <span class="nav-text">Chapter 3 Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Code-Generation-Setup"><span class="nav-number">2.</span> <span class="nav-text">Code Generation Setup</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Expression-Code-Generation"><span class="nav-number">3.</span> <span class="nav-text">Expression Code Generation</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Function-Code-Generation"><span class="nav-number">4.</span> <span class="nav-text">Function Code Generation</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Driver-changes-and-Closing-Thoughts"><span class="nav-number">5.</span> <span class="nav-text">Driver changes and Closing Thoughts</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/09/Kaleidoscope-Code-generation-to-LLVM-IR/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kaleidoscope: Code generation to LLVM IR
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-05-09 19:40:53" itemprop="dateCreated datePublished" datetime="2019-05-09T19:40:53+08:00">2019-05-09</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-05-22 17:03:11" itemprop="dateModified" datetime="2021-05-22T17:03:11+08:00">2021-05-22</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="Chapter-3-Introduction"><a href="#Chapter-3-Introduction" class="headerlink" title="Chapter 3 Introduction"></a>Chapter 3 Introduction</h2><p>本章主要是将 <a href="./Chapter2.md">Chapter 2</a> 中构建的抽象语法树 (AST) 转化成 LLVM IR. 这章主要讲述 LLVM 能做哪些工作, 并且告诉你怎么使用.</p>
+<p><strong>Note:</strong> 这章的代码需要 LLVM 3.7 或更新版.</p>
+<h2 id="Code-Generation-Setup"><a href="#Code-Generation-Setup" class="headerlink" title="Code Generation Setup"></a>Code Generation Setup</h2><p>为了能生成 IR, 我们首先在每个 AST 类中定义一个生成代码的虚方法 (virtual code generation method).</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ExprAST - Base class for all expression nodes</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExprAST</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">ExprAST</span>()&#123;&#125;;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> llvm::Value *<span class="title">codegen</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NumberExprAST - Expression class for numeric literals like &quot;1.0&quot;</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">NumberExprAST</span> :</span> <span class="keyword">public</span> ExprAST</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">double</span> Val;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">NumberExprAST</span>(<span class="keyword">double</span> Val) : <span class="built_in">Val</span>(Val) &#123;&#125;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> llvm::Value *<span class="title">codegen</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><code>codegen()</code> 方法会根据每个不同的类生成 IR, 都返回一个 <code>class Value</code> 对象的指针. <code>class Value</code> 表示 LLVM 中的一个 SSA (Static Single Assignment) register 或者 SSA value. SSA 表示每个变量都只能被赋值一次, 而且必须在使用前被定义.</p>
+<p>同时我们添加一个 <code>LogError()</code> 方法来记录生成 IR 时的错误:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">llvm::Value *<span class="title">LogErrorV</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *Str)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">LogError</span>(Str);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>并声明可能需要的静态变量:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> llvm::LLVMContext TheContext;</span><br><span class="line"><span class="keyword">static</span> llvm::IRBuilder&lt;&gt; Builder&#123;TheContext&#125;;</span><br><span class="line"><span class="keyword">static</span> std::unique_ptr&lt;llvm::Module&gt; TheModule;</span><br><span class="line"><span class="keyword">static</span> std::map&lt;std::string, llvm::Value *&gt; NamedValues;</span><br></pre></td></tr></table></figure>
+
+<p><code>LLVMContext TheContext</code> 是一个包含大量 LLVM 核心数据结构的对象, 比如包含类型和常量表 (the type and constant value tables). <code>IRBuilder Builder</code> 是一个辅助对象, 能简化 LLVM 指令的生成. 这个对象能够追踪当前需要插入指令的位置, 并有创建新指令的方法. <code>class Module</code> 的实例用来存储和 一个LLVM module 相关的所有信息. 在 LLVM 中, 一个 Module 表示能被处理的单个代码单元 (a single unit of code that is to be processed together), <del>差不多就是一个源代码文件</del>. <code>TheModule</code> 会拥有我们生成所有 IR 的内存, 这就是我们申明 <code>codegen()</code> 时, 让它返回裸指针 <code>Value *</code> 而不是 <code>unique_ptr&lt;Value&gt;</code> 的原因. <code>map&lt;string, Value *&gt; NamedValues</code> 主要追踪当前作用域内定义的值, 和它们的 LLVM representation. 换句话说 <code>NamedValues</code> 就是一个符号表 (symbol table for the code). 目前在 Kaleidoscope 中, 只有函数参数能被引用, 所以当生成函数体里面的代码时, 我们就会用到存储在它里面的函数参数.</p>
+<p>我们现在假设 <code>IRBuilder Builder</code> 已经被设置好可以生成代码.</p>
+<h2 id="Expression-Code-Generation"><a href="#Expression-Code-Generation" class="headerlink" title="Expression Code Generation"></a>Expression Code Generation</h2><p>为表达式节点生成 LLVM code 非常直接, 直接调用相应的函数即可, 首先是对数字常量表达式的代码生成:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">llvm::Value *<span class="title">NumberExprAST::codegen</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> llvm::ConstantFP::<span class="built_in">get</span>(TheContext, llvm::<span class="built_in">APFloat</span>(Val));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在 LLVM IR 中, 字面常量是用 <code>class ConstantFP</code> 表示的, 字面常量的值由 <code>class APFloat</code> 持有, 即后者是前者的一个成员变量 (AP 表示 Arbitrary Precision). 然后是变量表达式的 <code>codegen()</code>:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">llvm::Value *<span class="title">VariableExprAST::codegen</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    llvm::Value *V = NamedValues[Name];</span><br><span class="line">    <span class="keyword">if</span> (!V) &#123;</span><br><span class="line">        <span class="built_in">LogErrorV</span>(<span class="string">&quot;Unknown variable name&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> V;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>目前针对变量的引用只有在函数体内才有, 所以我们先检查被引用的变量名是否在 <code>map&lt;string, Value*&gt; NamedValues</code> 中, 然后直接返回它的值即可. 在教程后面我们会加上对循环变量和局部变量的支持 (loop induction variables and local variables).</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">llvm::Value *<span class="title">BinaryExprAST::codegen</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    llvm::Value *L = LHS -&gt; <span class="built_in">codegen</span>();</span><br><span class="line">    llvm::Value *R = RHS -&gt; <span class="built_in">codegen</span>();</span><br><span class="line">    <span class="keyword">if</span> (!L || !R)&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in"><span class="keyword">switch</span></span> (Op)</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="string">&#x27;+&#x27;</span>:</span><br><span class="line">        <span class="keyword">return</span> Builder.<span class="built_in">CreateFAdd</span>(L, R, <span class="string">&quot;addtmp&quot;</span>);</span><br><span class="line">    <span class="keyword">case</span> <span class="string">&#x27;-&#x27;</span>:</span><br><span class="line">        <span class="keyword">return</span> Builder.<span class="built_in">CreateFSub</span>(L, R, <span class="string">&quot;subtmp&quot;</span>);</span><br><span class="line">    <span class="keyword">case</span> <span class="string">&#x27;*&#x27;</span>:</span><br><span class="line">        <span class="keyword">return</span> Builder.<span class="built_in">CreateFMul</span>(L, R, <span class="string">&quot;multmp&quot;</span>);</span><br><span class="line">    <span class="keyword">case</span> <span class="string">&#x27;&lt;&#x27;</span>:</span><br><span class="line">        L = Builder.<span class="built_in">CreateFCmpULT</span>(L, R, <span class="string">&quot;cmptmp&quot;</span>);</span><br><span class="line">        <span class="comment">// Convert bool 0/1 to double 0.0 or 1.0</span></span><br><span class="line">        <span class="keyword">return</span> Builder.<span class="built_in">CreateUIToFP</span>(L, llvm::Type::<span class="built_in">getDoubleTy</span>(TheContext), <span class="string">&quot;booltmp&quot;</span>);</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">LogErrorV</span>(<span class="string">&quot;invalid binary operator&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>二元操作符表达式也是递归进行操作, 左表达式先进行代码生成, 然后是右表达式, 然后生成二元操作符表达式的代码. 在上述代码中, <code>class IRBuilder</code> 调用自己的成员方法, 例如 <code>CreateFAdd()</code>, 通过传入的参数来生成新的指令. 在 <code>CreateFAdd()</code> 方法中传入的名字仅仅只是一个提示, 如果上面的代码生成函数有多个 <code>CreateFAdd(L, R, &quot;addtmp&quot;)</code>, 那么 LLVM 会自动给每个都加上一个唯一的后缀.</p>
+<p>LLVM 指令是被严格约束的: 对于加法指令, 左操作数和右操作数必须是相同类型, 且结果的类型和操作数的类型必须相同. Kaleidoscope 中的所有值都是 <code>double</code>, 所以这里不需要考虑类型.</p>
+<p>并且, 在 LLVM 文档中, <code>fcmp</code> 指令返回的是 1个 bit 的整数 <code>i1</code>. 我们的数据类型中没有整数, 所以我们要转化为 0.0 或者 1.0. 所有我们使用 <code>uitofp</code> 指令, 它将第一个参数视为无符号的整数类型， 并把它转化为第二个参数表示的浮点类型 (double). 同时 <code>sitofp</code> 指令也可以完成类似的功能, 不过它是把第一个参数视为有符号的整数类型.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">llvm::Value *<span class="title">CallExprAST::codegen</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Lookup the name in the global module table</span></span><br><span class="line">    llvm::Function *CalleeF = TheModule -&gt; <span class="built_in">getFunction</span>(Callee);</span><br><span class="line">    <span class="keyword">if</span> (!CalleeF) &#123;</span><br><span class="line">        <span class="built_in">LogErrorV</span>(<span class="string">&quot;Unknown function referenced&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Argument checking</span></span><br><span class="line">    <span class="keyword">if</span> (CalleeF -&gt; <span class="built_in">arg_size</span>() != Args.<span class="built_in">size</span>()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">LogErrorV</span>(<span class="string">&quot;Incorrect number of arguments passed&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    std::vector&lt;llvm::Value *&gt; ArgsV;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">unsigned</span> i = <span class="number">0</span>, e = Args.<span class="built_in">size</span>(); i != e; ++i) &#123;</span><br><span class="line">        ArgsV.<span class="built_in">push_back</span>(Args[i] -&gt; <span class="built_in">codegen</span>());</span><br><span class="line">        <span class="keyword">if</span> (!ArgsV.<span class="built_in">back</span>()) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> Builder.<span class="built_in">CreateCall</span>(CalleeF, ArgsV, <span class="string">&quot;calltmp&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>函数调用的代码生成也是很直接的, 首先在 LLVM Module 的符号表里面查找这个函数名. LLVM Module 是用来持有函数的容器, 并且通过解析 Module 的符号表, 我们就能引用这些函数.</p>
+<p>一旦我们找到函数之后, 就检查它在符号表中的参数数量和实际获取的参数数量是否一致. 并且递归的解析传给它的每个参数. 然后就能创建一个 LLVM <code>call</code> 指令.</p>
+<h2 id="Function-Code-Generation"><a href="#Function-Code-Generation" class="headerlink" title="Function Code Generation"></a>Function Code Generation</h2><p>对函数原型和函数定义的代码生成包含不少细节, 不像上面表达式生成代码时那么直观和简洁. 但是我们同时也能看到一些比较重要的概念. 下面是函数原型的代码生成:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">llvm::Function *<span class="title">PrototypeAST::codegen</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Make the function prototype: double(double, double).</span></span><br><span class="line">    <span class="function">std::vector&lt;llvm::Type *&gt; <span class="title">Doubles</span><span class="params">(Args.size(), llvm::Type::getDoubleTy(TheContext))</span></span>;</span><br><span class="line">    llvm::FunctionType *FT = llvm::FunctionType::<span class="built_in">get</span>(llvm::Type::<span class="built_in">getDoubleTy</span>(TheContext), Doubles, <span class="literal">false</span>);</span><br><span class="line">    llvm::Function *F = llvm::Function::<span class="built_in">Create</span>(FT, llvm::Function::ExternalLinkage, Name, TheModule.<span class="built_in">get</span>());</span><br></pre></td></tr></table></figure>
+
+<p>这部分的代码包含了很多重要内容. 首先 <code>Function *PrototypeAST::codegen()</code> 返回值的类型是 <code>Function *</code> 而不是 <code>Value *</code>, 因为一个函数原型主要是表示函数的外部接口, 而不是像表达式一样能被计算出值. 对 <code>FunctionType::get()</code> 的调用可以得到函数类型, 第一个参数是返回值类型, 第二个参数是参数类型的列表, 第三个是是否支持可变参数列表.</p>
+<p>最后一行就是实际生成 IR 代码的一行, <code>Function::Create()</code> 的参数分别为函数类型, Linkage 类型 (一般熟知的有 external linkage 和 internal linkage, 分别表示能被外部 translation unit (Module) 访问和不能. 例如 c/c++ 关键字 <code>extern</code> 和 <code>static</code>), 函数名, 和 <code>TheModule</code>. <del>在之前版本的 LLVM 文档中, 直接传了 <code>TheModule</code> (unique_ptr) 而不是 <code>TheModule.get()</code>, 会造成编译器错误.</del></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">    <span class="comment">// Set names for all arguments</span></span><br><span class="line">    <span class="keyword">unsigned</span> Idx = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> &amp;Arg: F -&gt; <span class="built_in">args</span>()) &#123;</span><br><span class="line">        Arg.<span class="built_in">setName</span>(Args[Idx++]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> F;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后根据函数原型的参数名字, 给 IR 的参数命名, 增加 IR 生成之后的可读性, 并且后续操作中, 能直接根据参数名对参数进行引用, 不需要再到函数原型的 AST 节点中查找.</p>
+<p>然后就是函数定义:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">llvm::Function *<span class="title">FunctionAST::codegen</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Check for an existing function from a previous `extern` declaration</span></span><br><span class="line">    llvm::Function *TheFunction = TheModule -&gt; <span class="built_in">getFunction</span>(Proto -&gt; <span class="built_in">getName</span>());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!TheFunction) &#123;</span><br><span class="line">        TheFunction = Proto -&gt; <span class="built_in">codegen</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!TheFunction) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!TheFunction -&gt; <span class="built_in">empty</span>()) &#123;</span><br><span class="line">        <span class="keyword">return</span> (llvm::Function *)<span class="built_in">LogErrorV</span>(<span class="string">&quot;Function cannot be redefined&quot;</span>);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>对于函数定义, 我们首先查找 <code>TheModule</code> 的符号表, 看看有没有匹配的函数名. 这样就可以看出这个函数有没有使用 <code>extern</code> 的前向声明. 如果没有声明, 那么我们就生成函数原型的代码. 并且, 我们断言这个时候函数体是没有生成代码的, 也就是说我们这次定义并不是重复定义.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Create a new Basic Block to start insertion into.</span></span><br><span class="line">llvm::BasicBlock *BB = llvm::BasicBlock::<span class="built_in">Create</span>(TheContext, <span class="string">&quot;entry&quot;</span>, TheFunction);</span><br><span class="line">Builder.<span class="built_in">SetInsertPoint</span>(BB);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Record the function arguments in the NamedValues map.</span></span><br><span class="line">NamedValues.<span class="built_in">clear</span>();</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">auto</span> &amp;Arg : TheFunction -&gt; <span class="built_in">args</span>()) &#123;</span><br><span class="line">    NamedValues[Arg.<span class="built_in">getName</span>()] = &amp;Arg;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第一行创建了一个新的 basic block, 并把它插入到 <code>TheFunction</code> 中. 第二行就告诉 <code>Builder</code>, 新的指令应该被插入到这个 basic block 的末尾. Basic block 定义了 LLVM 中的控制流图 (Control flow graph). 虽然我们现在没有控制流, 但在 <a href="./Chapter5.md">Chapter 5</a> 会加上.</p>
+<p>然后就是将函数参数添加到 <code>map&lt;string, Value *&gt; NamedValues</code>, 这样 VariableExprAST 的节点就能在函数定义里面来引用它们.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">    <span class="keyword">if</span> (llvm::Value *RetVal = Body -&gt; <span class="built_in">codegen</span>()) &#123;</span><br><span class="line">        <span class="comment">// Finish off the function</span></span><br><span class="line">        Builder.<span class="built_in">CreateRet</span>(RetVal);</span><br><span class="line">        <span class="comment">// Validate the generated code, checking for consistency</span></span><br><span class="line">        llvm::<span class="built_in">verifyFunction</span>(*TheFunction);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> TheFunction;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    TheFunction -&gt; <span class="built_in">eraseFromParent</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>一旦代码的插入点被设置完毕, 我们就调用函数体的 <code>codegen()</code> 方法, 如果没有错误发生的话, 它就会将生成函数体里面表达式的代码, 然后将这些代码插入到上面定义的 entry basic block 中, 然后返回这些表达式计算出来的值. 接着创建 <code>ret</code> 指令完成函数. 生成完毕后使用 <code>verifyFunction()</code> 来检查生成代码的一致性. 如果生成函数体代码失败, 那就调用 <code>eraseFromParent()</code> 删除生成的函数.</p>
+<p>但是这部分的代码也有问题, 如果 <code>FunctionAST::codegen()</code> 方法已经找到一个存在的函数声明, 那么它就跳过了函数原型代码的生成, 就导致跳过了对参数名的设置, 所以当前向声明中的参数名和函数定义使用的参数名不一致时, 会发生错误:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="title">foo</span><span class="params">(a)</span></span>;   <span class="meta"># ok, declare foo</span></span><br><span class="line"><span class="function">def <span class="title">foo</span><span class="params">(b)</span></span>;      # Error: Unknown variable name</span><br></pre></td></tr></table></figure>
+
+<h2 id="Driver-changes-and-Closing-Thoughts"><a href="#Driver-changes-and-Closing-Thoughts" class="headerlink" title="Driver changes and Closing Thoughts"></a>Driver changes and Closing Thoughts</h2><p>主要就是在 <code>main()</code> 和相应的 <code>HandleDefinition()</code> 之类的函数中， 相应的更改用 preprocess macro 做了判断, 直接看代码即可.</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/llvm/" rel="tag"># llvm</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/05/09/Kaleidoscope-Implementing-a-Parser-and-AST/" rel="prev" title="Kaleidoscope: Implementing a Parser and AST">
+                  <i class="fa fa-chevron-left"></i> Kaleidoscope: Implementing a Parser and AST
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/05/12/SGXBounds-Memory-Safety-for-Shielded-Execution/" rel="next" title="SGXBounds: Memory Safety for Shielded Execution">
+                  SGXBounds: Memory Safety for Shielded Execution <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

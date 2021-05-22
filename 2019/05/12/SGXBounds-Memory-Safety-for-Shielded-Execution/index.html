@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;yoursite.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Gemini&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="IntroductionIntel SGX provides an abstraction of secure enclave, which can be used to achieve shielded execution for unmodified legacy applications on untrusted infrastructure. Shielded execution aims">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SGXBounds: Memory Safety for Shielded Execution">
+<meta property="og:url" content="http://yoursite.com/2019/05/12/SGXBounds-Memory-Safety-for-Shielded-Execution/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="IntroductionIntel SGX provides an abstraction of secure enclave, which can be used to achieve shielded execution for unmodified legacy applications on untrusted infrastructure. Shielded execution aims">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-05-12T07:06:46.000Z">
+<meta property="article:modified_time" content="2021-05-22T09:03:11.290Z">
+<meta property="article:author" content="Zhangtong">
+<meta property="article:tag" content="tagged pointer">
+<meta property="article:tag" content="SGX">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://yoursite.com/2019/05/12/SGXBounds-Memory-Safety-for-Shielded-Execution/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;default&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;05&#x2F;12&#x2F;SGXBounds-Memory-Safety-for-Shielded-Execution&#x2F;&quot;,&quot;path&quot;:&quot;2019&#x2F;05&#x2F;12&#x2F;SGXBounds-Memory-Safety-for-Shielded-Execution&#x2F;&quot;,&quot;title&quot;:&quot;SGXBounds: Memory Safety for Shielded Execution&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>SGXBounds: Memory Safety for Shielded Execution | Zhangtong's Notebook</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Zhangtong's Notebook</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Background"><span class="nav-number">2.</span> <span class="nav-text">Background</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SGXBOUNDS"><span class="nav-number">3.</span> <span class="nav-text">SGXBOUNDS</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Design-overview"><span class="nav-number">3.1.</span> <span class="nav-text">Design overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Design-details"><span class="nav-number">3.2.</span> <span class="nav-text">Design details</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Advanced-Features-of-SGXBOUNDS"><span class="nav-number">4.</span> <span class="nav-text">Advanced Features of SGXBOUNDS</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Multi-threading-support"><span class="nav-number">4.1.</span> <span class="nav-text">Multi-threading support</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Tolerating-bugs-with-boundless-memory"><span class="nav-number">4.2.</span> <span class="nav-text">Tolerating bugs with boundless memory</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Metadata-management-support"><span class="nav-number">4.3.</span> <span class="nav-text">Metadata management support</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Implementation"><span class="nav-number">5.</span> <span class="nav-text">Implementation</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#SGXBOUNDS-implementation"><span class="nav-number">5.1.</span> <span class="nav-text">SGXBOUNDS implementation</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/12/SGXBounds-Memory-Safety-for-Shielded-Execution/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SGXBounds: Memory Safety for Shielded Execution
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-05-12 15:06:46" itemprop="dateCreated datePublished" datetime="2019-05-12T15:06:46+08:00">2019-05-12</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-05-22 17:03:11" itemprop="dateModified" datetime="2021-05-22T17:03:11+08:00">2021-05-22</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>Intel SGX provides an abstraction of <em>secure enclave</em>, which can be used to achieve <em>shielded execution</em> for <strong>unmodified legacy applications</strong> on untrusted infrastructure.</p>
+<p>Shielded execution aims to protect confidentiality and integrity of applications when executed in an untrusted environment. The main idea is to isolate the application from the rest of the system, using only a narrow interface to communicate to the outside.</p>
+<p>However, shield execution does not protect the program against <em>memory safety</em> attacks. To validate our claim, we reproduced publicly available memory safety exploits inside the secure enclave. These examples highlight that a single exploit can completely compromise the integrity and confidentiality properties of shield execution.</p>
+<p>To prevent exploitation of these bugs, we experimented with two prominent software- and hardware based memory protection mechanisms in the context of shield execution: AddressSanitizer and Intel MPX, respectively.</p>
+<p>But, both of them incur high performance overhead, due to additional metadata used to track object bounds.</p>
+<p>In this paper, we present SGXBOUNDS. The SGXBOUNDS approach is based on a simple combination of tagged pointers and efficient memory layout to reduce overheads inside enclaves. In particular, we note that SGX enclave routine use only 32 lower bits to represent program address space and leave 32 higher bits of pointers unused. We utilize these high bits to represent the upper bound of the referent object (or more broadly the beginning of the object’s metadata area); the lower bound value is stored right after the object. Such metadata layout requires only 4 additional bytes per object and does not break cache locality — unlike Intel MPX and AddressSanitizer.</p>
+<p>Futhermore, we show that our design naturally extends for: (1) “synchronization-free” support for multi-threaded application, (2) increased availability instead of usual fail-stop semantics by tolerating out-of-bounds accesses, (3) generic APIs for object’s metadata management to support new use-cases.</p>
+<h2 id="Background"><a href="#Background" class="headerlink" title="Background"></a>Background</h2><p><strong>SCONE</strong> is a shielded execution framework that enables unmodified legacy application to take advantage of the isolation offered by SGX. With SCONE, the program is recompiled against a modified standard C library (SCONE libc), which facilitates the execution of of system calls.</p>
+<p>Clearly, the combination of SCONE and SGX is not a silver bullet: bugs in the enclave code itself can render these mechanisms useless.</p>
+<p><strong>Address Sanitizer</strong> is an extension to GCC and Clang/LLVM that detects the majority of object bounds violations. It keeps track of all objects, and checks whether the address is within one of the used objects on each memory access.</p>
+<p><strong>Intel MPX</strong> detects all possible spatial memory vulnerabilities including intra-object ones (When one member in a structure corrupts other members). The approach to achieving this goal is different from AddressSanitizer. Instead of separating objects by unaddressable redzones, MPX keeps <em>bounds metadata</em> of all pointers and check against these bounds on each memory access.</p>
+<p>One major limitation of the current Intel MPX implementation is a small number of bounded registers. If an application contains many distinct pointers, it will cause frequent loads and stores of bounds in memory.</p>
+<h2 id="SGXBOUNDS"><a href="#SGXBOUNDS" class="headerlink" title="SGXBOUNDS"></a>SGXBOUNDS</h2><p>We built SGXBOUNDS based on the following three insights. First, shielded application memory (specifically, its working set) must be kept minimal due to the very limited EPC size in current SGX implementation. Second, applications spend a considerable amount of time iterating through the elements of an array, and a smartly chosen layout of metadata can significantly reduce the overhead of bounds checking. Third, we rely on the SCONE infrastructure with its monolithic build process: all application code is statically linked without external dependencies. The first and second insights dictate the use of per-object metadata combined with <em>tagged pointers</em> to keep memory overhead minimal.</p>
+<h3 id="Design-overview"><a href="#Design-overview" class="headerlink" title="Design overview"></a>Design overview</h3><p>All modern SGX CPU operates in a 64-bit mode, meaning that all pointer are 64 bits in size. In SGX enclaves, however, only 36 bit of virtual address space are currently addressable. Thus, SGXBOUNDS relies on the idea of <em>tagged pointers</em>: a 64-bit pointer contains the pointer itself in its lower 32 bits and the referent object’s upper bound in the upper 32 bits.</p>
+<p>The value stored in the higher 32 bits (UB) serves not only for the upper-bound check, but also as a pointer to the object’s other metadata (LB). The metadata is stored right after the referent object.</p>
+<p>This metadata layout has important benefits: (1) it minimizes amount of memory for metadata, (2) it requires <em>no</em> additional memory accesses, (3) it alleviates problems of fat pointers concerning multi-threading and memory layout changes.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span> *s[N], *d[N]</span><br><span class="line">s = specify_bounds(s, s + N)</span><br><span class="line">d = specify_bounds(d, d + N)</span><br><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; M; i++)</span><br><span class="line">    si = s + i</span><br><span class="line">    di = d + i</span><br><span class="line">    sp, sLB, sUB = extract(si)</span><br><span class="line">    <span class="keyword">if</span> bounds_violated(sp, sLB, sUB)</span><br><span class="line">        crash(si)</span><br><span class="line">    val = load si</span><br><span class="line">    dp, dLB, dUB = extract(di)</span><br><span class="line">    <span class="keyword">if</span> bounds_violated(dp, dLB, dUB)</span><br><span class="line">        crash(di)</span><br><span class="line">    store val, di</span><br></pre></td></tr></table></figure>
+
+<h3 id="Design-details"><a href="#Design-details" class="headerlink" title="Design details"></a>Design details</h3><p><strong>Pointer creation.</strong> Whenever an object is created, SGX-BOUNDS associates a pointer with the bound of this object.</p>
+<p>For global and stack-allocated variables, we change their memory layout so they are padded with 4 bytes and initialize them at runtime. More specifically, we wrap such variables in two-member structures, e.g., <code>int x</code> is transformed into <code>struct xwarp &#123;int x; void* LB&#125;</code>:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">specify_bounds</span><span class="params">(<span class="keyword">void</span> *p, <span class="keyword">void</span> *UB)</span> </span>&#123;</span><br><span class="line">    LBaddr  = UB;</span><br><span class="line">    *LBaddr = p;</span><br><span class="line">    tagged  = (UB &lt;&lt; <span class="number">32</span>) | p;</span><br><span class="line">    <span class="keyword">return</span> tagged;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>For dynamically allocated variables, SGXBOUNDS wraps memory management functions to append 4 bytes to each newly created object, initialize these with the lower-bound value, and make the pointer tagged with the upper bound:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">malloc</span><span class="params">(<span class="keyword">int</span> size)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">void</span> *p = malloc_real(size + <span class="number">4</span>);</span><br><span class="line">    <span class="keyword">return</span> specify_bounds(p, p + size);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Note that there is no need to instrument <code>free</code> as the 4 bytes of metadata are removed together with the object itself.</p>
+<p><strong>Run-time bounds checks.</strong> SGXBOUNDS inserts run-time bounds check before each memory access: loads, stores, and atomic operations. For this, first the original pointer and the upper and lower bounds are extracted. To extract the original pointer:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">extract_p</span><span class="params">(<span class="keyword">void</span> *tagged)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> tagged &amp; <span class="number">0xFFFF&#x27;FFFF</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>To extract the upper bound”</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">extract_UB</span><span class="params">(<span class="keyword">void</span> *tagged)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> tagged &gt;&gt; <span class="number">32</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>To extract the lower bound which stored in the padded region:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">extract_LB</span><span class="params">(<span class="keyword">void</span> *UB)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> *UB;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Finally, the bound check:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">bounds_violated</span><span class="params">(<span class="keyword">void</span> *p, <span class="keyword">void</span> *LB, <span class="keyword">void</span> * UB)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (p &lt; LB || p &gt; UB) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Pointer arithmetic.</strong> SGXBOUNDS instruments pointer arithmetic so that only 32 low bits are affected:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">UB = extract_UB(si)</span><br><span class="line">si = s + i</span><br><span class="line">si = (UB &lt;&lt; <span class="number">32</span>) | extract_p(si)</span><br></pre></td></tr></table></figure>
+
+<p><strong>Type casts.</strong> Pointer-to-integer and integer-to-pointer casts are a curse for fat/tagged pointer approaches.</p>
+<p><strong>Function calls.</strong> SGXBOUNDS does not need to instrument function calls or altering calling conventions. The only uninstrumented code is the libc, for which we provide wrappers. This implies that any tagged pointer passed as a function argument will be treated as a tagged pointer in the callee.</p>
+<h2 id="Advanced-Features-of-SGXBOUNDS"><a href="#Advanced-Features-of-SGXBOUNDS" class="headerlink" title="Advanced Features of SGXBOUNDS"></a>Advanced Features of SGXBOUNDS</h2><h3 id="Multi-threading-support"><a href="#Multi-threading-support" class="headerlink" title="Multi-threading support"></a>Multi-threading support</h3><p>AddressSanitizer does not require any specific treatment of multi-threading, but it can negatively affect cache locality if a multi-threaded application was specifically designed as cache-friendly.</p>
+<p>All fat-pointer or disjoint-metadata techniques similar to Intel MPX suffer from multi-threading issues. An update of a pointer and its associated metadata must be implemented as one atomic operation.</p>
+<p>SGXBOUNDS does not experience this problem. Indeed, the pointer and the upper bound are always updated atomically since they are stored in the same 64-bit tagged pointer.</p>
+<h3 id="Tolerating-bugs-with-boundless-memory"><a href="#Tolerating-bugs-with-boundless-memory" class="headerlink" title="Tolerating bugs with boundless memory"></a>Tolerating bugs with boundless memory</h3><p>To allow applications to survive most bugs and attacks and continue correct execution, SGXBOUNDS reverts to failure-oblivious computing by using the concepts of boundless memory blocks. In this case, whenever an out-of-bounds memory access is detected, SGXBOUNDS redirects this access to a separate “overlay” memory area to prevent corruption of adjacent objects, creating the illusion of “boundless memory allocated for the object.</p>
+<p>Consider an example of a classic off-by-one error, SGXBOUNDS will redirect to load and store to an overlay address, instead of a violation of accessing metadata.</p>
+<h3 id="Metadata-management-support"><a href="#Metadata-management-support" class="headerlink" title="Metadata management support"></a>Metadata management support</h3><p>So far, we discussed only one metadata type kept per object — the lower bound. However, our memory layout allows us to add arbitrary number of metadata items for each object to implement additional functionality.</p>
+<p>All instrumentation in SGXBOUNDS is implemented as calls to auxiliary functions, which we refer to as instrumentation hooks. One can think of these hooks as a metadata management API : (1) <code>on_create()</code> is called at run-tim whenever a new object is created. In the context of SGXBOUNDS, it corresponds to the <code>specify_bounds()</code> function which initializes our only metadata (lowerbound). (2) <code>on_access()</code> is called at each memory access, be it a write, read, or both (for atomic instruction such as compare-and-swap). In SGXBOUNDS, the hook roughly corresponds to the <code>bounds_violated()</code> function. (3) <code>on_delete()</code> is called whenever the object is deallocated, we support this hook only for the head objects.</p>
+<table>
+<thead>
+<tr>
+<th>function</th>
+<th align="left">description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>on_create(base, size, type)</code></td>
+<td align="left">called after object creation (global, heap, or stack)</td>
+</tr>
+<tr>
+<td><code>on_access(addr, size, metadata, access_type)</code></td>
+<td align="left">called before memory access</td>
+</tr>
+<tr>
+<td><code>on_delete(metadata)</code></td>
+<td align="left">called before object destruction(only for heap)</td>
+</tr>
+</tbody></table>
+<h2 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h2><h3 id="SGXBOUNDS-implementation"><a href="#SGXBOUNDS-implementation" class="headerlink" title="SGXBOUNDS implementation"></a>SGXBOUNDS implementation</h3><p>SGXBOUNDS is a compile-time transformation pass implemented in LLVM 3.8.</p>
+<p><strong>Compiler Support.</strong> We treat inline assembly as an opaque memory instruction: all pointer arguments to inline assembly are bounds checked. SGXBOUNDS does not yet completely support c++ exception handling.</p>
+<p><strong>Run-time Support.</strong> We implement boundless memory feature completely in the run-time support library. To prevent data races, all read/update operations on the cache are synchronized via a global lock. For the tagged pointer scheme, SGXBOUNDS relies on SGX enclaves (thus the virtual address space) to start from 0x0. To allow this, we set Linux security flag <code>vm.mmap_min_addr</code> to zero for our applications. We also modified the original Intel SGX driver to always start the enclave at address 0x0.</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/tagged-pointer/" rel="tag"># tagged pointer</a>
+              <a href="/tags/SGX/" rel="tag"># SGX</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/05/09/Kaleidoscope-Code-generation-to-LLVM-IR/" rel="prev" title="Kaleidoscope: Code generation to LLVM IR">
+                  <i class="fa fa-chevron-left"></i> Kaleidoscope: Code generation to LLVM IR
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/05/13/Fast-and-generic-metadata-management-with-mid-fat-pointers/" rel="next" title="Fast and generic metadata management with mid-fat pointers">
+                  Fast and generic metadata management with mid-fat pointers <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

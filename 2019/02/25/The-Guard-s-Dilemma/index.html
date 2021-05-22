@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;yoursite.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Gemini&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="IntroductionSGX isolates sensitive code and data from the OS, hypervisor, BIOS and other applications. Besides, SGX code and data is always encrypted as soon as it leaves the CPU. sensitive data, e.g.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The Guard&#39;s Dilemma">
+<meta property="og:url" content="http://yoursite.com/2019/02/25/The-Guard-s-Dilemma/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="IntroductionSGX isolates sensitive code and data from the OS, hypervisor, BIOS and other applications. Besides, SGX code and data is always encrypted as soon as it leaves the CPU. sensitive data, e.g.">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-02-25T09:28:09.000Z">
+<meta property="article:modified_time" content="2021-05-22T09:03:11.290Z">
+<meta property="article:author" content="Zhangtong">
+<meta property="article:tag" content="code-reuse attack">
+<meta property="article:tag" content="SGX">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://yoursite.com/2019/02/25/The-Guard-s-Dilemma/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;default&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;02&#x2F;25&#x2F;The-Guard-s-Dilemma&#x2F;&quot;,&quot;path&quot;:&quot;2019&#x2F;02&#x2F;25&#x2F;The-Guard-s-Dilemma&#x2F;&quot;,&quot;title&quot;:&quot;The Guard&#39;s Dilemma&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>The Guard's Dilemma | Zhangtong's Notebook</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Zhangtong's Notebook</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#The-Guard%E2%80%99s-Dilemma"><span class="nav-number">2.</span> <span class="nav-text">The Guard’s Dilemma</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Overview-and-Attack-Workflow"><span class="nav-number">2.1.</span> <span class="nav-text">Overview and Attack Workflow</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Primitives"><span class="nav-number">2.1.1.</span> <span class="nav-text">Primitives</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Workflow"><span class="nav-number">2.1.2.</span> <span class="nav-text">Workflow</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Details"><span class="nav-number">2.2.</span> <span class="nav-text">Details</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ORET-Primitives"><span class="nav-number">2.2.1.</span> <span class="nav-text">ORET Primitives</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CONT-Primitive"><span class="nav-number">2.2.2.</span> <span class="nav-text">CONT Primitive</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Fake-stack"><span class="nav-number">2.2.3.</span> <span class="nav-text">Fake stack</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Fake-exception-information"><span class="nav-number">2.2.4.</span> <span class="nav-text">Fake exception information</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Attacking-SGX-Shield"><span class="nav-number">3.</span> <span class="nav-text">Attacking SGX-Shield</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Overview-on-SGX-Shield"><span class="nav-number">3.1.</span> <span class="nav-text">Overview on SGX-Shield</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Exploit"><span class="nav-number">3.2.</span> <span class="nav-text">Exploit</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#First-stage"><span class="nav-number">3.3.</span> <span class="nav-text">First stage</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Second-stage"><span class="nav-number">3.4.</span> <span class="nav-text">Second stage</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/25/The-Guard-s-Dilemma/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          The Guard's Dilemma
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-02-25 17:28:09" itemprop="dateCreated datePublished" datetime="2019-02-25T17:28:09+08:00">2019-02-25</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-05-22 17:03:11" itemprop="dateModified" datetime="2021-05-22T17:03:11+08:00">2021-05-22</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>SGX isolates sensitive code and data from the OS, hypervisor, BIOS and other applications. Besides, SGX code and data is always encrypted as soon as it leaves the CPU. sensitive data, e.g. cryptographic keys, of applications is protected by SGX containers called <em>enclaves</em>, which can be dynamiclly created while the applications, known as <em>hosts</em>, is running. enclaves provide predefined entry points to hosts performing sensitive computation.</p>
+<p>Ideally, the enclave code only includes minimal carefully-inspected code, which could be formally proven to be free of vulnerabilities. However, legacy applications can be adapted as well to run inside SGX enclaves with necessary modifications. Formally proving or manually inspecting legacy applications is not feasible, meaning that memory corruption vulnerabilities occurs in enclaves with high probability.</p>
+<p>Recently, Dark-ROP[1] was proposed to leverage memory-corruption against SGX. Dark-ROP is based on several oracles, which inform the attackers about the internal status of encalves, and return-oriented programming. However, Dark-ROP requires a non-randomized memory layout to locate secret code and data after crashing. Therefore, an implementation of SGX randomization called SGX-Shield[2] mitigates Dark-ROP attack.</p>
+<p>However, SGX-Shield does not randomize the part of SGX SDK that handles transitions between host code and enclave code, which contains a number of <em>gadgets</em> to mount a ROP attack. This paper demonstrates that the interface code is enough to mount powerful run-time attacks and bypass SGX-Shield without requiring kernel privileges.</p>
+<h2 id="The-Guard’s-Dilemma"><a href="#The-Guard’s-Dilemma" class="headerlink" title="The Guard’s Dilemma"></a>The Guard’s Dilemma</h2><p>Controlling registers is essential in any code-reuse attack, which can prepare data for subsequent gadgets or set arguments for function calls. Thus, attackers always use specific register-setting gadgets, e.g. <em>pop gadgets</em>, to control registers. But, this paper allows attacker to use whole functions in tRTS as building blocks instead of small gadgets. Here lies the dilemma: the SDK is an important part in creating enclaves, but in this case it is actually exposing them to attacks.</p>
+<p>two new exploitation primitives:</p>
+<ul>
+<li><strong>The ORET primitive</strong> allows attacker to gain access to a critical set of CPU registers by exploiting a stack overflow vulnerability.</li>
+<li><strong>The CONT primitive</strong> allows attacker to gain access to all general-purpose registers, with the control of a register (on x86_64, rdi).</li>
+</ul>
+<h3 id="Overview-and-Attack-Workflow"><a href="#Overview-and-Attack-Workflow" class="headerlink" title="Overview and Attack Workflow"></a>Overview and Attack Workflow</h3><h4 id="Primitives"><a href="#Primitives" class="headerlink" title="Primitives"></a>Primitives</h4><ul>
+<li><p><strong>ORET primitive.</strong> asm_oret function is used to restore the CPU context after a OCALL. Once the attacker control the instruction pointer(hijacking control flow) and stack contents, e.g. stack overflow or format string, she can set a subset of CPU registers, e.g. rdi, rip.</p>
+</li>
+<li><p><strong>CONT primitive.</strong>  continue_execution function is meant to restore CPU context after an exception. The prerequisite is calling this function with a controlled rdi register, e.g. exploiting a memory corruption affecting a function pointer. The attacker can control over all general-purpose CPU registers.</p>
+</li>
+<li><p><strong>ORET+CONT loop.</strong> the basic idea behind the attack is to use CONT primitive repeatedly to invoke the various gadgets with correct register values.</p>
+</li>
+</ul>
+<p>Each iteration of this loop executes one gadget and is stuctured as follows:</p>
+<ol>
+<li>A CONT primitive manipulates the stack pointer to hijack it into attack-controlled memory and executes a gadget.</li>
+<li>Once the gadget completes, the previous stack manipulation cause the execution of an ORET primitive.</li>
+<li>The ORET primitive triggers the CONT primitive for next gadget, continuing the cycle from the first step.</li>
+</ol>
+<h4 id="Workflow"><a href="#Workflow" class="headerlink" title="Workflow"></a>Workflow</h4><ol>
+<li><p>Payload preparation<br>The attack performs static analysis on the enclave binary to determine the gadgets in the non-randomized part of binary, e.g. tRTS. Next, she construct a gadgets chain and defines the register states that should be set before executing each gadget, e.g. function argument register. According to Threat Model, attacker knows the memory address layout, including enclave binary offset. Also, she has to determine the offset of asm_oret and continue_execution(both in tRTS).</p>
+</li>
+<li><p>Fake structures preparation<br>The primitives work by abusing functions intended to restore CPU contexts by tricking them into restore fake contexts. Contrast to a standard ROP exploit, attacker requires a number of memory structures to hold the fake context and execution primitives.</p>
+</li>
+</ol>
+<ul>
+<li><p>Multiple fake exception information structures</p>
+</li>
+<li><p>Fake stack is a supporting structure for the ORET+CONT loop that serves two purpose. On the one hand, it is used to bring control back to an ORET primitive after a gadget executes. On the other one hand, it contains fake context for the transition from the ORET primitive to the CONT primitive to continue the loop.</p>
+</li>
+</ul>
+<ol start="3">
+<li>Attack execution<br>When the vulnerability satisfies the CONT preconditions (e.g., exploitation of an indirect function call), the attacker can execute the first CONT directly. When the vulnerability satisfies the ORET preconditions (e.g., stack overflow), the attacker can set the first function argument register and the instruction pointer.</li>
+</ol>
+<h3 id="Details"><a href="#Details" class="headerlink" title="Details"></a>Details</h3><h4 id="ORET-Primitives"><a href="#ORET-Primitives" class="headerlink" title="ORET Primitives"></a>ORET Primitives</h4><p>ORET primitive abuses the asm_oret function to restore CPU context from the OCALL frame saved on the stack. The prototype of this function is:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">sgx_status_t</span> <span class="title">asm_oret</span><span class="params">(<span class="keyword">uintptr_t</span> sp, <span class="keyword">void</span> *ms)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>the first argument (sp) points to the OCALL frame, which contains the partial CPU context to be restored, including saved values for rbp, rdi, rsi, and r12 to r15.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">ocall_context_t</span> &#123;</span></span><br><span class="line">  <span class="keyword">uintptr_t</span> r15;</span><br><span class="line">  <span class="keyword">uintptr_t</span> r14;</span><br><span class="line">  <span class="keyword">uintptr_t</span> r13;</span><br><span class="line">  <span class="keyword">uintptr_t</span> r12;</span><br><span class="line">  <span class="keyword">uintptr_t</span> xbp;  <span class="comment">//rbp</span></span><br><span class="line">  <span class="keyword">uintptr_t</span> xdi;  <span class="comment">//rdi</span></span><br><span class="line">  <span class="keyword">uintptr_t</span> xsi;  <span class="comment">//rsi</span></span><br><span class="line">  <span class="keyword">uintptr_t</span> xbx;  <span class="comment">//rbx</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">uintptr_t</span> ocall_ret</span><br><span class="line">&#125; <span class="keyword">ocall_context_t</span>;</span><br></pre></td></tr></table></figure>
+<p>Attacker able to control the OCALL frame can set all registers mentioned; moreover, the new instruction pointer (rip) can also be set.</p>
+<p>The values of rsp and rip after asm_oret depend on the SGX SDK version. For versions earlier than 2.0, the stack pointer is set to point to the ocall_ret field before issuing a ret instruction. Hence, the new instruction pointer will be the value of ocall_ret, and the new stack pointer will pointer to the memory location immediately following the OCALL frame.</p>
+<p>From the version 2.0, a more traditional epilogue is used: the base pointer(rbp) is moved into rsp, the rbp is popped from the stack, and finally a ret is issued. Therefore, rbp in the OCALL frame points to a memory area containing two 64-bit words: the new value for rbp, and the return address(new instruction pointer).</p>
+<p>The first operation done by asm_oret is shifting rsp to the sp argument, i.e., the top of OCALL frame. A attacker can jump to the code after the function prologue and let asm_oret believe that the OCALL frame is at the top of the current stack. It is always possible to abuse asm_oret to restore a fake OCALL frame at the top of the stack, without the need to control the first argument, by jumping to an appropriate instruction inside asm_oret.</p>
+<p>An attacker who has control over the stack contents can reuse asm_oret to set the registers. The application is vulnerable to a buffer overflow error on the stack. The attacker exploits this to overwrite the return address with the address of asm_oret, properly adjusted to account for skipped instructions. Moreover, she places a fake ocall_context_t immediately after the return address. Once function call returns, control is transferred to asm_oret with the fake OCALL frame at the top of stack.</p>
+<h4 id="CONT-Primitive"><a href="#CONT-Primitive" class="headerlink" title="CONT Primitive"></a>CONT Primitive</h4><p>The CONT primitive is based on exception handle function continue_execution, which used to restore CPU context from a exception information structure.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">continue_execution(<span class="keyword">sgx_exception_info_t</span> *info);</span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">sgx_exception_info_t</span> &#123;</span></span><br><span class="line">  <span class="keyword">sgx_cpu_context_t</span>       cpu_context;</span><br><span class="line">  <span class="keyword">sgx_exception_vector_t</span>  exception_vector;</span><br><span class="line">  <span class="keyword">sgx_exception_type_t</span>    exception_type;</span><br><span class="line">&#125;<span class="keyword">sgx_exception_info_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">cpu_context_t</span> &#123;</span></span><br><span class="line">  <span class="keyword">uint64_t</span>  rax;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rcx;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rdx;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rbx;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rsp;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rbp;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rsi;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rdi;</span><br><span class="line">  <span class="keyword">uint64_t</span>  r8;</span><br><span class="line">  <span class="comment">//...</span></span><br><span class="line">  <span class="keyword">uint64_t</span>  r15;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rflags;</span><br><span class="line">  <span class="keyword">uint64_t</span>  rip;</span><br><span class="line">&#125; <span class="keyword">cpu_context_t</span>;</span><br></pre></td></tr></table></figure>
+<p>Note that the stack pointer(rsp) and the instruction pointer(rip) are part of this context, attacker can control stack pointer and hijack it to attacker-controled memory(<em>fake stack</em>). This technique is known as <em>stack pivoting</em>.</p>
+<p>As a example, continue_execution can be reused by corrupting a function pointer and hijacking it to it, moreover the attacker needs to control rdi or the memory pointed to by rdi.</p>
+<h4 id="Fake-stack"><a href="#Fake-stack" class="headerlink" title="Fake stack"></a>Fake stack</h4><p>The fake stack is used to chain CONT to ORET, and it is composed of a sequences of frames, which consists of the address of asm_oret(properly adjusted) followed by an ocall_context_t structure. The CONT in the loop invokes a gadget with stack pointer set to the top of fake stack. The address of asm_oret will be at the top of the stack before gadget return. Therefore, the gadget will return to asm_oret, launching an ORET primitive and restore the fake context from frame. The fake context is set up so the rdi points to a fake exception structure and the instruction pointer is set to continue_execution.</p>
+<h4 id="Fake-exception-information"><a href="#Fake-exception-information" class="headerlink" title="Fake exception information"></a>Fake exception information</h4><p>For each gadget, the attack sets up a fake sgx_exception_info_t structure with desired register values and instruction pointer to the gadget’s address. The stack pointer is set to the top of fake stack.</p>
+<h2 id="Attacking-SGX-Shield"><a href="#Attacking-SGX-Shield" class="headerlink" title="Attacking SGX-Shield"></a>Attacking SGX-Shield</h2><h3 id="Overview-on-SGX-Shield"><a href="#Overview-on-SGX-Shield" class="headerlink" title="Overview on SGX-Shield"></a>Overview on SGX-Shield</h3><ul>
+<li>Fine-grained randomization</li>
+<li>Software DEP</li>
+<li>Software Fault Isolation</li>
+<li>Coarse-grained Control Flow Integrity</li>
+</ul>
+<p>Because SGX-Shield needs writable code pages during loading, the enclave code will stay writable for the whole enclave’s lifecycle.</p>
+<h3 id="Exploit"><a href="#Exploit" class="headerlink" title="Exploit"></a>Exploit</h3><p><strong>Assumption:</strong> a stack overflow vulnerability in the enclave.<br><strong>Observation:</strong> SGX-Shield enclaves feature writable code pages.<br><strong>Idea:</strong> the first stage, based on code reuse, injects the second-stage code, also known as <em>shellcode</em>.</p>
+<h3 id="First-stage"><a href="#First-stage" class="headerlink" title="First stage"></a>First stage</h3><ol>
+<li><p><strong>Payload preparation.</strong> The attacker starts by determining the offsets of asm_oret and continue_execution. Next, for the code-injection attack, the attackers needs a gadget (from do_rdrand function in tRTS) to write to memory.</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">mov</span> <span class="built_in">eax</span>, (<span class="built_in">rcx</span>)</span><br><span class="line"><span class="keyword">mov</span> <span class="number">1</span>  , <span class="built_in">eax</span></span><br><span class="line"><span class="keyword">ret</span></span><br></pre></td></tr></table></figure>
+<p>Our chain repeatedly invoke this gadget to write the shellcode 4 bytes a time. The address to place the shellcode at is taken from the writeable SGX-Shield code pages.</p>
+</li>
+<li><p><strong>Fake structures preparation.</strong> The attacker starts by creating a fake stack that contains the address of continue_execution repeated n-1 times, where n is the number of gadgets in the chain. A sgx_exception_info_t structure is set up for all registers, with rip is set up for the shellcode’s address and the other registers at the attacker’s discretion.</p>
+</li>
+<li><p><strong>Attack execution.</strong> The attacker triggers the stack overflow in the enclave. She overwrites a return address with the address of asm_oret, and place a fake ocall_context_t after the address. The ocall_ret set to the address of continue_execution and the rdi set to the fake sgx_exception_info_t as the argument. This will result in continue_execution being called on fake exception structure, which starts the chain. The fake exception structure set up the rip to gadget’s address, the rax and rcx to proper value to place attacker’s code in SGX-Shield code pages. The rsp will point at fake stack, which are all continue_execution.</p>
+</li>
+</ol>
+<h3 id="Second-stage"><a href="#Second-stage" class="headerlink" title="Second stage"></a>Second stage</h3><p>The Shell code has full control over the enclave. In this case, attacker extract cryptographic keys used during remote attestation process through the shellcode. Therefore, she can sent these keys to remote server.</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/code-reuse-attack/" rel="tag"># code-reuse attack</a>
+              <a href="/tags/SGX/" rel="tag"># SGX</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/01/19/OpenVPN-Setup-Tutorial/" rel="prev" title="OpenVPN Setup Tutorial">
+                  <i class="fa fa-chevron-left"></i> OpenVPN Setup Tutorial
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/03/23/Data-Oriented-Programming/" rel="next" title="Data-Oriented Programming">
+                  Data-Oriented Programming <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;yoursite.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Gemini&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="IntroductionControl-flow Integrity still allows the attacker control over the execution along two dimensions: the imprecision in the analysis and CFI’s statelessness; data-only attacks allow an attack">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Block-oriented programming">
+<meta property="og:url" content="http://yoursite.com/2019/04/01/Block-oriented-programming/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="IntroductionControl-flow Integrity still allows the attacker control over the execution along two dimensions: the imprecision in the analysis and CFI’s statelessness; data-only attacks allow an attack">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-04-01T02:47:46.000Z">
+<meta property="article:modified_time" content="2021-05-22T09:03:11.290Z">
+<meta property="article:author" content="Zhangtong">
+<meta property="article:tag" content="code-reuse attack">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://yoursite.com/2019/04/01/Block-oriented-programming/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;default&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;04&#x2F;01&#x2F;Block-oriented-programming&#x2F;&quot;,&quot;path&quot;:&quot;2019&#x2F;04&#x2F;01&#x2F;Block-oriented-programming&#x2F;&quot;,&quot;title&quot;:&quot;Block-oriented programming&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Block-oriented programming | Zhangtong's Notebook</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Zhangtong's Notebook</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Assumption-and-threat-model"><span class="nav-number">2.</span> <span class="nav-text">Assumption and threat model</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Design"><span class="nav-number">3.</span> <span class="nav-text">Design</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Expressing-Payloads"><span class="nav-number">3.1.</span> <span class="nav-text">Expressing Payloads</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Selecting-functional-blocks"><span class="nav-number">3.2.</span> <span class="nav-text">Selecting functional blocks</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Finding-BOP-gadgets"><span class="nav-number">3.3.</span> <span class="nav-text">Finding BOP gadgets</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Searching-for-dispatcher-blocks"><span class="nav-number">3.4.</span> <span class="nav-text">Searching for dispatcher blocks</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Stiching-BOP-gadgets"><span class="nav-number">3.5.</span> <span class="nav-text">Stiching BOP gadgets</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Implementation"><span class="nav-number">4.</span> <span class="nav-text">Implementation</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Binary-Frontend"><span class="nav-number">4.1.</span> <span class="nav-text">Binary Frontend</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SPL-Frontend"><span class="nav-number">4.2.</span> <span class="nav-text">SPL Frontend</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Locating-candidate-block-sets"><span class="nav-number">4.3.</span> <span class="nav-text">Locating candidate block sets</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Identifying-functional-block-sets"><span class="nav-number">4.4.</span> <span class="nav-text">Identifying functional block sets.</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Selecting-functional-blocks-1"><span class="nav-number">4.5.</span> <span class="nav-text">Selecting functional blocks</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Discovering-dispatcher-blocks"><span class="nav-number">4.6.</span> <span class="nav-text">Discovering dispatcher blocks</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Synthesizing-exploits"><span class="nav-number">4.7.</span> <span class="nav-text">Synthesizing exploits</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Discussion-and-future-work"><span class="nav-number">5.</span> <span class="nav-text">Discussion and future work</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/01/Block-oriented-programming/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Block-oriented programming
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-04-01 10:47:46" itemprop="dateCreated datePublished" datetime="2019-04-01T10:47:46+08:00">2019-04-01</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-05-22 17:03:11" itemprop="dateModified" datetime="2021-05-22T17:03:11+08:00">2021-05-22</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>Control-flow Integrity still allows the attacker control over the execution along two dimensions: the imprecision in the analysis and CFI’s statelessness; data-only attacks allow an attacker to influence conditional branches arbitrarily. With CFI, exploits become highly program dependent as the set of reachable gadgets is severely limited by CFI policy, so exploits must therefore follow valid paths in the CFG.</p>
+<p>We present BOPC (<em>Block Oriented Programming Compiler</em>), an automatic framework to evaluate a program’s remaining attack surface under strong control-flow hijacking mitigation. BOPC compiles an “exploit” into a program trace, which is executed on top of the orignal program’s CFG. To express the desired exploits flexibly, BOPC provides a Turing-complete, high-level language: SPloit language (SPL). BOPC takes as input an SPL payload and a starting point and returns a trace through the program that encodes the SPL payload.</p>
+<p>First, BOPC translates the SPL payload into constraints for individual statements and, for each statement, searches for basic blocks in the target binary that satisfy these constraints (called <em>candidate blocks</em>). At this point, SPL abstract register assignments from underlying architecture. Second, BOPC infers a resource (register and state) mapping for each SPL statement, iterating through the set of candidate blocks and turing them into <em>functional blocks</em> which can be used to execute a concrete instantiation of the given SPL statement. Third, BOPC constructs a trace that connect each functional block through <em>dispatcher  blocks</em>. Since the mapping process is NP-hard, to find a solution in reasonable time BOPC first prunes the set of functional blocks per statement to constrain the search space and then use a ranking based on the proximity of individual function blocks as a heuristic when searching for dispatcher gadgets.</p>
+<h2 id="Assumption-and-threat-model"><a href="#Assumption-and-threat-model" class="headerlink" title="Assumption and threat model"></a>Assumption and threat model</h2><p>Our threat model consists of a binary with a known memory corruption vulnerability that is protected with the state-of-art control-flow hijacking mitigation, such as CFI along with a <em>shadow stack</em>. Futhermore, the binary is also hardened with DEP, ASLR and Stack Canaries.</p>
+<p>We assume that the target binary has an arbitrary memory write vulnerability. The attacker can write any value to any (writable) address which called an <em>Arbitrary memory Write Primitive</em> (AWP). To bypass probabilistic defenses such as ASLR, we assume that the attacker has access to an information leak, i.e., a vulnerability that allows her to read any value from any memory address which called <em>Arbitrary memory Read primitive</em> (ARP).</p>
+<p>We also assume that there exist an entry point, i.e., a location that the program reaches naturally after completion of all AWPs (and ARPs). Thus BOPC does not require code pointer corruption to reach the entry point. Determining an entry point is considered to be a part of the vulnerability discovery process.</p>
+<p>These assumption enable BOPC to inject a payload into a target binary’s address space, modifying its memory state to execute the payload. BOPC assumes that the AWP (and/or ARP) may be triggered multiple times to modify the memory state of the target binary. After the state modification completes, the SPL payload executes without using the AWP (and or ARP) further.</p>
+<h2 id="Design"><a href="#Design" class="headerlink" title="Design"></a>Design</h2><ol>
+<li>SPL payload</li>
+<li>Selecting functional blocks</li>
+<li>Searching for dispatcher blocks</li>
+<li>Stiching BOP gagdets</li>
+</ol>
+<p>First, BOPC providing an exploit programming language, called SPL, that enables analysts to define exploits independent of the target program or underlying architecture. Second, to automate SPL gadget discovery, BOPC finds basic blocks from the target program that implement individual SPL statements, called <em>functional blocks</em>. Third, to chain basic blocks together in a manner that adheres with CFI and shadow stacks, BOPC searches the target program for sequences of basic blocks that connect pairs of neighboring functional blocks, which we called <em>dispatcher blocks</em>. Fourth, BOPC simulates the BOP chain to produce a payload that implements that SPL payload from a chosen AWP.</p>
+<p>The BOPC design builds on two key ideas: <em>Block Oriented Programming</em> and <em>Block Constraint Summaries</em>. First, BOP constructs exploit programs called BOP chains from basic block sequences in the valid CFG of a target program. Each BOP gadget is one functional block that implements a statement in an SPL payload and zero or more dispatcher blocks that connect the functional block to the next BOP gadget in a manner that compiles with the CFG.</p>
+<p>Second, BOPC abstracts each basic block from individual instruction into <em>Block Constraint Summaries</em>, enabling blocks to be employed in a varity of different ways. That is, a single block may perform multiple functional and/or dispatching operations by utilizing different sets of register for different purposes. That is, a basic block that modifies a register in a manner that may fulfill an SPL statement may be used as a functional block, otherwise it may be considered to serve as a dispatcher block.</p>
+<p>BOPC leverages Block Constraint Summaries to apply blocks in multiple contexts. There are two cases: either the candidate dispatcher block’s summary constraints indicate that it will modify the register state set and/or the memory state by the functional blocks, called the <em>SPL state</em>, or it will not, enabling the computation to proceed with out disturbing the effects of the functional blocks.</p>
+<p>An important distinction between BOP and ROP is that the problem of computing BOP chains is NP-hard. Conventional ROP assumes that indirect control-flow may target any executable byte in memory while BOP must follow a legal path through the CFG for any chain of blocks, resulting in the need of automation.</p>
+<h3 id="Expressing-Payloads"><a href="#Expressing-Payloads" class="headerlink" title="Expressing Payloads"></a>Expressing Payloads</h3><p>BOPC provides a programming language, called SPloit language that allows analysts to express exploit payloads in a compact high-level language that independent of target program or processor architecture.</p>
+<p>The architecture independence of SPL has important advantages. First, the same payload can be executed under different ISAs or operating systems. Second, SPL uses a set of virtual registers, accessed through reserved volatile variables.</p>
+<p>The environment for SPL differs from that of conventional languages. Instead of running code directly on CPU, our compiler encodes the payload as a mapping of instructions to functional blocks. That is, the underlying runtime environment is the target binary and its program state, where payloads are executed as side effects of the underlying binary.</p>
+<h3 id="Selecting-functional-blocks"><a href="#Selecting-functional-blocks" class="headerlink" title="Selecting functional blocks"></a>Selecting functional blocks</h3><p>To generate a BOP chain for a SPL payload, BOPC must find a sequnce of blocks that implement each statement in the SPL payload, which called functional blocks.</p>
+<p>Conceptually, BOPC must compare each block to each SPL statement to detemine if the block can implement the statement. However, blocks are in terms of machine code and SPL statements are high-level program statements. BOPC computes <em>Block Constraint Summaries</em>, which define the possible impacts that the block would have on SPL state. Block Constraint Summaries provide flexibly in the matching blocks to SPL statements because there are multiple possible mappings of SPL statements and thier virtual registers to the block and its constraints on register and state.</p>
+<p>The constraint summaries of each basic block are obtained by isolating and symbolically executing it. The effect of executing a basic block creates a set of constraints, mapping input to the resultant output. Such constraints refer to registers, memory locations, jump types and external operatons(e.g., library calls).</p>
+<h3 id="Finding-BOP-gadgets"><a href="#Finding-BOP-gadgets" class="headerlink" title="Finding BOP gadgets"></a>Finding BOP gadgets</h3><p>The combinaton of a functional block and dispatcher blocks is called a <em>BOP gadgets</em>. However, dispatcher paths between two functional blocks may not exist either because there is no legal path in the CFG between them, or the control flow cannot reach the next block due to unsatisfiable runtime constraint.</p>
+<p>BOP gadgets are volatile: gadget feasibility changes based on the selection of prior gadgets for the target binary. The problem of selecting a suitable sequence of functional blocks, such as that a dispatcher path exists between every possible control flow tansfer in the SPL payload, is NP-hard.</p>
+<p>We propose several heuristics and optimizations to find solutions in reasonable amount of time. BOPC leverages basic block <em>proximity</em> as a metric to “rank” dispatcher paths and organizes this information into a special data structure called a <em>delta graph</em>.</p>
+<h3 id="Searching-for-dispatcher-blocks"><a href="#Searching-for-dispatcher-blocks" class="headerlink" title="Searching for dispatcher blocks"></a>Searching for dispatcher blocks</h3><p>While each functional block executes a statement, BOPC must chain multiple functional blocks together to execute the SPL payload. Functional blocks are connected through zero or more basic blocks that do not clobber the SPL state computed thus far.</p>
+<p>Finding such blocks is challenging, thus, we propose a graph data structure called <em>delta graph</em>, to represent the state of the search for dispatcher blocks. The delta graph stores, for each functional block, the shortest path to the next candidate blocks.</p>
+<p>The delta graph is a multi-partite, directed graph that has a set of functional block nodes for every payload statement. An edge between two functional blocks represents the <em>minimum</em> number of executed basic blocks to move from one functional block to the other, while avoiding clobbering blocks.</p>
+<p>Calculating the shortest path between two basics in a CFG faces a challenge: while the CFG statically allow multiple targets, at runtime they are context sensitive and only have an concrete target.</p>
+<p>Our context-sensitive shortest path algorithm is a recursive version of Dijkstra’s shortest path algorithm that avoids all clobbering blocks. Initially, each edge on the CFG has a cost of 1. When it encounters a basic block with a call instruction, it recursively calculates the shortest path starting from the calling function’s entry block (Be). if the destination block, Bd, is inside the callee, the shortest path is the concatenation of the two individual shortest paths from the beginning to Be and from Be to Bd. Otherwise, our algorithm finds the shortest path from the Be to the closest return point and uses this value as an edge weight for that callee.</p>
+<p>After creation of delta graph, out algorithm selects exactly one node (i.e, functional block) from each set (i.e payload statement) to minimize the total weight of the resulting induced subgraph.</p>
+<h3 id="Stiching-BOP-gadgets"><a href="#Stiching-BOP-gadgets" class="headerlink" title="Stiching BOP gadgets"></a>Stiching BOP gadgets</h3><p>To find a dispatcher between two functional blocks, BOPC leverages <em>concolic execution</em>, which collects the required constraints that are needed to lead the execution to the next functional block.</p>
+<p>To construct an SPL payload from a BOP chain, BOPC launches concolic execution from the first functional block in the BOP chain, starting with an empty state. At each step BOPC tries the first K shortest dispather path until it finds one that reaches the next functional block. The corresponding constraints are added to the current state. The search therefore incrementally adds BOP gadgets to the BOP chain.</p>
+<h2 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h2><p>BOPC requires three distinct inputs:</p>
+<ul>
+<li>The exploit payload expressed in SPL,</li>
+<li>The vulnerable application on top of which the payload runs,</li>
+<li>The entry point in the vulnerable application, which is a location that the program reaches naturally and occurs after all AWPs have been completed.</li>
+</ul>
+<p>The output of BOPC is a sequence of (<em>address</em>, <em>value</em>, <em>size</em>) tuples that describes how the memory should be modified during the state modification phase to execute the payload.</p>
+<h3 id="Binary-Frontend"><a href="#Binary-Frontend" class="headerlink" title="Binary Frontend"></a>Binary Frontend</h3><p>Using angr to lift the target binary into the VEX intermediate representation to expose the application’s CFG. Then, we translate each basic block into a block constraint summary. BOPC executes each basic block in an isolated environment, where every action (e.g., register and memory accesses) is monitored. Therefore, instead of working with the instructions of each basic block, BOPC utilizes its abstraction for all operations.(<strong>CFGa</strong>)</p>
+<h3 id="SPL-Frontend"><a href="#SPL-Frontend" class="headerlink" title="SPL Frontend"></a>SPL Frontend</h3><p>The SPL Frontend translates the exploit payload into a graph-based <strong>IR</strong> for further processing. For each statement sequence we build a <em>dependence graph</em> based on a customized version of Kahn’s topological sorting algorithm, to infer all groups of independent statements, Which can be executed out-of-order.</p>
+<h3 id="Locating-candidate-block-sets"><a href="#Locating-candidate-block-sets" class="headerlink" title="Locating candidate block sets"></a>Locating candidate block sets</h3><p>SPL is a high level language that hides the underlying ABI. Therefore, BOPC finds all possible ways to map individual elements from the SPL environment to the ABI (though candidate blocks).</p>
+<p>Once CFGa and IR are generated, BOPC searches for and marks candidate basic blocks. For a block to be a candidate, it must “semantic match” with one (or more) payload statement. Note that variable assignments, unconditional jumps, and returns do not require a basic block and therefore are excluded from the search.</p>
+<p>All statement that assign or modify registers require the basic block to apply the same operation on the same. For function calls, the requirement for the basic block is to invoke the same call, either as a system call or as a library call.</p>
+<p>Upon a successful matching, BPC builds the following data stuctures:</p>
+<ul>
+<li><p>The Register Mapping Graph, which is a bipartite undirected graph. The nodes in the two sets represent the virtual and hardware registers respectively. The edges represent potential associations between them.</p>
+</li>
+<li><p>The Variable Mapping Graph, which associates payload variables to underlying memory addresses.</p>
+</li>
+<li><p>The Memory Dereference Set, which has all memory addresses that are dereferenced and their values are loaded into registers.</p>
+</li>
+</ul>
+<h3 id="Identifying-functional-block-sets"><a href="#Identifying-functional-block-sets" class="headerlink" title="Identifying functional block sets."></a>Identifying functional block sets.</h3><p>BOPC iteratively identifies, for each SPL statement, which candidate blocks can serve as functional blocks. This step determines for each candidate block if there is a resource mapping that satisfies the block constraints.</p>
+<p>BOPC identifiers the concrete set of hardware registers and memory addresses that execute the desired statement.</p>
+<p>This step determines, for each statement, which concrete registers and memory addresses are reserved. Merging this information with the set of candidate blocks constructs each block’s SPL state, enabling the removal of candidate blocks that are unsatisfiable.</p>
+<h3 id="Selecting-functional-blocks-1"><a href="#Selecting-functional-blocks-1" class="headerlink" title="Selecting functional blocks"></a>Selecting functional blocks</h3><p>Given the functional block set Fb, this step searches for a subset that executes all payload statements. The goal is to select exactly one functional block for every IR statement and find dispather blocks to chain them together.</p>
+<p>Once the delta graph is generated, this step locates the minimum induced subgraph, that contains the complete set of functional blocks to execute the SPL payload. If the subgraph does not result in a solution, the algorithm tries the next minimum induced subgraph, until a solution is found or a limit is reached.</p>
+<p>If the resulting deleta graph does not lead to a solution, this step “shuffle” out-of-order payload statement and build a new delta graph.</p>
+<h3 id="Discovering-dispatcher-blocks"><a href="#Discovering-dispatcher-blocks" class="headerlink" title="Discovering dispatcher blocks"></a>Discovering dispatcher blocks</h3><p>The simulation phase takes the individual functional blocks and tried to find appropriate dispatcher blocks to compose the BOP gadgets. It returns a set of memory assignments for the corresponding dispatcher blocks.</p>
+<p>BOPC is called to find a dispatcher path for every edge in the minimum induced subgraph. That is, we need to simulate every control flow transfer in the adjacency matrix of SPL payload. However, dispatchers are built on the binary’s execution state so far, so BOP gadgets must be stiched with the respect to the program’s current flow originating from the entry point.</p>
+<p>Finding dispatcher blocks relies on concolic execution. Our algorithm utilizes functional block proximity as a metric for dispatcher path quality. However, it cannot predict which constrains will take exponential time to solve. Therefore, concolic execution selects the K shortest dispatcher paths relative to current BOP chain, and tries them in order until one produces a set of satisfiable constraints.</p>
+<p>When simulation starts it also initializes any SPL variables at locations that are reserved during the variable mapping. These addresses are marked as immutable, so any unintended modification raises an exception.</p>
+<p>Simulation traverse the minimum induced subgraph, and incrementally extends the SPL state from one BOP gadget to the next, ensuring that newly added constraints remain satisfiable. When encounting a conditional statement, BOPC clones the current state and continues building the trace for both paths independently.</p>
+<h3 id="Synthesizing-exploits"><a href="#Synthesizing-exploits" class="headerlink" title="Synthesizing exploits"></a>Synthesizing exploits</h3><p>If the simulation module returns a solution, the final step is to encode the execution trace as a set of memory writes in the target binary.</p>
+<h2 id="Discussion-and-future-work"><a href="#Discussion-and-future-work" class="headerlink" title="Discussion and future work"></a>Discussion and future work</h2><p>BOPC is limited by the granularity of basic blocks. That is, a combination of basic blocks could potentially lead to execution of a desired SPL statement, while individual blocks might not.</p>
+<p>BOPC sets several upper bounds defined by user inputs. These configurable bounds include the upper limit of (i) SPL payload permutations P, (2) length of continuous block L, (3) of minimum induced subgraphs extracted from the delta graph N, (4) dispatcher paths between a pair of functional blocks K. These upper bounds along with the timeout for symbolic execution, reduce the search space, but prune some potentially valid solutions.</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/code-reuse-attack/" rel="tag"># code-reuse attack</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/03/23/Data-Oriented-Programming/" rel="prev" title="Data-Oriented Programming">
+                  <i class="fa fa-chevron-left"></i> Data-Oriented Programming
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/04/05/Securing-software-by-enforcing-data-flow-integrity/" rel="next" title="Securing software by enforcing data-flow integrity">
+                  Securing software by enforcing data-flow integrity <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

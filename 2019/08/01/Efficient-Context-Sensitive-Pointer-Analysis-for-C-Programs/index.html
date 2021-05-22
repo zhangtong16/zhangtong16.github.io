@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;yoursite.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Gemini&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="IntroductionPoint analysis promises significant benefits for optimizing and parallelizing compilers. However, the analysis must be efficient without sacrificing the accuracy of results. Moreover, the">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Efficient Context-Sensitive Pointer Analysis for C Programs">
+<meta property="og:url" content="http://yoursite.com/2019/08/01/Efficient-Context-Sensitive-Pointer-Analysis-for-C-Programs/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="IntroductionPoint analysis promises significant benefits for optimizing and parallelizing compilers. However, the analysis must be efficient without sacrificing the accuracy of results. Moreover, the">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-08-01T07:27:44.000Z">
+<meta property="article:modified_time" content="2021-05-22T09:03:11.290Z">
+<meta property="article:author" content="Zhangtong">
+<meta property="article:tag" content="points-to analysis">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://yoursite.com/2019/08/01/Efficient-Context-Sensitive-Pointer-Analysis-for-C-Programs/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;default&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;08&#x2F;01&#x2F;Efficient-Context-Sensitive-Pointer-Analysis-for-C-Programs&#x2F;&quot;,&quot;path&quot;:&quot;2019&#x2F;08&#x2F;01&#x2F;Efficient-Context-Sensitive-Pointer-Analysis-for-C-Programs&#x2F;&quot;,&quot;title&quot;:&quot;Efficient Context-Sensitive Pointer Analysis for C Programs&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Efficient Context-Sensitive Pointer Analysis for C Programs | Zhangtong's Notebook</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Zhangtong's Notebook</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Major-Concepts"><span class="nav-number">2.</span> <span class="nav-text">Major Concepts</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Partial-Transfer-Functions"><span class="nav-number">2.1.</span> <span class="nav-text">Partial Transfer Functions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Design-of-PTFs"><span class="nav-number">2.2.</span> <span class="nav-text">Design of PTFs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Algorithm-Outline"><span class="nav-number">2.3.</span> <span class="nav-text">Algorithm Outline</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pointer-Representations"><span class="nav-number">3.</span> <span class="nav-text">Pointer Representations</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Location-Sets"><span class="nav-number">3.1.</span> <span class="nav-text">Location Sets</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Extended-Parameters"><span class="nav-number">3.2.</span> <span class="nav-text">Extended Parameters</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Points-to-Functions"><span class="nav-number">3.3.</span> <span class="nav-text">Points-to Functions</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Analyzing-a-Procedure"><span class="nav-number">4.</span> <span class="nav-text">Analyzing a Procedure</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Strong-Updates"><span class="nav-number">4.1.</span> <span class="nav-text">Strong Updates</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Sparse-Representation"><span class="nav-number">4.2.</span> <span class="nav-text">Sparse Representation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Evaluating-Dereferences"><span class="nav-number">4.3.</span> <span class="nav-text">Evaluating Dereferences</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Evaluating-Assignments"><span class="nav-number">4.4.</span> <span class="nav-text">Evaluating Assignments</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Interprocedural-Algorithm"><span class="nav-number">5.</span> <span class="nav-text">Interprocedural Algorithm</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Calls-Through-Pointers"><span class="nav-number">5.1.</span> <span class="nav-text">Calls Through Pointers</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Testing-if-a-PTF-Applies"><span class="nav-number">5.2.</span> <span class="nav-text">Testing if a PTF Applies</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Applying-a-PTF"><span class="nav-number">5.3.</span> <span class="nav-text">Applying a PTF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Recursive-Calls"><span class="nav-number">5.4.</span> <span class="nav-text">Recursive Calls</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/01/Efficient-Context-Sensitive-Pointer-Analysis-for-C-Programs/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Efficient Context-Sensitive Pointer Analysis for C Programs
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-08-01 15:27:44" itemprop="dateCreated datePublished" datetime="2019-08-01T15:27:44+08:00">2019-08-01</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-05-22 17:03:11" itemprop="dateModified" datetime="2021-05-22T17:03:11+08:00">2021-05-22</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>Point analysis promises significant benefits for optimizing and parallelizing compilers. However, the analysis must be efficient without sacrificing the accuracy of results. Moreover, the pointer analysis must handle real C programs.</p>
+<p>Our approach is based on the insight that procedures are typically called with the same aliases among their inputs. Our idea is to generate <em>incomplete</em> transfer functions that only cover the input conditions that exists in the program. These incomplete transfer functions are made up of simple <em>partial</em> transfer functions (PTFs) that are only applicable to calling contexts that exhibit certain alias relationships.</p>
+<h2 id="Major-Concepts"><a href="#Major-Concepts" class="headerlink" title="Major Concepts"></a>Major Concepts</h2><h3 id="Partial-Transfer-Functions"><a href="#Partial-Transfer-Functions" class="headerlink" title="Partial Transfer Functions"></a>Partial Transfer Functions</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">f</span> <span class="params">(<span class="keyword">int</span> *p, <span class="keyword">int</span> *q, <span class="keyword">int</span> *r)</span> </span>&#123;</span><br><span class="line">    *p = *q;</span><br><span class="line">    *q = *r;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> x, y, z;</span><br><span class="line"><span class="keyword">int</span> *x0, *y0, *z0;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    x0 = &amp;x;</span><br><span class="line">    y0 = &amp;y;</span><br><span class="line">    z0 = &amp;z;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (test1)</span><br><span class="line">        f(&amp;x0, &amp;y0, &amp;z0);</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (test2)</span><br><span class="line">        f(&amp;z0, &amp;x0, &amp;y0);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        f(&amp;x0, &amp;y0, &amp;x0)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>The example function <code>int f(int *, int *, int *)</code> illustrates two points. First, the alias among the inputs to a procedure determine its behavior. Second, even for this simple two-statement procedure the complete summary is fairly complex;</p>
+<p>The main idea behind our algorithm is that we need not summarize a procedure for all possible aliases among its inputs. Instead, we only to find <strong>summaries that apply to the specific alias patterns that occur in the program</strong>.</p>
+<h3 id="Design-of-PTFs"><a href="#Design-of-PTFs" class="headerlink" title="Design of PTFs"></a>Design of PTFs</h3><p>There is a tradeoff between the complexity of the individual PTFs and their applicability. Whenever the analysis encounters another call to the procedure with the same input values, it can reuse the final values recorded in the PTF, which known as <em>memorization</em>.</p>
+<p>Since it is not the specific input values but their alias patterns that determine the behavior of a procedure, we use symbolic names called <em>extended parameters</em> to abstract the input values. An extended parameter represents the locations reached through an input pointer at the beginning of a procedure.</p>
+<p>Extended parameters’ three important roles:</p>
+<ol>
+<li><p>Extended parameters make up part of the name space of a procedure.</p>
+</li>
+<li><p>The initial points-to function for a PTF specifies the input domain.</p>
+</li>
+<li><p>The final points-to function at the procedure exit summarizes the pointer assignments.</p>
+</li>
+</ol>
+<p>Besides the alias, the input domain of a PTF is also defined by the value of function pointers passed in and used in calls within the procedure. Because they determine what code could be executed.</p>
+<h3 id="Algorithm-Outline"><a href="#Algorithm-Outline" class="headerlink" title="Algorithm Outline"></a>Algorithm Outline</h3><p>When we begin analyzing a procedure, the initial points-to function is empty and the parameter mapping only records the actual values for the formal parameters. When we need to know the initial value of an input pointer and it is not already recorded, we add an entry to the initial points-to function. To check for aliases, we need to look up the initial values in the calling context. The process continues recursively up the call graph until the pointer values are known.</p>
+<p>When the iterative analysis encounters a procedure call, it needs to find the effects of the call on the points-to function. if the call is through a pointer passed as an input to one or more of the PTFs on the call stack, we add the potential values of that pointer to the specifications of the input domains for those PTFs. For each potential callee procedure, we first check if any of its PTFs apply. This involves building up a parameter mapping and comparing the input alias to those recorded for the PTF.</p>
+<h2 id="Pointer-Representations"><a href="#Pointer-Representations" class="headerlink" title="Pointer Representations"></a>Pointer Representations</h2><p>Instead of using types to identify locations that may contain pointers, we assume that any memory location could potentially hold a pointer. we also refer to locations within a block of memory by their positions, not by their field names. We define a new abstraction, the <em>location set</em>, to specify both a block of memory and a set of positions within that block.</p>
+<p>We divide memory into blocks of contiguous storage, whose positions relative to one another are undefined. A block of memory may be one of three kinds: a local variable, a locally allocated heap block, or an extended parameter (global variables).</p>
+<p>We distinguish heap blocks based on their allocation context, grouping together all the blocks allocated in each context. The minimal context information is simply the statement that creates the block.</p>
+<h3 id="Location-Sets"><a href="#Location-Sets" class="headerlink" title="Location Sets"></a>Location Sets</h3><p>Our goal with regard to aggregates is to distinguish between different fields within a structure but not the different element of an array. Our pointer analysis can be combined with data dependence tests to distinguish between different array elements.</p>
+<p>A location set is a triple (<em>b</em>, <em>f</em>, <em>s</em>) where the base <em>b</em> is the name for a block of memory, <em>f</em> is an offset within that block, and <em>s</em> is the stride. That i, it represents the set of locations {<em>f</em> + <em>is</em> | <em>i</em> ∈ Ƶ} within block <em>b</em>.</p>
+<table>
+<thead>
+<tr>
+<th>Expression</th>
+<th>Location Set</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>scalar</td>
+<td>(scalar, 0, 0)</td>
+</tr>
+<tr>
+<td>struct.F</td>
+<td>(struct, f, 0)</td>
+</tr>
+<tr>
+<td>array</td>
+<td>(array, 0, 0)</td>
+</tr>
+<tr>
+<td>array[i]</td>
+<td>(array, 0, s)</td>
+</tr>
+<tr>
+<td>array[i].F</td>
+<td>(array, f, s)</td>
+</tr>
+<tr>
+<td>struct.F[i]</td>
+<td>(struct, f % s, s)</td>
+</tr>
+<tr>
+<td>*(&amp;p + X)</td>
+<td>(p, 0, 1)</td>
+</tr>
+</tbody></table>
+<h3 id="Extended-Parameters"><a href="#Extended-Parameters" class="headerlink" title="Extended Parameters"></a>Extended Parameters</h3><p>Every object is represented by at most one extended parameter. When adding an entry to the initial points-to function we first find the values of the pointer in the calling context. If the parameter mapping shows that an existing parameter already includes the same values, we reuse the old parameter instead of creating new one.</p>
+<p>For simplicity and efficiency, each initial points-to entry points to a single extended parameter. In cases where the initial values are aliased with more than one parameter, we create a new extended parameter that subsumes all the aliased parameters, and we replace all references to the subsumed parameters. Likewise, when the initial values are aliased with an existing parameter but also include new values, we subsume the aliased parameter with new one.</p>
+<p>Aliases involving fields of structures can be a bit more complicated. When updating the initial points-to function, if we find a pointer to a field of an existing parameter, we can easily record that fact. However, if we encounter a pointer to a field before a pointer to the enclosing structure, we will create an extended parameter to represent the field. We simply allow the location set offsets to be negative.</p>
+<h3 id="Points-to-Functions"><a href="#Points-to-Functions" class="headerlink" title="Points-to Functions"></a>Points-to Functions</h3><p>A points-to function is a mapping from location sets to sets of location sets. It is important for the analysis to know which locations may contain pointers. Since we do not use the high-level type, and since the points-to function only contain entries for pointers that have been referenced, we record separately for each block of memory the location sets that may hold pointers.</p>
+<p>Within the pointer analysis itself, that information can enable <em>strong updates</em>, where assignments overwrite the previous contents of their destinations. We only need that information at the point where a pointer is dereferenced.</p>
+<h2 id="Analyzing-a-Procedure"><a href="#Analyzing-a-Procedure" class="headerlink" title="Analyzing a Procedure"></a>Analyzing a Procedure</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">EvalProc</span><span class="params">(proc *pr, PTF *ptf)</span> </span>&#123;</span><br><span class="line">    <span class="comment">/* iteratively analyze a procedure */</span></span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        changed = <span class="literal">false</span>;</span><br><span class="line">        foreach cfgnode nd in pr.flowgraph &#123;</span><br><span class="line">            <span class="keyword">if</span> (no predecessors of nd evaluated)</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            <span class="keyword">if</span> (nd is meet) EvalMeet(nd, ptf);</span><br><span class="line">            <span class="keyword">if</span> (nd is assign) EvalAssign(nd, ptf);</span><br><span class="line">            <span class="keyword">if</span> (nd is call) EvalCall(nd, ptf);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">while</span> (changed)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Strong-Updates"><a href="#Strong-Updates" class="headerlink" title="Strong Updates"></a>Strong Updates</h3><p>Unless we know that an assignment will definitely occur and that it assigns to a unique location, we must conservatively assume that location potentially retains its old values.</p>
+<h3 id="Sparse-Representation"><a href="#Sparse-Representation" class="headerlink" title="Sparse Representation"></a>Sparse Representation</h3><p>Since we analyze heap data as well as global and stack variables, many possible memory locations could be included in the points-to functions. Fortunately, the information stored in the point-to function is very sparse.</p>
+<p>Because of the sparse point-to function representation, looking up the values of a pointer requires searching back for the most recent assignment to that location. Beginning at the current node, we search back through the dominating flow graph nodes.</p>
+<h3 id="Evaluating-Dereferences"><a href="#Evaluating-Dereferences" class="headerlink" title="Evaluating Dereferences"></a>Evaluating Dereferences</h3><p>Because location sets may overlap, more than one location set may refer to the same location. Value assigned to one location set must be observed by references to overlapping locations. Thus, when a pointer is dereferenced, we iterate through all of the overlapping locations and look up in the current points-to function the values that have been assigned to each one. However, if the location being referenced is a unique location, values assigned to overlapping locations may have been overwritten by a strong update.</p>
+<h3 id="Evaluating-Assignments"><a href="#Evaluating-Assignments" class="headerlink" title="Evaluating Assignments"></a>Evaluating Assignments</h3><p>An assignment node in a flow graph specifies both the source and destination expressions, as well as the size of the value to be assigned. When building the flow graph from the intermediate representation of a program, we automatically convert the assignments to a “points-to” form. That is, since a variable reference on the right-hand side if an assignment refers to the contents of that variable, we add extra dereference to each expression on the right-hand side.</p>
+<p>The process of evaluating an assignment begins by finding the locations identified by the source and destination expressions.</p>
+<h2 id="Interprocedural-Algorithm"><a href="#Interprocedural-Algorithm" class="headerlink" title="Interprocedural Algorithm"></a>Interprocedural Algorithm</h2><p>To evaluate the effects of a call on the points-to function, we need to find a PTF that applies in the calling context.</p>
+<h3 id="Calls-Through-Pointers"><a href="#Calls-Through-Pointers" class="headerlink" title="Calls Through Pointers"></a>Calls Through Pointers</h3><p>The first step in evaluating procedure calls is to determine the target procedures. Function pointer values may be expressed in terms of extended parameters. This is one situation where we need to know the specific values represented by extended parameters.</p>
+<h3 id="Testing-if-a-PTF-Applies"><a href="#Testing-if-a-PTF-Applies" class="headerlink" title="Testing if a PTF Applies"></a>Testing if a PTF Applies</h3><p>The input domain of a PTF is specified by its initial points-to function and by the value of the parameters used as call targets. To test if a PTF applies, we check if these things are the same in the current context as they were when the PTF was created.</p>
+<h3 id="Applying-a-PTF"><a href="#Applying-a-PTF" class="headerlink" title="Applying a PTF"></a>Applying a PTF</h3><h3 id="Recursive-Calls"><a href="#Recursive-Calls" class="headerlink" title="Recursive Calls"></a>Recursive Calls</h3>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/points-to-analysis/" rel="tag"># points-to analysis</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/06/05/Intel-Processor-Trace/" rel="prev" title="Intel Processor Trace">
+                  <i class="fa fa-chevron-left"></i> Intel Processor Trace
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/12/07/How-to-Read-a-Paper/" rel="next" title="How to Read a Paper">
+                  How to Read a Paper <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

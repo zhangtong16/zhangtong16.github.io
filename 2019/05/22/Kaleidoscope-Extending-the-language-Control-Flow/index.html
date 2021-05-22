@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;yoursite.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Gemini&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="Chapter 5 Introduction这是该教程的第五章, 前四章讲了 Kaleidoscope 的实现, 并且包括对 JIT 的支持. 在这章我们要给它添加简单的条件分支和循环指令. If&#x2F;Then&#x2F;Else给 Kaleidoscope 添加 if&#x2F;then&#x2F;else 支持非常直接: 将条件分支的处理分别加入 lexer, AST, parser, 和 LLVM IR 代码生成. 首先我们">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kaleidoscope: Extending the Language: Control Flow">
+<meta property="og:url" content="http://yoursite.com/2019/05/22/Kaleidoscope-Extending-the-language-Control-Flow/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="Chapter 5 Introduction这是该教程的第五章, 前四章讲了 Kaleidoscope 的实现, 并且包括对 JIT 的支持. 在这章我们要给它添加简单的条件分支和循环指令. If&#x2F;Then&#x2F;Else给 Kaleidoscope 添加 if&#x2F;then&#x2F;else 支持非常直接: 将条件分支的处理分别加入 lexer, AST, parser, 和 LLVM IR 代码生成. 首先我们">
+<meta property="og:locale">
+<meta property="og:image" content="http://yoursite.com/2019/05/22/Kaleidoscope-Extending-the-language-Control-Flow/5.1.png">
+<meta property="article:published_time" content="2019-05-22T03:12:33.000Z">
+<meta property="article:modified_time" content="2021-05-22T09:03:11.290Z">
+<meta property="article:author" content="Zhangtong">
+<meta property="article:tag" content="llvm">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/2019/05/22/Kaleidoscope-Extending-the-language-Control-Flow/5.1.png">
+
+
+<link rel="canonical" href="http://yoursite.com/2019/05/22/Kaleidoscope-Extending-the-language-Control-Flow/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;default&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;05&#x2F;22&#x2F;Kaleidoscope-Extending-the-language-Control-Flow&#x2F;&quot;,&quot;path&quot;:&quot;2019&#x2F;05&#x2F;22&#x2F;Kaleidoscope-Extending-the-language-Control-Flow&#x2F;&quot;,&quot;title&quot;:&quot;Kaleidoscope: Extending the Language: Control Flow&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Kaleidoscope: Extending the Language: Control Flow | Zhangtong's Notebook</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Zhangtong's Notebook</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Chapter-5-Introduction"><span class="nav-number">1.</span> <span class="nav-text">Chapter 5 Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#If-Then-Else"><span class="nav-number">2.</span> <span class="nav-text">If&#x2F;Then&#x2F;Else</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Lexer-Extension-for-If-Then-Else"><span class="nav-number">2.1.</span> <span class="nav-text">Lexer Extension for If&#x2F;Then&#x2F;Else</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AST-Extensions-for-If-Then-Else"><span class="nav-number">2.2.</span> <span class="nav-text">AST Extensions for If&#x2F;Then&#x2F;Else</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Parser-Extension-for-If-Then-Else"><span class="nav-number">2.3.</span> <span class="nav-text">Parser Extension for If&#x2F;Then&#x2F;Else</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LLVM-IR-for-If-Then-Else"><span class="nav-number">2.4.</span> <span class="nav-text">LLVM IR for If&#x2F;Then&#x2F;Else</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Code-Generation-for-If-Then-Else"><span class="nav-number">2.5.</span> <span class="nav-text">Code Generation for If&#x2F;Then&#x2F;Else</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#for-loop-expression"><span class="nav-number">3.</span> <span class="nav-text">for loop expression</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Lexer-Extension-for-the-for-Loop"><span class="nav-number">3.1.</span> <span class="nav-text">Lexer Extension for the for Loop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AST-Extension-for-the-for-Loop"><span class="nav-number">3.2.</span> <span class="nav-text">AST Extension for the for Loop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Parser-Extension-for-the-for-loop"><span class="nav-number">3.3.</span> <span class="nav-text">Parser Extension for the for loop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LLVM-IR-for-the-for-loop"><span class="nav-number">3.4.</span> <span class="nav-text">LLVM IR for the for loop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Code-Generation-for-the-for-Loop"><span class="nav-number">3.5.</span> <span class="nav-text">Code Generation for the for Loop</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/22/Kaleidoscope-Extending-the-language-Control-Flow/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kaleidoscope: Extending the Language: Control Flow
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-05-22 11:12:33" itemprop="dateCreated datePublished" datetime="2019-05-22T11:12:33+08:00">2019-05-22</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-05-22 17:03:11" itemprop="dateModified" datetime="2021-05-22T17:03:11+08:00">2021-05-22</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/note/" itemprop="url" rel="index"><span itemprop="name">note</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="Chapter-5-Introduction"><a href="#Chapter-5-Introduction" class="headerlink" title="Chapter 5 Introduction"></a>Chapter 5 Introduction</h2><p>这是该教程的第五章, 前四章讲了 Kaleidoscope 的实现, 并且包括对 JIT 的支持. 在这章我们要给它添加简单的条件分支和循环指令.</p>
+<h2 id="If-Then-Else"><a href="#If-Then-Else" class="headerlink" title="If/Then/Else"></a>If/Then/Else</h2><p>给 Kaleidoscope 添加 if/then/else 支持非常直接: 将条件分支的处理分别加入 lexer, AST, parser, 和 LLVM IR 代码生成.</p>
+<p>首先我们看一下, 要给它加入什么样的扩展功能 (what):</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">fib</span>(<span class="params">x</span>) <span class="title">if</span> <span class="title">x</span> &lt; 3 <span class="title">then</span> 1 <span class="title">else</span> <span class="title">fib</span>(<span class="params">x - <span class="number">1</span></span>) + <span class="title">fib</span>(<span class="params">x - <span class="number">2</span></span>);</span></span><br></pre></td></tr></table></figure>
+
+<p>在 Kaleidoscope 中, 只有表达式 (expression), 没有语句(statement). 所以 if/then/else 表达式需要被计算出一个值, 根据条件表达式的值不同, 最终的结果可能为 then 表达式值, 也可能为 else 表达式值.</p>
+<p>条件表达式中, 如果值为 0.0, 则表示 false, 其它都为 true</p>
+<h3 id="Lexer-Extension-for-If-Then-Else"><a href="#Lexer-Extension-for-If-Then-Else" class="headerlink" title="Lexer Extension for If/Then/Else"></a>Lexer Extension for If/Then/Else</h3><p>我们先添加关键字:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">    <span class="comment">// control flow</span></span><br><span class="line">    tok_if = <span class="number">-6</span>,</span><br><span class="line">    tok_then = <span class="number">-7</span>,</span><br><span class="line">    tok_else = <span class="number">-8</span>,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>然后在 <code>gettok()</code> 中进行识别:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (IdentifierStr == <span class="string">&quot;if&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> tok_if;</span><br><span class="line"><span class="keyword">if</span> (IdentifierStr == <span class="string">&quot;then&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> tok_then;</span><br><span class="line"><span class="keyword">if</span> (IdentifierStr == <span class="string">&quot;else&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> tok_else;</span><br></pre></td></tr></table></figure>
+
+<h3 id="AST-Extensions-for-If-Then-Else"><a href="#AST-Extensions-for-If-Then-Else" class="headerlink" title="AST Extensions for If/Then/Else"></a>AST Extensions for If/Then/Else</h3><p>然后再添加新的 AST 节点:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// IfExprAST - This class represents for if/then/else expression</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">IfExprAST</span> :</span> <span class="keyword">public</span> ExprAST &#123;</span><br><span class="line">    std::unique_ptr&lt;ExprAST&gt; Cond, Then, Else;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">IfExprAST</span>(std::unique_ptr&lt;ExprAST&gt; Cond, std::unique_ptr&lt;ExprAST&gt; Then, std::unique_ptr&lt;ExprAST&gt; Else) : <span class="built_in">Cond</span> (std::<span class="built_in">move</span>(Cond)), <span class="built_in">Then</span> (std::<span class="built_in">move</span>(Then)), <span class="built_in">Else</span> (std::<span class="built_in">move</span>(Else)) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">llvm::Value *<span class="title">codegen</span><span class="params">()</span> <span class="keyword">override</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Parser-Extension-for-If-Then-Else"><a href="#Parser-Extension-for-If-Then-Else" class="headerlink" title="Parser Extension for If/Then/Else"></a>Parser Extension for If/Then/Else</h3><p>新的 Parser 函数:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ifexpr ::= &#x27;if&#x27; expr &#x27;then&#x27; expr &#x27;else&#x27; expr;</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;ExprAST&gt; <span class="title">ParseIfExpr</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// eat &#x27;if&#x27;</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line">    <span class="comment">// condition</span></span><br><span class="line">    <span class="keyword">auto</span> Cond = <span class="built_in">ParseExpression</span>();</span><br><span class="line">    <span class="keyword">if</span> (!Cond) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (CurTok != tok_then) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">LogError</span>(<span class="string">&quot;Excepted then&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// eat &#x27;then&#x27;</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line">    <span class="keyword">auto</span> Then = <span class="built_in">ParseExpression</span>();</span><br><span class="line">    <span class="keyword">if</span> (!Then) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (CurTok != tok_else) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">LogError</span>(<span class="string">&quot;Expected else&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// eat &#x27;else&#x27;</span></span><br><span class="line">    <span class="built_in">getNextToken</span>();</span><br><span class="line">    <span class="keyword">auto</span> Else = <span class="built_in">ParseExpression</span>();</span><br><span class="line">    <span class="keyword">if</span> (!Else) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> std::make_unique&lt;IfExprAST&gt;(std::<span class="built_in">move</span>(Cond), std::<span class="built_in">move</span>(Then), std::<span class="built_in">move</span>(Else));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>将这个 <code>ParseIfExpr()</code> 添加到 <code>ParsePrimary()</code> 中:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in"><span class="keyword">switch</span></span> (CurTok)</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">case</span> tok_identifier:</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ParseIdentifierExpr</span>();</span><br><span class="line"><span class="keyword">case</span> tok_number:</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ParseNumberExpr</span>();</span><br><span class="line"><span class="keyword">case</span> <span class="string">&#x27;(&#x27;</span>:</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ParseParenExpr</span>();</span><br><span class="line"><span class="keyword">case</span> tok_if:</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ParseIfExpr</span>();</span><br><span class="line"><span class="keyword">default</span>:</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">LogError</span>(<span class="string">&quot;unknown token when expecting an expression&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="LLVM-IR-for-If-Then-Else"><a href="#LLVM-IR-for-If-Then-Else" class="headerlink" title="LLVM IR for If/Then/Else"></a>LLVM IR for If/Then/Else</h3><p>在有了 AST 和 Parser 之后, 我们就应该实现 <code>codegen()</code> 方法了, 我们要在这部分介绍新的内容.</p>
+<p>我们首先来看一段 LLVM IR:</p>
+<figure class="highlight llvm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">declare</span> <span class="keyword">double</span> <span class="title">@foo</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">declare</span> <span class="keyword">double</span> <span class="title">@bar</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">define</span> <span class="keyword">double</span> <span class="title">@baz</span>(<span class="keyword">double</span> <span class="variable">%x</span>) &#123;</span><br><span class="line"><span class="symbol">entry:</span></span><br><span class="line">  <span class="variable">%ifcond</span> <span class="operator">=</span> <span class="keyword">fcmp</span> <span class="keyword">one</span> <span class="keyword">double</span> <span class="variable">%x</span><span class="punctuation">,</span> <span class="number">0.000000e+00</span></span><br><span class="line">  <span class="keyword">br</span> <span class="type">i1</span> <span class="variable">%ifcond</span><span class="punctuation">,</span> label <span class="variable">%then</span><span class="punctuation">,</span> label <span class="variable">%else</span></span><br><span class="line"><span class="symbol"></span></span><br><span class="line"><span class="symbol">then:</span>       <span class="comment">; preds = %entry</span></span><br><span class="line">  <span class="variable">%calltmp</span> <span class="operator">=</span> <span class="keyword">call</span> <span class="keyword">double</span> <span class="title">@foo</span>()</span><br><span class="line">  <span class="keyword">br</span> label <span class="variable">%ifcont</span></span><br><span class="line"><span class="symbol"></span></span><br><span class="line"><span class="symbol">else:</span>       <span class="comment">; preds = %entry</span></span><br><span class="line">  <span class="variable">%calltmp1</span> <span class="operator">=</span> <span class="keyword">call</span> <span class="keyword">double</span> <span class="title">@bar</span>()</span><br><span class="line">  <span class="keyword">br</span> label <span class="variable">%ifcont</span></span><br><span class="line"><span class="symbol"></span></span><br><span class="line"><span class="symbol">ifcont:</span>     <span class="comment">; preds = %else, %then</span></span><br><span class="line">  <span class="variable">%iftmp</span> <span class="operator">=</span> <span class="keyword">phi</span> <span class="keyword">double</span> [ <span class="variable">%calltmp</span><span class="punctuation">,</span> <span class="variable">%then</span> ]<span class="punctuation">,</span> [ <span class="variable">%calltmp1</span><span class="punctuation">,</span> <span class="variable">%else</span> ]</span><br><span class="line">  <span class="keyword">ret</span> <span class="keyword">double</span> <span class="variable">%iftmp</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过使用 <code>llvm-as</code> 和 <code>opt</code> 工具, 我们可以画出这段代码 (t.ll) 的 CFG 图, 运行 <code>llvm-as-7 &lt; t.ll| opt-7 -analyze -view-cfg</code> 之后:</p>
+<img src="/2019/05/22/Kaleidoscope-Extending-the-language-Control-Flow/5.1.png" class="" title="CFG">
+
+<p>其它生成 CFG 图的方法还有在代码中调用或者在调试器中调用 <code>F-&gt;viewCFG()</code> 或者 <code>F-&gt;viewCFGOnly()</code>, 其中 <code>F</code>, 是一个 <code>Function*</code>.</p>
+<p>不管是 LLVM IR, 还是 CFG 图, 我们都可以发现这些信息: entry block 中将 <code>x</code> 的值和 <code>0</code> 进行 <code>one</code> 类型的 <code>fcmp</code> 比较. <code>one</code> 的意思是 Ordered and not equal, Ordered 的<a target="_blank" rel="noopener" href="https://stackoverflow.com/a/8627368/4684264">解释</a>. <code>fcmp</code> 表示是浮点数的比较. <code>br</code> 表示的是根据 <code>%ifcond</code> 的值跳转到 <code>label %then</code> 或者 <code>%label %else</code>.</p>
+<p><code>%then</code> 和 <code>%else</code> 两个 basic block 的指令都差不多, 调用其它函数, 然后跳转到 <code>%ifcont</code>. 所以, 在最后一个 basic block 中, 我们需要确定控制流是从哪个 block 来的, 从而确定整个 if/then/else 表达式的值.</p>
+<p>所以这就是 <code>phi</code> 指令的作用, 如果控制流是从 <code>%then</code> 过来, 那么它的值为 <code>%calltmp</code>; 如果控制流是从 <code>%else</code> 过来, 那么它的值为 <code>%calltmp1</code>.</p>
+<h3 id="Code-Generation-for-If-Then-Else"><a href="#Code-Generation-for-If-Then-Else" class="headerlink" title="Code Generation for If/Then/Else"></a>Code Generation for If/Then/Else</h3><p>为了给 If/Then/Else 生成代码, 我们就要实现 <code>Value *IfExprAST::codegen()</code>.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">llvm::Value *<span class="title">IfExprAST::codegen</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    llvm::Value * CondV = Cond-&gt;<span class="built_in">codegen</span>();</span><br><span class="line">    <span class="keyword">if</span> (!CondV) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// convert condition to a bool by comparing non-equal to 0.0</span></span><br><span class="line">    CondV = Builder.<span class="built_in">CreateFCmpONE</span>(CondV, llvm::ConstantFP::<span class="built_in">get</span>(TheContext, llvm::<span class="built_in">APFloat</span>(<span class="number">0.0</span>)), <span class="string">&quot;ifcond&quot;</span>);</span><br><span class="line"></span><br><span class="line">    llvm::Function *TheFunction = Builder.<span class="built_in">GetInsertBlock</span>()-&gt;<span class="built_in">getParent</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create blocks for the then and else </span></span><br><span class="line">    <span class="comment">// cases. Insert the &#x27;then&#x27; block at the </span></span><br><span class="line">    <span class="comment">// end of the function</span></span><br><span class="line">    llvm::BasicBlock *ThenBB = llvm::BasicBlock::<span class="built_in">Create</span>(TheContext, <span class="string">&quot;then&quot;</span>, TheFunction);</span><br><span class="line">    llvm::BasicBlock *ElseBB = llvm::BasicBlock::<span class="built_in">Create</span>(TheContext, <span class="string">&quot;else&quot;</span>);</span><br><span class="line">    llvm::BasicBlock *MergeBB = llvm::BasicBlock::<span class="built_in">Create</span>(TheContext, <span class="string">&quot;ifcont&quot;</span>);</span><br><span class="line">    Builder.<span class="built_in">CreateCondBr</span>(CondV, ThenBB, ElseBB);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Emit then Value</span></span><br><span class="line">    Builder.<span class="built_in">SetInsertPoint</span>(ThenBB);</span><br><span class="line">    llvm::Value *ThenV = Then-&gt;<span class="built_in">codegen</span>();</span><br><span class="line">    <span class="keyword">if</span> (!ThenV) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Builder.<span class="built_in">CreateBr</span>(MergeBB);</span><br><span class="line">    ThenBB = Builder.<span class="built_in">GetInsertBlock</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Emit the &#x27;else&#x27; block</span></span><br><span class="line">    TheFunction-&gt;<span class="built_in">getBasicBlockList</span>().<span class="built_in">push_back</span>(ElseBB);</span><br><span class="line">    Builder.<span class="built_in">SetInsertPoint</span>(ElseBB);</span><br><span class="line"></span><br><span class="line">    llvm::Value *ElseV = Else-&gt;<span class="built_in">codegen</span>();</span><br><span class="line">    <span class="keyword">if</span>(!ElseV) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Builder.<span class="built_in">CreateBr</span>(MergeBB);</span><br><span class="line">    ElseBB = Builder.<span class="built_in">GetInsertBlock</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Emit the &#x27;merge&#x27; block</span></span><br><span class="line">    TheFunction-&gt;<span class="built_in">getBasicBlockList</span>().<span class="built_in">push_back</span>(MergeBB);</span><br><span class="line">    Builder.<span class="built_in">SetInsertPoint</span>(MergeBB);</span><br><span class="line">    llvm::PHINode *PN = Builder.<span class="built_in">CreatePHI</span>(llvm::Type::<span class="built_in">getDoubleTy</span>(TheContext), <span class="number">2</span>, <span class="string">&quot;iftmp&quot;</span>);</span><br><span class="line"></span><br><span class="line">    PN-&gt;<span class="built_in">addIncoming</span>(ThenV, ThenBB);</span><br><span class="line">    PN-&gt;<span class="built_in">addIncoming</span>(ElseV, ElseBB);</span><br><span class="line">    <span class="keyword">return</span> PN;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先将 <code>CondV</code> 生成代码, 然后使用 <code>Builder-&gt;CreateFCmpONE()</code> 生成条件判断代码.</p>
+<p>然后通过 <code>Builder-&gt;GetInsertBlock()-&gt;getParent()</code> 获取整个函数的指针, 用来创建这个函数中其它的 BasicBlock, 也就是 then block, else block 和最后的 merge block. 注意这里的 else block 是直接插入到函数后端的. then block 和 merge block 还没有插入到函数中. 然后使用 <code>Builder.CreateCondBr()</code> 来创建跳转指令, 根据条件判断的值跳转到不同的 Basic Block.</p>
+<p>然后使用 <code>Builder.SetInsertPoint(ThenBB)</code> 将当前代码的插入点设置为 then block 的最后, 在后面进行类似于 append 的操作. 然后递归调用 Then 的 <code>codegen()</code> 生成代码, 生成完毕之后创建一个无条件跳转 <code>CreateBr</code>, 将控制流转移到 merge block. (LLVM 中, 所有的 basic block 必须使用控制流指令来终结, 即使是 fall-through 也需要一个无条件的跳转)</p>
+<p>最重要的是, 这里我们又需要一个 <code>ThenBB = Builder.getInsetBlock()</code>. 在我们设置 Phi node 时, 我们要创建 basic block 和 value 的 key/value 对, 所以Phi node 需要获取和它直接相邻的前面两个 block 的信息. 然而, 在对 Else block 和 Then block 进行代码生成时, 如果它们中嵌套了 if/then/else, 那么之前的 Then block 和 Else block 就不是和 Phi node 直接相连了. 所以我们要在代码生成完毕之后再获取一次当前的 basic block, 来获取直接与 Phi node 相连的前驱 block.</p>
+<p>然后是将 Else block 添加到函数中, 再调用 <code>Builder.SetInsetPoint()</code> 设置需要生成代码的位置, 递归生成代码, 创建跳转, 更新 Phi node 前驱 block.</p>
+<p>然后是 merge block, 前面也是一样的操作, 将 basic block 加入函数, 并设置代码插入点. 然后使用 <code>Builder.CreatePHI()</code> 创建一个 Phi node, 来处理分支的合并. 然后再加上进入分支的信息就可以.</p>
+<p>最后, 整个 If/Then/Else 表达式的值就是 Phi node 的值.</p>
+<h2 id="for-loop-expression"><a href="#for-loop-expression" class="headerlink" title="for loop expression"></a><code>for</code> loop expression</h2><p>我们想添加一个如下的 for loop:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="title">putchard</span><span class="params">(<span class="keyword">char</span>)</span></span>;</span><br><span class="line"><span class="function">def <span class="title">printstar</span><span class="params">(n)</span></span></span><br><span class="line"><span class="function">    <span class="keyword">for</span> i </span>= <span class="number">1</span>, i &lt; n, <span class="number">1.0</span> <span class="function">in</span></span><br><span class="line"><span class="function">        <span class="title">putchard</span><span class="params">(<span class="number">42</span>)</span></span>;       <span class="meta"># ascii 42 = <span class="meta-string">&#x27;*&#x27;</span></span></span><br><span class="line">printstar(<span class="number">100</span>);</span><br></pre></td></tr></table></figure>
+
+<p>这个表达式定义了一个新的变量 <code>i</code>, 从 <code>1</code> 开始迭代, 当条件 <code>i &lt; n</code> 成立时, 执行循环体中的 <code>putchard(42)</code>, 并将自身加 <code>1</code>. 目前我们将循环表达式的值设置为 0.</p>
+<h3 id="Lexer-Extension-for-the-for-Loop"><a href="#Lexer-Extension-for-the-for-Loop" class="headerlink" title="Lexer Extension for the for Loop"></a>Lexer Extension for the <code>for</code> Loop</h3><p>看代码</p>
+<h3 id="AST-Extension-for-the-for-Loop"><a href="#AST-Extension-for-the-for-Loop" class="headerlink" title="AST Extension for the for Loop"></a>AST Extension for the <code>for</code> Loop</h3><p>看代码</p>
+<h3 id="Parser-Extension-for-the-for-loop"><a href="#Parser-Extension-for-the-for-loop" class="headerlink" title="Parser Extension for the for loop"></a>Parser Extension for the <code>for</code> loop</h3><p>看代码</p>
+<h3 id="LLVM-IR-for-the-for-loop"><a href="#LLVM-IR-for-the-for-loop" class="headerlink" title="LLVM IR for the for loop"></a>LLVM IR for the <code>for</code> loop</h3><p>当我们生成代码时, 应该是如下所示的结构:</p>
+<figure class="highlight llvm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">declare</span> <span class="keyword">double</span> <span class="title">@putchard</span>(<span class="keyword">double</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">define</span> <span class="keyword">double</span> <span class="title">@printstar</span>(<span class="keyword">double</span> <span class="variable">%n</span>) &#123;</span><br><span class="line"><span class="symbol">entry:</span></span><br><span class="line">    <span class="comment">; initial value = 1.0 (inlined into phi)</span></span><br><span class="line">    <span class="keyword">br</span> label <span class="variable">%loop</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; preds = %loop, %entry</span></span><br><span class="line"><span class="symbol">loop:</span></span><br><span class="line">    <span class="variable">%i</span> <span class="operator">=</span> <span class="keyword">phi</span> <span class="keyword">double</span> [<span class="number">1.000000e+00</span><span class="punctuation">,</span> <span class="variable">%entry</span>]<span class="punctuation">,</span> [<span class="variable">%nextvar</span><span class="punctuation">,</span> <span class="variable">%loop</span>]</span><br><span class="line">    <span class="comment">; body</span></span><br><span class="line">    <span class="variable">%calltmp</span> <span class="operator">=</span> <span class="keyword">call</span> <span class="keyword">double</span> <span class="title">@putchard</span>(<span class="keyword">double</span> <span class="number">4.200000e+01</span>)</span><br><span class="line">    <span class="comment">; increment</span></span><br><span class="line">    <span class="variable">%nextvar</span> <span class="operator">=</span> <span class="keyword">fadd</span> <span class="keyword">double</span> <span class="variable">%i</span><span class="punctuation">,</span> <span class="number">1.000000e+00</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">; termination test</span></span><br><span class="line">    <span class="variable">%cmptmp</span> <span class="operator">=</span> <span class="keyword">fcmp</span> <span class="keyword">ult</span> <span class="keyword">double</span> <span class="variable">%i</span><span class="punctuation">,</span> <span class="variable">%n</span></span><br><span class="line">    <span class="variable">%booltmp</span> <span class="operator">=</span> <span class="keyword">uitofp</span> <span class="type">i1</span> <span class="variable">%cmptmp</span> <span class="keyword">to</span> <span class="keyword">double</span></span><br><span class="line">    <span class="variable">%loopcond</span> <span class="operator">=</span> <span class="keyword">fcmp</span> <span class="keyword">one</span> <span class="keyword">double</span> <span class="variable">%booltmp</span><span class="punctuation">,</span> <span class="number">0.000000e+00</span></span><br><span class="line">    <span class="keyword">br</span> <span class="type">i1</span> <span class="variable">%loopcond</span><span class="punctuation">,</span> label <span class="variable">%loop</span><span class="punctuation">,</span> label <span class="variable">%afterloop</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; preds = %loop</span></span><br><span class="line"><span class="symbol">afterloop:</span></span><br><span class="line">    <span class="comment">; loop always returns 0</span></span><br><span class="line">    <span class="keyword">ret</span> <span class="keyword">double</span> <span class="number">0.000000e+00</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Code-Generation-for-the-for-Loop"><a href="#Code-Generation-for-the-for-Loop" class="headerlink" title="Code Generation for the for Loop"></a>Code Generation for the <code>for</code> Loop</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">llvm::Value *<span class="title">ForExprAST::codegen</span> <span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Emit the start code first, without &#x27;variable&#x27; in scope</span></span><br><span class="line">    llvm::Value *StartVal = Start-&gt;<span class="built_in">codegen</span>();</span><br><span class="line">    <span class="keyword">if</span> (!StartVal) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Make the new basic block for the loop header, </span></span><br><span class="line">    <span class="comment">// inserting after current block</span></span><br><span class="line">    llvm::Function *TheFunction = Builder.<span class="built_in">GetInsertBlock</span>()-&gt;<span class="built_in">getParent</span>();</span><br><span class="line">    llvm::BasicBlock *PreheaderBB = Builder.<span class="built_in">GetInsertBlock</span>();</span><br><span class="line">    llvm::BasicBlock *LoopBB = llvm::BasicBlock::<span class="built_in">Create</span>(TheContext, <span class="string">&quot;loop&quot;</span>, TheFunction);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Inserting an explict fall-through from current (PreheaderBB) to LoopBB.</span></span><br><span class="line">    Builder.<span class="built_in">CreateBr</span>(LoopBB);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Start insertion to LoopBB</span></span><br><span class="line">    Builder.<span class="built_in">SetInsertPoint</span>(LoopBB);</span><br><span class="line">    <span class="comment">// Start the PHI node with one Incoming basic block</span></span><br><span class="line">    llvm::PHINode *Variable = Builder.<span class="built_in">CreatePHI</span>(llvm::Type::<span class="built_in">getDoubleTy</span>(TheContext), <span class="number">2</span>, VarName.<span class="built_in">c_str</span>());</span><br><span class="line">    Variable-&gt;<span class="built_in">addIncoming</span>(StartVal, PreheaderBB);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Within the loop, the variable is defined equal to </span></span><br><span class="line">    <span class="comment">// the PHI node, If it shadows an existing variable, </span></span><br><span class="line">    <span class="comment">// we have to restore it, so save it now.</span></span><br><span class="line">    llvm::Value *OldVal = NamedValues[VarName];</span><br><span class="line">    NamedValues[VarName] = Variable;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Emit the body of the loop. This, like any other </span></span><br><span class="line">    <span class="comment">// expr, can change the current BB. Note that we </span></span><br><span class="line">    <span class="comment">// ignore the value computed by the body, but don&#x27;t </span></span><br><span class="line">    <span class="comment">// allow an error.</span></span><br><span class="line">    <span class="keyword">if</span> (!Body-&gt;<span class="built_in">codegen</span>()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Emit the step value</span></span><br><span class="line">    llvm::Value *StepVal = <span class="literal">nullptr</span>;</span><br><span class="line">    <span class="keyword">if</span> (Step) &#123;</span><br><span class="line">        StepVal = Step-&gt;<span class="built_in">codegen</span>();</span><br><span class="line">        <span class="keyword">if</span> (!StepVal) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// if not specified, use 1.0</span></span><br><span class="line">        StepVal = llvm::ConstantFP::<span class="built_in">get</span>(TheContext, llvm::<span class="built_in">APFloat</span>(<span class="number">1.0</span>));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// add the step value</span></span><br><span class="line">    llvm::Value *NextVal = Builder.<span class="built_in">CreateFAdd</span>(Variable, StepVal, <span class="string">&quot;nextvar&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Compute the end condition</span></span><br><span class="line">    llvm::Value *EndCond = End-&gt;<span class="built_in">codegen</span>();</span><br><span class="line">    <span class="keyword">if</span> (!EndCond) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Convert condition to a bool by comparing non-equal to 0.0</span></span><br><span class="line">    EndCond = Builder.<span class="built_in">CreateFCmpONE</span>(EndCond, llvm::ConstantFP::<span class="built_in">get</span>(TheContext, llvm::<span class="built_in">APFloat</span>(<span class="number">0.0</span>)), <span class="string">&quot;loopcond&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create the &quot;after loop&quot; block and insert it</span></span><br><span class="line">    llvm::BasicBlock *LoopEndBB = Builder.<span class="built_in">GetInsertBlock</span>();</span><br><span class="line">    llvm::BasicBlock *AfterBB = llvm::BasicBlock::<span class="built_in">Create</span>(TheContext, <span class="string">&quot;afterloop&quot;</span>, TheFunction);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Insert the conditional branch into the end of LoopEndBB</span></span><br><span class="line">    Builder.<span class="built_in">CreateCondBr</span>(EndCond, LoopBB, AfterBB);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Any new code will be inserted in AfterBB</span></span><br><span class="line">    Builder.<span class="built_in">SetInsertPoint</span>(AfterBB);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Add a new entry to the PHI node for the backage</span></span><br><span class="line">    Variable-&gt;<span class="built_in">addIncoming</span>(NextVal, LoopEndBB);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Restore the unshadowed variable</span></span><br><span class="line">    <span class="keyword">if</span> (OldVal) &#123;</span><br><span class="line">        NamedValues[VarName] = OldVal;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        NamedValues.<span class="built_in">erase</span>(VarName);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Always returns 0.0</span></span><br><span class="line">    <span class="keyword">return</span> llvm::Constant::<span class="built_in">getNullValue</span>(llvm::Type::<span class="built_in">getDoubleTy</span>(TheContext));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先是生成 start 部分, 对应 parser 来看就是循环变量 <code>i</code> 被赋予的初始值, 所以先计算这部分. 下一步就是生成循环体的代码, 首先获取当前 basic block 所在的函数 <code>Function *TheFunction = Builder-&gt;GetInsertBlock()-&gt;getParent()</code>, 然后把当前的 basic block 标记为 <code>BasicBlock *PreheaderBB</code>. 创建循环体 basic block (<code>BasicBlock *LoopBB</code>), 并把它添加到函数末尾. 然后在 <code>PreheaderBB</code> 最后添加一条 fall-through 到 <code>LoopBB</code> 的<code>Br</code> 指令.</p>
+<p>这部分代码和之前看到的 <code>if/then/else</code> 代码生成的方式很相似. 由于循环体所在的 basic block 有两个 incoming 的控制流边 (fall-through 和循环尾), 我们要使用 Phi node 来标记控制流是从哪来的. 目前我们创建的只有 <code>PreheaderBB</code>, 所以现在只添加一个 incoming 即可. 所以, 先把函数插入点移到 <code>LoopBB</code>, 然后用 <code>Builder</code> 生成 Phi node 即可.</p>
+<p>在对循环变量作处理时, 循环变量可能和函数参数重名, 导致冲突. 所以我们使用一个 shadow 变量先把变量符号表 (NamedValues) 中的同名值存起来, 这样就实现了作用域的概念. 然后我们给循环体生成代码, 递归的调用 <code>Body-&gt;codegen()</code> 即可. 如果我们设置了 <code>StepVal</code>, 那么就生成 Step 的代码, 没有的话默认就是 <code>1</code>. 然后再创建一个 <code>NextVar</code> 用作下一次循环时的循环变量.</p>
+<p>最后计算结束条件 <code>EndCond</code>, 首先生成代码. 再使用生成的代码去创建一个 <code>FCmpOne</code>, 用作后续 <code>CondBr</code> 指令的条件判断. 然后使用 <code>BasicBlock *LoopEndBB = Builder.GetInsertBlock()</code> 去更新最新的 basic block, 作为循环体的最后一个 block, 并创建一个 <code>BasicBlock *AfterBB</code> 使得之后的代码生成都是在循环结束之后. 最后就是给 Phi node 添加一个来自于 <code>BasicBlock *LoopEndBB</code> 的边, 并从 shadow object 中恢复原来变量的值, 最后直接返回 0.</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/llvm/" rel="tag"># llvm</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/05/15/Kaleidoscope-Adding-JIT-and-Optimizer-Support/" rel="prev" title="Kaleidoscope: Adding JIT and Optimizer Support">
+                  <i class="fa fa-chevron-left"></i> Kaleidoscope: Adding JIT and Optimizer Support
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/06/05/Intel-Processor-Trace/" rel="next" title="Intel Processor Trace">
+                  Intel Processor Trace <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

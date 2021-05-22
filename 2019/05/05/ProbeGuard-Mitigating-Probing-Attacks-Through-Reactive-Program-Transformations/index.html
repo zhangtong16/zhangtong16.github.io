@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="default">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;yoursite.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Gemini&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;left&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:false,&quot;bookmark&quot;:{&quot;enable&quot;:false,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:false,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;Searching...&quot;,&quot;empty&quot;:&quot;We didn&#39;t find any results for the search: ${query}&quot;,&quot;hits_time&quot;:&quot;${hits} results found in ${time} ms&quot;,&quot;hits&quot;:&quot;${hits} results found&quot;}}</script>
+<meta name="description" content="IntroductionAs a defense, information hiding is more efficient than integrity-based defenses. In particular, randomization is almost ‘free’, as even a sophisticated defense against code reuse attacks">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ProbeGuard: Mitigating Probing Attacks Through Reactive Program Transformations">
+<meta property="og:url" content="http://yoursite.com/2019/05/05/ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations/index.html">
+<meta property="og:site_name" content="Zhangtong&#39;s Notebook">
+<meta property="og:description" content="IntroductionAs a defense, information hiding is more efficient than integrity-based defenses. In particular, randomization is almost ‘free’, as even a sophisticated defense against code reuse attacks">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-05-05T11:29:31.000Z">
+<meta property="article:modified_time" content="2021-05-22T09:03:11.290Z">
+<meta property="article:author" content="Zhangtong">
+<meta property="article:tag" content="code-reuse attack">
+<meta property="article:tag" content="processor trace">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://yoursite.com/2019/05/05/ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;default&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;05&#x2F;05&#x2F;ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations&#x2F;&quot;,&quot;path&quot;:&quot;2019&#x2F;05&#x2F;05&#x2F;ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations&#x2F;&quot;,&quot;title&quot;:&quot;ProbeGuard: Mitigating Probing Attacks Through Reactive Program Transformations&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>ProbeGuard: Mitigating Probing Attacks Through Reactive Program Transformations | Zhangtong's Notebook</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Zhangtong's Notebook</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Threat-model"><span class="nav-number">2.</span> <span class="nav-text">Threat model</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Design"><span class="nav-number">3.</span> <span class="nav-text">Design</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Anomaly-detection"><span class="nav-number">3.1.</span> <span class="nav-text">Anomaly detection</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Probe-analysis"><span class="nav-number">3.2.</span> <span class="nav-text">Probe analysis</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hotpatching"><span class="nav-number">3.3.</span> <span class="nav-text">Hotpatching</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Selective-security-hardening"><span class="nav-number">3.4.</span> <span class="nav-text">Selective security hardening</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Implementation"><span class="nav-number">4.</span> <span class="nav-text">Implementation</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhangtong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Zhangtong</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/05/ProbeGuard-Mitigating-Probing-Attacks-Through-Reactive-Program-Transformations/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Zhangtong">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Zhangtong's Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ProbeGuard: Mitigating Probing Attacks Through Reactive Program Transformations
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-05-05 19:29:31" itemprop="dateCreated datePublished" datetime="2019-05-05T19:29:31+08:00">2019-05-05</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-05-22 17:03:11" itemprop="dateModified" datetime="2021-05-22T17:03:11+08:00">2021-05-22</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/paper/" itemprop="url" rel="index"><span itemprop="name">paper</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>As a defense, <em>information hiding</em> is more efficient than <em>integrity-based defenses</em>. In particular, randomization is almost ‘free’, as even a sophisticated defense against code reuse attacks such as Code Pointer Integrity adds a modest 2.9% performance overhead.</p>
+<p>Unfortunately, recent research demonstrates that attackers bypass even the most advanced information-hiding defenses. They show that, by repeatedly <code>probing</code> the address space (either directly or by means of side channels), it is possible to break the underlying randomization and reveal the sensitive data.</p>
+<p>In this paper, we show that we can transforming from fast information hiding to strong software integrity if (and only when) attacks start probing to break the randomization.</p>
+<p><strong>Derandomization primitives.</strong> To break randomization, attackers make use a number of derandomization primitives. Since one-shot leaks are rare in modern defenses—as the defenses move all sensitive information (e.g., code pointers) out of reach of the attacker, state-of-art derandomization primitives invariably must <em>probe</em> by repeatedly executing an operation to exhaust the entropy.</p>
+<p><strong>Selective hardening.</strong> The key idea we present is that, in a software protected by a fast baseline defense (information hiding), we keep monitoring the running program for any occurrence of probing attempts. When we encounter any such attempt, we automatically locate it origin, and patch <em>only</em> the offending piece of code at runtime with stronger and more expensive integrity-based defenses.</p>
+<p>The first stage of ProbeGuard is form of anomaly detection. We detect probing attempts that characterize derandomization primitives. For most varieties of probing attacks, the anomaly detection itself is simple and non-intrusive (e.g., detecting of repeated exceptions).</p>
+<p>The second stage, namely probe analysis, uncovers the particular code site the attacker abused for probing. Doing so is complicated in the general case. However, by leveraging fast control-flow tracing feature (e.g., Intel Processor Trace), ProbeGuard conservatively pinpoints the offending code fragment in a secure way.</p>
+<p>Finally, ProbeGuard hotpatch the program by selectively replacing the offending code fragment with a harden variant. In principle, ProbeGuard is agnostic to the hotpatching technique it itself. A simple and elegent way is to create a binary that already contains multiple versions of all code fragments, where each version offers different levels of protection.</p>
+<h2 id="Threat-model"><a href="#Threat-model" class="headerlink" title="Threat model"></a>Threat model</h2><p>We consider a determined remote attacker who aims to mount a code reuse attack over the network on a <em>server application</em> hardened by any <em>ideal</em> state-of-art information hiding-base defenses. ProbeGuard’s goal is to address the fundamental weakness of practical (information-hiding based) code reuse defenses, making them resistant to attacks that bypass the defense by derandomizing hidden memory regions.</p>
+<p>We trust the underlying operating system, and we assume a modern processor that provides efficient control flow tracing, such as Intel Processor Trace.</p>
+<p>We assume a determined attacker who has access to derandomization primitives to probe the victim’s address space. Further, we assume that the attacker has unlimited probing attempts as the application recovers automatically upon any crash.</p>
+<h2 id="Design"><a href="#Design" class="headerlink" title="Design"></a>Design</h2><p>An application employs information-hiding based on state-of-art defenses. ProbeGuard must ensure what is hidden remain hidden. We embed <em>anomaly detectors</em> within the application that sense probing attacks and a <em>secure code cache</em> consisting of a collection of code fragments hardened by applying LLVM-based integrity checking instrumentations. A separate <em>reactive defense</em> server decodes execution traces obtained by Intel PT and performs fast <em>probe analyses</em>. ProbeGuard then reactively activates hardened code fragments by <em>hotpatching</em> when under attack.</p>
+<h3 id="Anomaly-detection"><a href="#Anomaly-detection" class="headerlink" title="Anomaly detection"></a>Anomaly detection</h3><p><strong>Arbitrary reads and writes.</strong> An attacker may exploit an arbitrary memory read or write vulnerability in the application with the goal of derandomization the hidden region. Typically, only a very small fraction of the application’s virtual address is actually mapped. When the attacker uses such a vulnerability to access random address, it is highly likely to hit an unmapped virtual memory address leading to a segmentation fault (or a crash). We detect such probing attacks by simply handling and proxying the signal using a custom <code>SIGSEGV</code> handler.</p>
+<p><strong>Kernel reads and writes.</strong> Attackers prefer probing silently and avoid detection. Hence, to avoid the crashes, they could also attempt to derandomize the victim application’s address space by probing memory via the kernel. Certain system calls (e.g., <code>read</code>) accepts memory addresses in their argument list and return specific error codes (e.g., <code>EFAULT</code>) if the argument is a pointer to an inaccessible or unallocated memory location. Using arbitrary-read/write primitives on such arguments, they could attempt CROP attacks to enable probes eliminating application crashes (thereby not generating <code>SIGSEGV</code> signals). We can detect such probing attacks by intercepting system calls, either in <code>glibc</code> or directly in the kernel, and inspecting their results.</p>
+<p><strong>Arbitrary jumps.</strong> Attacker can use this primitive to scanning the address space, and looking for valid code pointers, and then locating gadgets. An attempt to execute unmapped or non-executable memory results in either a segmentation fault (raising a <code>SIGSEGV</code> signal) or an illegal instruction exception (raising a <code>SIGILL</code> signal). Thus, we extend our custom signal handler to handle both the signals.</p>
+<p><strong>Allocation oracles.</strong> Such probes exploit memory allocation functions in the target application by attempting to allocate large memory areas. Success or failure of the allocation leaks information about the sizeof holes in the address space, which in turn, helps locate the hidden region. We hook into <code>glibc</code> to intercept the system calls used to allocate memory (e.g., <code>mmap()</code> and <code>brk</code>). We choose a configurable threshold on allocation size, above which our detector triggers reactive hardening (half of the address space by default).</p>
+<h3 id="Probe-analysis"><a href="#Probe-analysis" class="headerlink" title="Probe analysis"></a>Probe analysis</h3><p>Upon an anomaly detector flagging a potential attack, ProbeGuard must locate the offending code fragment. To locate the probing primitive, we employ hardware-assisted branch tracing to fetch to control flow prior to when we detectd the anomaly. We build a reverse mapping to fetch source-level information from the trace.</p>
+<p>We obtain past executed control-flow using Intel PT, which offers low-overhead and secure branch tracing. Control bits in the CPU’s model-specific registers (MSRs) allow an operating system kernel to turn this hardware feature to on or off. The buffer size is configurable, typical values range from 2 MB to 4 MB or more. The backward trace analysis can limit itself to the relevant recent control-flow history and avoid decoding all of the trace in its entirely.</p>
+<p>We use <code>perf record</code> command interface’s snapshot mode and dump the trace when required. Although the decoded trace provided, it’s hard to mapping them back to the source file and determining the offending code fragment.</p>
+<p>The <em>probe analyzer</em> must locate the affected spot in the source code. We repurpose a field in LLVM’s debug metadata that normally carries <code>column number</code> of the source code location to instead place respective basic block identifiers. This only simplifies out prototype implementation to let LLVM’s default code generator pass on the metadata through DWARF 4.0 symbols onto the resulting application binarym instead of having to use a new metadata stream and write the supporting code.</p>
+<p>We choose to mark the entire parent function that includes the probing primitive and use this for hardening.</p>
+<h3 id="Hotpatching"><a href="#Hotpatching" class="headerlink" title="Hotpatching"></a>Hotpatching</h3><p>To facilitate hotpatching, we first transform the program using our LLVM compiler passes. The goal is to be able to quickly and efficiently replace each vanilla variant of a function with a different (hardened) variant of the same function at runtime. We clone all functions found in the target application’s LLVM IR and selectively invoke security-hardening instrumentation passes on specific functions clones at <em>compiler time</em>.</p>
+<p>A global <code>switchboard</code> (which we insert in the application) allows switching between each function variant at runtime. It contains an entry for each function in the program, controlling which of the variants to use during execution.</p>
+<p>To deter attacks against ProbeGuard, we mark the switchboard <strong>as read-only during normal execution</strong>.</p>
+<h3 id="Selective-security-hardening"><a href="#Selective-security-hardening" class="headerlink" title="Selective security hardening"></a>Selective security hardening</h3><p><strong>Arbitrary memory reads and writes.</strong> Software Fault Isolation mitigates probing attempts that use arbitrary reads and writes. It simply instruments every load or store operation in the application binary by masking the target memory location with a bit mask (47th bit of the memory pointer).</p>
+<p><strong>Kernel reads and writes.</strong> We mask all pointer arguments to library calls.</p>
+<p><strong>Arbitrary jumps.</strong> We implemented a type-based CFI policy for forward-edge protection, and a per-thread shadow stack for backward-edge protection.</p>
+<p><strong>Allocation oracles.</strong> A white-list based threshold on the size arguments of library functions.</p>
+<h2 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h2><p>ProbeGuard’s implementation consists of the following:</p>
+<ol>
+<li><p>A static library linked with the application: it houses a signal handler registered at startup, and helps in hotpatching to support switching between function variants at runtime.</p>
+</li>
+<li><p><code>glibc</code> modifications to intercept <code>mmap()</code>, and syscalls that results in <code>EFAULT</code>.</p>
+</li>
+<li><p>LLVM compiler passes to generate and propagate function identifying markers onto the binary via DWARF 4.0 symbols, and function cloning to facilitate hotpatching.</p>
+</li>
+<li><p>A seprate reactive defense server that does probe analysis by fetching Intel PT traces using <code>libipt</code> to map them onto the binary by reading the markers using <code>libdwarf</code></p>
+</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/code-reuse-attack/" rel="tag"># code-reuse attack</a>
+              <a href="/tags/processor-trace/" rel="tag"># processor trace</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/05/03/IMIX-In-Process-Memory-Isolation-EXtension/" rel="prev" title="IMIX: In-Process Memory Isolation EXtension">
+                  <i class="fa fa-chevron-left"></i> IMIX: In-Process Memory Isolation EXtension
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/05/09/Kaleidoscope-Tutorial-Introduction-and-the-Lexer/" rel="next" title="Kaleidoscope: Tutorial Introduction and the Lexer">
+                  Kaleidoscope: Tutorial Introduction and the Lexer <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhangtong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
